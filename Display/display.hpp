@@ -4,6 +4,7 @@
 #include "../VertexGL/vertexBuffers.hpp"
 #include "../VertexGL/vertexIndices.hpp"
 #include "../VertexGL/vertexArrayObjects.hpp"
+#include "../Textures/textures.hpp"
 #include<iostream>
 #include<fstream>
 #include<string>

@@ -19,8 +19,8 @@ void main()
 	//vs_position = vec4(ModelMatrix * vec4(vertex_position, 1.f)).xyz;
     vs_position = vertex_position;
     vs_color = vertex_color;
-	vs_texcoord = vec2(vertex_texcoord.x, vertex_texcoord.y * -1.f);
+	vs_texcoord = vec2(vertex_texcoord.x, vertex_texcoord.y * 1.f);
 	//vs_normal = mat3(ModelMatrix) * vertex_normal;
-
+	//gl_PointSize = 10.0;
 	gl_Position =  vec4(vertex_position, 1.f);
 }

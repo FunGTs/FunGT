@@ -12,7 +12,7 @@ Vertex vertices[] =
     glm::vec3(-0.5,0.5f,0.f),       glm::vec3(1.f,0.f,0.f),  glm::vec2(0.f,1.f),
     glm::vec3(-0.5f,-0.5f,0.f),    glm::vec3(0.f,1.f,0.f),  glm::vec2(0.f,0.f),
     glm::vec3(0.5f,-0.5f,0.f),    glm::vec3(0.f,0.f,1.f),   glm::vec2(1.f,0.f),
-    glm::vec3(0.5f,0.5f,0.f),    glm::vec3(1.f,1.f,0.f),  glm::vec2(0.f,0.f)
+    glm::vec3(0.5f,0.5f,0.f),    glm::vec3(1.f,1.f,0.f),  glm::vec2(1.f,1.f)
 };
 unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
 GLuint indices[] = 
@@ -100,13 +100,15 @@ int Display::set(){
     //OPENGL OPTIONS
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-
+    //Change to GL_FILL to actually fill the polygon
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    
     //Shader init
 
         #ifdef __APPLE__
@@ -118,7 +120,9 @@ int Display::set(){
    
         //VAO, VBO, EBO 
         VAO vertexArrayObject{};
-    
+        Texture texture{"/home/juanchuletas/Documents/Developer_Zone/FunGL/Display/fungt_logo.png"};
+        texture.bind();
+        core_program.setUniform1i("u_Texture",0);
 
         // generate VBO and bind and send DATA
         VB vertexBuffer{vertices,sizeof(vertices)};
@@ -140,7 +144,9 @@ int Display::set(){
         glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,color));
         glEnableVertexAttribArray(1);
         //COORDS
-        glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+        //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+
         glEnableVertexAttribArray(2);
 
 
@@ -151,14 +157,19 @@ int Display::set(){
          /* Render here */
 
         /* Swap front and back buffers */
-         glfwSwapBuffers(window);
+        glfwSwapBuffers(window);
         /* Poll for and process events */
         glfwPollEvents();
+        
+        texture.bind();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         //UPDATE
         //updateInput(window);
         //USE A PROGRAM
         core_program.Bind();
+        //Update uniforms. Why? 
+        //Uniforms are variables yuou send from the CPU to the GPU
+        core_program.setUniform1i("texture0",0);
         vertexBuffer.build();
         //bind vertex array object
         vertexArrayObject.build();

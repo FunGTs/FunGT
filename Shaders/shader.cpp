@@ -153,3 +153,9 @@ void Shader::setMat4fv(glm::mat4 value, std::string name, GLboolean transpose = 
 
     this->unBind();
 }
+void Shader::setUniform1i(const std::string &name, int value){
+    //this->Bind();
+    glUniform1i(glGetUniformLocation(this->idP,name.c_str()),value);
+    //this->unBind();
+}
+

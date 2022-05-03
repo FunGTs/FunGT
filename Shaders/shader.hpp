@@ -42,6 +42,7 @@ class Shader{
       void Bind();
       void unBind();
       //Setting the uniforms
+      void setUniform1i(const std::string &name, int value);
       void setUniformVec3f(glm::fvec3 value,std::string name);
       void setUniformVec2f(glm::fvec2 value,std::string name);
       void setUniformVec1f(GLfloat value,std::string name);
