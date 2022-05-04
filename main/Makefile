@@ -7,9 +7,9 @@ YELLOW = \033[1;33m
 NC = \033[1;0m
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-LIB = -framework Accelerate
-CC = c++-7
-TARGET = $(BIN)/funQC_macos.exe
+LIB = -I/usr/local/include -L/usr/local/lib -lglfw -framework Cocoa -framework OpenGL -framework IOKit
+CC = c++-11
+TARGET = $(BIN)/funGT_macos.exe
 endif
 ifeq ($(UNAME), Linux)
 LIB = -lGL -lGLU -lglut -lglfw -lGLEW
