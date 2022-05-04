@@ -70,6 +70,7 @@ int Display::set(){
         return -1;
     }
     glfwGetFramebufferSize(window,&frameBufferWidth,&frameBufferHeight);
+    
     glViewport(0,0,frameBufferWidth,frameBufferWidth);
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
@@ -118,11 +119,50 @@ int Display::set(){
             Shader core_program{"../resources/vertex_core.glsl","../resources/fragment_core.glsl"};
         #endif
    
+        //Projection matrix 
+        glm::mat4 ModelMatrix(1.f);
+        ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.f, 0.f, 0.f));
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(1.f, 0.f, 0.f));
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 1.f, 0.f)); 
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 0.f, 1.f));
+        ModelMatrix = glm::scale(ModelMatrix, glm::vec3(1.f)); 
+ 
+
+
+
+        glm::vec3 positionCam  = glm::vec3(0.f,0.f,1.f);
+        glm::vec3 worldUp = glm::vec3(0.f, 1.f, 0.f);
+        glm::vec3 frontCam = glm::vec3(0.f, 0.f, -1.f);
+        
+        glm::mat4 ViewMatrix(1.f);
+        ViewMatrix = glm::lookAt(positionCam, positionCam + frontCam, worldUp);
+
+        float fov = 90.f; 
+        float nearPlane = 0.1f; 
+        float farPlane = 1000.f; 
+
+
+
+        glm::mat4 ProjectionMatrix(1.f);
+        ProjectionMatrix = glm::perspective(glm::radians(fov),static_cast<float>(frameBufferWidth)/frameBufferHeight, nearPlane, farPlane);
+
+
+
+
+
         //VAO, VBO, EBO 
         VAO vertexArrayObject{};
-        Texture texture{"/home/juanchuletas/Documents/Developer_Zone/FunGL/Display/fungt_logo.png"};
+        Texture texture{"../img/fungt_logo.png"};
         texture.bind();
         core_program.setUniform1i("u_Texture",0);
+
+        //Send projection matrices to the shader
+        core_program.Bind(); //Important to bind shader
+        core_program.setUniformMat4fv("ModelMatrix",ModelMatrix);
+        core_program.setUniformMat4fv("ViewMatrix",ViewMatrix);
+        core_program.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
+        core_program.unBind(); //Important to unbind shader
+
 
         // generate VBO and bind and send DATA
         VB vertexBuffer{vertices,sizeof(vertices)};
@@ -170,6 +210,28 @@ int Display::set(){
         //Update uniforms. Why? 
         //Uniforms are variables yuou send from the CPU to the GPU
         core_program.setUniform1i("texture0",0);
+        //Move, rotate and scale
+        float value = 0.002; 
+     
+        ModelMatrix = glm::translate(ModelMatrix, glm::vec3(value, 0.f, 0.f));
+       
+        //value = value + 0.002;
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(1.f, 0.f, 0.f));
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 1.f, 0.f)); 
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 0.f, 1.f));
+        ModelMatrix = glm::scale(ModelMatrix, glm::vec3(1.f)); 
+
+        core_program.setUniformMat4fv("ModelMatrix",ModelMatrix);
+
+        glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
+        ProjectionMatrix = glm::mat4(1.0f);
+        //Updating the projection matrix at each frame avoids the image stretches when we resize the window
+        ProjectionMatrix = glm::perspective(glm::radians(fov),static_cast<float>(frameBufferWidth)/frameBufferHeight, nearPlane, farPlane);
+
+        core_program.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
+
+
+
         vertexBuffer.build();
         //bind vertex array object
         vertexArrayObject.build();

@@ -158,4 +158,11 @@ void Shader::setUniform1i(const std::string &name, int value){
     glUniform1i(glGetUniformLocation(this->idP,name.c_str()),value);
     //this->unBind();
 }
+void Shader::setUniformMat4fv(std::string name, const glm::mat4 &proj){
+ 
+    //this->Bind();
 
+        glUniformMatrix4fv(glGetUniformLocation(this->idP, name.c_str()), 1,GL_FALSE, &proj[0][0]);
+
+    //this->unBind();
+}

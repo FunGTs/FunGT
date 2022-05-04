@@ -47,6 +47,8 @@ class Shader{
       void setUniformVec2f(glm::fvec2 value,std::string name);
       void setUniformVec1f(GLfloat value,std::string name);
       void setMat4fv(glm::mat4 value, std::string name,GLboolean transpose);
+      void setUniformMat4fv(std::string name, const glm::mat4 &proj);
+
 
 
 };
