@@ -5,6 +5,7 @@
 #include "../VertexGL/vertexIndices.hpp"
 #include "../VertexGL/vertexArrayObjects.hpp"
 #include "../Textures/textures.hpp"
+#include "../Imgui_Setup/imgui_setup.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include<iostream>
 #include<fstream>

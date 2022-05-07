@@ -118,7 +118,12 @@ int Display::set(){
         #else
             Shader core_program{"../resources/vertex_core.glsl","../resources/fragment_core.glsl"};
         #endif
-   
+    
+        // Setup Dear ImGui context
+       
+
+        imguiSetup(window);
+
         //Projection matrix 
         glm::mat4 ModelMatrix(1.f);
         ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.f, 0.f, 0.f));
@@ -191,15 +196,24 @@ int Display::set(){
 
 
         glBindVertexArray(0);    
-
+        bool show_demo_window = true;
+        bool show_another_window = false;
+        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     while (!glfwWindowShouldClose(window))
     {
          /* Render here */
-
+        
+         /*IMGUI*/
+        imguiNewFrame();
+        imguiFrameBasic();
+        imguiRender();
+        /*END IMGUI*/
+        
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
-        /* Poll for and process events */
+         /* Poll for and process events */
         glfwPollEvents();
+       
         
         texture.bind();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -211,7 +225,7 @@ int Display::set(){
         //Uniforms are variables yuou send from the CPU to the GPU
         core_program.setUniform1i("texture0",0);
         //Move, rotate and scale
-        float value = 0.002; 
+        float value = 0.f; 
      
         ModelMatrix = glm::translate(ModelMatrix, glm::vec3(value, 0.f, 0.f));
        
@@ -235,14 +249,17 @@ int Display::set(){
         vertexBuffer.build();
         //bind vertex array object
         vertexArrayObject.build();
-    
+
         //DRAW
         glDrawElements(GL_TRIANGLES,nOfIndices,GL_UNSIGNED_INT, 0);
 
+        imguiRender();
        
         glFlush();
     }
 
+    imguiCleanUp();
+    glfwDestroyWindow(window);
     glfwTerminate();
 
     return 0; 
