@@ -12,7 +12,7 @@ CC = c++-11
 TARGET = $(BIN)/funGT_macos.exe
 endif
 ifeq ($(UNAME), Linux)
-LIB = -lGL -lGLU -lglut -lglfw -lGLEW
+LIB = -lGL -lGLU -lglut -lglfw -lGLEW -ldl
 TARGET = $(BIN)/funGL.exe
 CC = c++
 endif
@@ -24,7 +24,8 @@ SHADER = ../Shaders
 VERTEX = ../VertexGL
 TEXTURES = ../Textures
 STB = ../vendor/stb_image
-
+IMGUI = ../vendor/imgui
+IMGUI_SET = ../Imgui_Setup
 # ********** SOURCE *************
 
 SOURCE += main.cpp
@@ -33,16 +34,23 @@ SOURCE += $(SHADER)/shader.cpp
 SOURCE += $(DISP)/display.cpp
 SOURCE += $(TEXTURES)/textures.cpp
 SOURCE += $(STB)/stb_image.cpp
+SOURCE += $(IMGUI)/imgui.cpp 
+SOURCE += $(IMGUI)/imgui_demo.cpp $(IMGUI)/imgui_draw.cpp 
+SOURCE += $(IMGUI)/imgui_tables.cpp $(IMGUI)/imgui_widgets.cpp
+SOURCE += $(IMGUI)/imgui_impl_glfw.cpp $(IMGUI)/imgui_impl_opengl3.cpp
+SOURCE += $(IMGUI_SET)/imgui_setup.cpp
+
 #****** HEADERS ************
 INV += $(wildcard $(VERTEX)/*.hpp)
 INC += $(SHADER)/shader.hpp
 INC += $(DISP)/display.hpp
 INC += $(TEXTURES)/textures.hpp
 INC += $(STB)/stb_image.h
+INC += $(IMGUI_SET)/imgui_setup.hpp
 
 
 #**********
-VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(DISP) $(STB)
+VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(DISP) $(STB) $(IMGUI) $(IMGUI_SET)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
 #OBJ = $(SOURCE:.cpp=.o)
