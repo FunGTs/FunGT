@@ -9,11 +9,16 @@ void imguiSetup(GLFWwindow* window) {
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
-
+    //ImGui::StyleColorsClassic();  
+    
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
+    #if defined(__APPLE__)
+        ImGui_ImplOpenGL3_Init("#version 150");
+    #else
+         ImGui_ImplOpenGL3_Init("#version 130");
+    #endif
+    
 }
 void imguiNewFrame() {
     ImGui_ImplOpenGL3_NewFrame();
