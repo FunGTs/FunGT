@@ -7,7 +7,7 @@ YELLOW = \033[1;33m
 NC = \033[1;0m
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-LIB = -I/usr/local/include -L/usr/local/lib -lglfw -framework Cocoa -framework OpenGL -framework IOKit
+LIB = -I/usr/local/include -L/usr/local/lib -lglfw -framework Cocoa -framework OpenGL -framework IOKit -ldl
 CC = c++-11
 TARGET = $(BIN)/funGT_macos.exe
 endif
