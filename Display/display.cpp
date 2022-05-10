@@ -211,7 +211,7 @@ int Display::set(){
         
          /*IMGUI*/
         imguiNewFrame();
-        imguiFrameBasic();
+        imguiFrameBasic(position, rotation);
         imguiRender();
         /*END IMGUI*/
         

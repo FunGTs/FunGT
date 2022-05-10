@@ -37,7 +37,7 @@ void imguiCleanUp() {
     ImGui::DestroyContext();
 }
 // Frame Windows
-void imguiFrameBasic() {
+void imguiFrameBasic(glm::vec3 &position, glm::vec3 &rotation) {
 
     // variables
     bool show_demo_window = true;
@@ -55,11 +55,12 @@ void imguiFrameBasic() {
 
         ImGui::Begin("FunGT menu");                          // Create a window called "Hello, world!" and append into it.
 
-        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-        ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-        ImGui::Checkbox("Another Window", &show_another_window);
+        ImGui::Text("Rotation and Translation.");               // Display some text (you can use a format strings too)
+        ImGui::Checkbox("FunGT Window", &show_demo_window);      // Edit bools storing our window open/close state
+        //ImGui::Checkbox("Another Window", &show_another_window);
 
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat3("Position", &position.x, -1.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat3("Rotation", &rotation.x, -360.f, 360.0f); 
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
         if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
