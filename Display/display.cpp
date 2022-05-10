@@ -124,18 +124,25 @@ int Display::set(){
 
         imguiSetup(window);
 
+        //INIT MATRICES
+        glm::vec3 position(0.f);
+        glm::vec3 rotation(0.f);
+        glm::vec3 scale(1.f);
+
         //Projection matrix 
+
+
         glm::mat4 ModelMatrix(1.f);
-        ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.f, 0.f, 0.f));
-        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(1.f, 0.f, 0.f));
-        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 1.f, 0.f)); 
-        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 0.f, 1.f));
-        ModelMatrix = glm::scale(ModelMatrix, glm::vec3(1.f)); 
+        ModelMatrix = glm::translate(ModelMatrix, position);
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+        ModelMatrix = glm::scale(ModelMatrix, scale); 
  
 
 
 
-        glm::vec3 positionCam  = glm::vec3(0.f,0.f,1.f);
+        glm::vec3 positionCam  = glm::vec3(0.f,0.f,0.8f);
         glm::vec3 worldUp = glm::vec3(0.f, 1.f, 0.f);
         glm::vec3 frontCam = glm::vec3(0.f, 0.f, -1.f);
         
@@ -150,6 +157,7 @@ int Display::set(){
 
         glm::mat4 ProjectionMatrix(1.f);
         ProjectionMatrix = glm::perspective(glm::radians(fov),static_cast<float>(frameBufferWidth)/frameBufferHeight, nearPlane, farPlane);
+        //ProjectionMatrix = glm::ortho(-2.f, 2.f,-2.f, 2.f,-1.f, 1.f);
 
 
 
@@ -157,7 +165,7 @@ int Display::set(){
 
         //VAO, VBO, EBO 
         VAO vertexArrayObject{};
-        Texture texture{"../img/fungt_logo.png"};
+        Texture texture{"../img/batmanLego.png"};
         texture.bind();
         core_program.setUniform1i("u_Texture",0);
 
@@ -196,9 +204,7 @@ int Display::set(){
 
 
         glBindVertexArray(0);    
-        bool show_demo_window = true;
-        bool show_another_window = false;
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+       
     while (!glfwWindowShouldClose(window))
     {
          /* Render here */
@@ -225,23 +231,22 @@ int Display::set(){
         //Uniforms are variables yuou send from the CPU to the GPU
         core_program.setUniform1i("texture0",0);
         //Move, rotate and scale
-        float value = 0.f; 
-     
-        ModelMatrix = glm::translate(ModelMatrix, glm::vec3(value, 0.f, 0.f));
-       
-        //value = value + 0.002;
-        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(1.f, 0.f, 0.f));
-        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 1.f, 0.f)); 
-        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(0.f), glm::vec3(0.f, 0.f, 1.f));
-        ModelMatrix = glm::scale(ModelMatrix, glm::vec3(1.f)); 
+    
+        //position.z -= 0.01f;
+        ModelMatrix = glm::mat4(1.f);
+        ModelMatrix = glm::translate(ModelMatrix, position);
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
+        ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+        ModelMatrix = glm::scale(ModelMatrix, scale); 
 
         core_program.setUniformMat4fv("ModelMatrix",ModelMatrix);
-
+        
         glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
         ProjectionMatrix = glm::mat4(1.0f);
         //Updating the projection matrix at each frame avoids the image stretches when we resize the window
         ProjectionMatrix = glm::perspective(glm::radians(fov),static_cast<float>(frameBufferWidth)/frameBufferHeight, nearPlane, farPlane);
-
+        //ProjectionMatrix = glm::ortho(-2.f, 2.f,-2.f, 2.f,-1.f, 1.f);
         core_program.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
 
 
