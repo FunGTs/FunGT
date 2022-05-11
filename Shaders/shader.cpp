@@ -2,7 +2,7 @@
 
 
 Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom){
-
+    //USES A GEOMETRY SHADER
     std::string vPath; 
     GLuint vShader = 0; 
     GLuint geomShader = 0; 
@@ -11,6 +11,8 @@ Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom)
     geomShader = loadShader(GL_GEOMETRY_SHADER, pathgeom); 
     fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag);  
 
+
+    this->linkProgram(vShader,geomShader,fShader);
 
     glDeleteShader(vShader);
     glDeleteShader(geomShader);
@@ -29,6 +31,10 @@ Shader::Shader(std::string pathVert, std::string pathFrag){
     fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag); 
 
     this->linkProgram(vShader,geomShader,fShader);
+
+    glDeleteShader(vShader);
+    glDeleteShader(geomShader);
+    glDeleteShader(fShader);
 }
 Shader::~Shader(){
     std::cout<<"Shader destructor"<<std::endl;

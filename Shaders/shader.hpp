@@ -1,32 +1,8 @@
 #if !defined(_SHADERS_H_)
 #define _SHADERS_H_
-#include<iostream>
-#include<string>
-#include<fstream>
-#include<sstream>
-#include <glm/glm.hpp>
-#include<glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include<glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#ifndef __APPLE__
-//int glewInit();
-#endif
-#ifdef __APPLE__
-#define GLFW_INCLUDE_GLCOREARB
-#include <OpenGL/gl3.h>
-#include <OpenGL/gl3ext.h>
-//#include <OpenGL/glu.h>
-//#include <GLUT/glut.h>
-#include <GLFW/glfw3.h>
-#else
-#ifdef _WIN32
-  #include <windows.h>
-#endif
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#endif
+#include "../include/prequisites.hpp"
+#include "../include/glmath.hpp"
+
 class Shader{
 
     GLuint idP; 
