@@ -1,6 +1,6 @@
 #if !defined(_DISPLAY_H_)
 #define _DISPLAY_H_
-#include "../Shaders/shader.hpp"
+#include "../Material/material.hpp"
 #include "../VertexGL/vertexBuffers.hpp"
 #include "../VertexGL/vertexIndices.hpp"
 #include "../VertexGL/vertexArrayObjects.hpp"

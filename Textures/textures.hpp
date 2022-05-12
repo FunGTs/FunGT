@@ -9,17 +9,24 @@ class Texture{
         std::string txt_Path;
         unsigned char* txt_localBuffer;
         int txt_width, txt_height,txt_BBP;
+        unsigned int type; 
+        GLint textureUnit; 
     public: 
         Texture(const std::string  &path );
+        Texture(const std::string  &path, GLenum type);
         ~Texture();
 
 
         void bind(unsigned int slot=0);
         void unBind();
-
+        int getID() const;    
 
         inline int getWidth() const {return txt_width;}
-        inline int getHeight() const {return txt_height;};
+        inline int getHeight() const {return txt_height;}
+        GLint getTextureUnit() const{
+            return this->textureUnit;
+        }
+
 
 };
 

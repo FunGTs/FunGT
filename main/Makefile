@@ -26,6 +26,7 @@ TEXTURES = ../Textures
 STB = ../vendor/stb_image
 IMGUI = ../vendor/imgui
 IMGUI_SET = ../Imgui_Setup
+MATERIAL = ../Material
 # ********** SOURCE *************
 
 SOURCE += main.cpp
@@ -39,6 +40,7 @@ SOURCE += $(IMGUI)/imgui_demo.cpp $(IMGUI)/imgui_draw.cpp
 SOURCE += $(IMGUI)/imgui_tables.cpp $(IMGUI)/imgui_widgets.cpp
 SOURCE += $(IMGUI)/imgui_impl_glfw.cpp $(IMGUI)/imgui_impl_opengl3.cpp
 SOURCE += $(IMGUI_SET)/imgui_setup.cpp
+SOURCE += $(MATERIAL)/material.cpp
 
 #****** HEADERS ************
 INV += $(wildcard $(VERTEX)/*.hpp)
@@ -47,10 +49,12 @@ INC += $(DISP)/display.hpp
 INC += $(TEXTURES)/textures.hpp
 INC += $(STB)/stb_image.h
 INC += $(IMGUI_SET)/imgui_setup.hpp
+INC += $(MATERIAL)/material.hpp
+
 
 
 #**********
-VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(DISP) $(STB) $(IMGUI) $(IMGUI_SET)
+VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(DISP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
 #OBJ = $(SOURCE:.cpp=.o)

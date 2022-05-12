@@ -4,15 +4,16 @@ struct Vertex
     glm::vec3 position;
     glm::vec3 color;
     glm::vec2 texcoord;
+    glm::vec3 normal; 
 };
 
 Vertex vertices[] = 
 {
-    //POSITION                         //COLOR                  //Texcoords
-    glm::vec3(-0.5,0.5f,0.f),       glm::vec3(1.f,0.f,0.f),  glm::vec2(0.f,1.f),
-    glm::vec3(-0.5f,-0.5f,0.f),    glm::vec3(0.f,1.f,0.f),  glm::vec2(0.f,0.f),
-    glm::vec3(0.5f,-0.5f,0.f),    glm::vec3(0.f,0.f,1.f),   glm::vec2(1.f,0.f),
-    glm::vec3(0.5f,0.5f,0.f),    glm::vec3(1.f,1.f,0.f),  glm::vec2(1.f,1.f)
+    //POSITION                         //COLOR                  //Texcoords            //NORMAL
+    glm::vec3(-0.5,0.5f,0.f),      glm::vec3(1.f,0.f,0.f),   glm::vec2(0.f,1.f),    glm::vec3(0.f,0.f,-11.f),
+    glm::vec3(-0.5f,-0.5f,0.f),    glm::vec3(0.f,1.f,0.f),   glm::vec2(0.f,0.f),    glm::vec3(0.f,0.f,-1.f),
+    glm::vec3(0.5f,-0.5f,0.f),     glm::vec3(0.f,0.f,1.f),    glm::vec2(1.f,0.f),   glm::vec3(0.f,0.f,-1.f),
+    glm::vec3(0.5f,0.5f,0.f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),  glm::vec3(0.f,0.f,-1.f),
 };
 unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
 GLuint indices[] = 
@@ -169,11 +170,17 @@ int Display::set(){
         texture.bind();
         core_program.setUniform1i("u_Texture",0);
 
+        //Lights:
+        glm::vec3 lightPos0(0.f, 0.f, 2.f);
+        //MATERIAL
+        Material material0(glm::vec3(0.1f), glm::vec3(1.f),glm::vec3(1.f), 0, 0);
+
         //Send projection matrices to the shader
         core_program.Bind(); //Important to bind shader
         core_program.setUniformMat4fv("ModelMatrix",ModelMatrix);
         core_program.setUniformMat4fv("ViewMatrix",ViewMatrix);
         core_program.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
+        core_program.setUniformVec3f(lightPos0,"lightPos0");
         core_program.unBind(); //Important to unbind shader
 
 
@@ -196,11 +203,14 @@ int Display::set(){
         //COLOR
         glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,color));
         glEnableVertexAttribArray(1);
-        //COORDS
+        //TEXTURE COORDS
         //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
         glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-
         glEnableVertexAttribArray(2);
+        //NORMAL COORDS
+        //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+        glVertexAttribPointer(3,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
+        glEnableVertexAttribArray(3);
 
 
         glBindVertexArray(0);    
@@ -229,7 +239,7 @@ int Display::set(){
         core_program.Bind();
         //Update uniforms. Why? 
         //Uniforms are variables yuou send from the CPU to the GPU
-        core_program.setUniform1i("texture0",0);
+        material0.sendToShader(core_program);
         //Move, rotate and scale
     
         //position.z -= 0.01f;

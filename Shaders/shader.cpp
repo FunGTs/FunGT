@@ -115,18 +115,10 @@ void Shader::unBind(){
 
     glUseProgram(0);
 }
- void Shader::setUniformVec3f(glm::fvec3 value, std::string name){
-      
-     this->Bind();
-
-
+void Shader::setUniformVec3f(glm::fvec3 value, std::string name){
+    
     glUniform3fv(glGetUniformLocation(this->idP, name.c_str()),1, glm::value_ptr(value));
-
-
-
-
-     this->unBind();
- }
+}
 void Shader::setUniformVec2f(glm::fvec2 value, std::string name){
       
      this->Bind();
@@ -171,4 +163,14 @@ void Shader::setUniformMat4fv(std::string name, const glm::mat4 &proj){
         glUniformMatrix4fv(glGetUniformLocation(this->idP, name.c_str()), 1,GL_FALSE, &proj[0][0]);
 
     //this->unBind();
+}
+void Shader::set1i(GLint value, std::string name){
+    glUniform1i(glGetUniformLocation(this->idP,name.c_str()), value);
+}
+void Shader::setVec4(glm::fvec4 value, std::string name){
+    glUniform4fv(glGetUniformLocation(this->idP,name.c_str()), 1, glm::value_ptr(value)); 
+}
+void Shader::setMat3fv(glm::mat3 value, std::string name, GLboolean transpose = GL_FALSE){
+    glUniformMatrix3fv(glGetUniformLocation(this->idP, name.c_str()), 1,transpose, glm::value_ptr(value));
+
 }
