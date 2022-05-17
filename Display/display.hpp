@@ -1,9 +1,6 @@
 #if !defined(_DISPLAY_H_)
 #define _DISPLAY_H_
-#include "../Material/material.hpp"
-#include "../VertexGL/vertexBuffers.hpp"
-#include "../VertexGL/vertexIndices.hpp"
-#include "../VertexGL/vertexArrayObjects.hpp"
+#include "../Mesh/fungtMesh.hpp"
 #include "../Textures/textures.hpp"
 #include "../Imgui_Setup/imgui_setup.hpp"
 #include <glm/gtc/matrix_transform.hpp>

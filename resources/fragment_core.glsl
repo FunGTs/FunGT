@@ -40,7 +40,7 @@ void main(){
 
 
     //DIFF
-    vec3 posToLightDirVec = normalize(vs_position-lightPos0); 
+    vec3 posToLightDirVec = normalize(lightPos0-vs_position); 
     vec3 diffColor = vec3(1.0f, 1.0f, 1.0f);
     float diffuse = clamp(dot(posToLightDirVec, vs_normal),0,1); 
     vec3 finalDiffuse = material.diffLigth*diffuse;
@@ -48,9 +48,9 @@ void main(){
     //Specualr light:
     
 
-    vec3 lightToPosDirVec = normalize(lightPos0-vs_position);
+    vec3 lightToPosDirVec = normalize(vs_position-lightPos0);
     vec3 reflecDirVector = normalize(reflect(lightToPosDirVec,normalize(vs_normal))); 
-    vec3 PosToViewDirVec = normalize(vs_position-cameraPos);
+    vec3 PosToViewDirVec = normalize(cameraPos-vs_position);
     float specularConstant = pow(max(dot(PosToViewDirVec,reflecDirVector),0),35);
     vec3 finalSpecLight= material.specLight * specularConstant; 
 

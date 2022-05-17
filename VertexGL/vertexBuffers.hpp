@@ -12,10 +12,11 @@ class VB{
     private: 
         unsigned int id_Render; // OpenGL  needs a numeric ID, keeps track of every type of object: texture, vertex, shader, etc. 
     public:
+        VB();
         VB(const void* data, unsigned int size);
         ~VB();
 
-
+        void genVB(const void* data, unsigned int size);
         void build();
         void release();
 

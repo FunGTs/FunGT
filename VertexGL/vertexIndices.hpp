@@ -13,11 +13,13 @@ class VI{
     unsigned int numId_rnd;
 
     public:
+        VI();
         VI(const unsigned int *data, unsigned int totIndices);
         ~VI();
 
 
         void build();
+        void genVI(const unsigned int *data, unsigned int totIndices);
         void release();
         unsigned int getNumIndices() const ; 
 

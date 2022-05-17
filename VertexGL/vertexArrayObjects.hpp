@@ -13,8 +13,10 @@ class VAO{
 
 
     public:
+        VAO(int);
         VAO();
         ~VAO();
+        void genVAO();
         void build();
         void release();
 }; 

@@ -1,19 +1,12 @@
 #include "display.hpp"
-struct Vertex
-{
-    glm::vec3 position;
-    glm::vec3 color;
-    glm::vec2 texcoord;
-    glm::vec3 normal; 
-};
 
 Vertex vertices[] = 
 {
     //POSITION                         //COLOR                  //Texcoords            //NORMAL
-    glm::vec3(-0.5,0.5f,0.f),      glm::vec3(1.f,0.f,0.f),   glm::vec2(0.f,1.f),    glm::vec3(0.f,0.f,-11.f),
-    glm::vec3(-0.5f,-0.5f,0.f),    glm::vec3(0.f,1.f,0.f),   glm::vec2(0.f,0.f),    glm::vec3(0.f,0.f,-1.f),
-    glm::vec3(0.5f,-0.5f,0.f),     glm::vec3(0.f,0.f,1.f),    glm::vec2(1.f,0.f),   glm::vec3(0.f,0.f,-1.f),
-    glm::vec3(0.5f,0.5f,0.f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),  glm::vec3(0.f,0.f,-1.f),
+    glm::vec3(-0.5,0.5f,0.f),      glm::vec3(1.f,0.f,0.f),   glm::vec2(0.f,1.f),    glm::vec3(0.f,0.f,1.f),
+    glm::vec3(-0.5f,-0.5f,0.f),    glm::vec3(0.f,1.f,0.f),   glm::vec2(0.f,0.f),    glm::vec3(0.f,0.f,1.f),
+    glm::vec3(0.5f,-0.5f,0.f),     glm::vec3(0.f,0.f,1.f),    glm::vec2(1.f,0.f),   glm::vec3(0.f,0.f,1.f),
+    glm::vec3(0.5f,0.5f,0.f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),  glm::vec3(0.f,0.f,1.f),
 };
 unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
 GLuint indices[] = 
@@ -120,8 +113,11 @@ int Display::set(){
             Shader core_program{"../resources/vertex_core.glsl","../resources/fragment_core.glsl"};
         #endif
     
+        //MODEL MESH
+
+        funGT::Mesh mesh{vertices,nOfvertices, indices,nOfIndices};
         // Setup Dear ImGui context
-       
+
 
         imguiSetup(window);
 
@@ -165,8 +161,8 @@ int Display::set(){
 
 
         //VAO, VBO, EBO 
-        VAO vertexArrayObject{};
-        Texture texture{"../img/batmanLego.png"};
+        VAO vertexArrayObject{1};
+        Texture texture{"../img/pusheen.png"};
         texture.bind();
         core_program.setUniform1i("u_Texture",0);
 
@@ -181,6 +177,7 @@ int Display::set(){
         core_program.setUniformMat4fv("ViewMatrix",ViewMatrix);
         core_program.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
         core_program.setUniformVec3f(lightPos0,"lightPos0");
+        core_program.setUniformVec3f(positionCam,"cameraPos");
         core_program.unBind(); //Important to unbind shader
 
 
@@ -188,12 +185,12 @@ int Display::set(){
         VB vertexBuffer{vertices,sizeof(vertices)};
 
 
-        std::cout<<"Num of vertices: "<<sizeof(vertices)<<std::endl;
+        std::cout<<"Size of: "<<nOfvertices <<" vertices: "<<sizeof(vertices)<<std::endl;
 
         //GEN EBO and BIND and SEND DATA
         VI vertexIndices{indices,sizeof(indices)};
 
-        std::cout<<"Num of indices: "<<sizeof(indices)<<std::endl;
+        std::cout<<"Size of: "<<nOfIndices <<" indices: "<<sizeof(indices)<<std::endl;
         printf("Supported GLSL version is %s.\n", (char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
 
         //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
