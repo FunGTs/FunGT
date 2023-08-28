@@ -146,7 +146,7 @@ int Display::set(){
         glm::mat4 ViewMatrix(1.f);
         ViewMatrix = glm::lookAt(positionCam, positionCam + frontCam, worldUp);
 
-        float fov = 90.f; 
+        float fov = 45.f; 
         float nearPlane = 0.1f; 
         float farPlane = 1000.f; 
 
@@ -164,7 +164,7 @@ int Display::set(){
         VAO vertexArrayObject{1};
         Texture texture{"../img/pusheen.png"};
         texture.bind();
-        core_program.setUniform1i("u_Texture",0);
+        //core_program.setUniform1i("u_Texture",0);
 
         //Lights:
         glm::vec3 lightPos0(0.f, 0.f, 2.f);
@@ -238,7 +238,7 @@ int Display::set(){
         //Uniforms are variables yuou send from the CPU to the GPU
         material0.sendToShader(core_program);
         //Move, rotate and scale
-    
+     
         //position.z -= 0.01f;
         ModelMatrix = glm::mat4(1.f);
         ModelMatrix = glm::translate(ModelMatrix, position);

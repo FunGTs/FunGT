@@ -119,9 +119,15 @@ void Shader::setUniformVec3f(glm::fvec3 value, std::string name){
     
     glUniform3fv(glGetUniformLocation(this->idP, name.c_str()),1, glm::value_ptr(value));
 }
+void Shader::setUniformVec4f(glm::fvec4 value, std::string name){
+    //glUniform4fv()
+    this->Bind();
+    glUniform4fv(glGetUniformLocation(this->idP, name.c_str()),1, glm::value_ptr(value));
+    this->unBind();
+}
 void Shader::setUniformVec2f(glm::fvec2 value, std::string name){
       
-     this->Bind();
+    // this->Bind();
 
 
     glUniform2fv(glGetUniformLocation(this->idP, name.c_str()),1, glm::value_ptr(value));
@@ -129,7 +135,7 @@ void Shader::setUniformVec2f(glm::fvec2 value, std::string name){
 
 
 
-     this->unBind();
+     //this->unBind();
  }
 void Shader::setUniformVec1f(GLfloat value, std::string name){
       
@@ -142,6 +148,14 @@ void Shader::setUniformVec1f(GLfloat value, std::string name){
 
 
      this->unBind();
+ }
+ void Shader::setUniform4f(GLfloat r, GLfloat g, GLfloat b, std::string name){
+
+
+    this->Bind();
+        glUniform4f(glGetUniformLocation(this->idP, name.c_str()),r,g,b,1.0);
+    this->unBind();
+
  }
 void Shader::setMat4fv(glm::mat4 value, std::string name, GLboolean transpose = GL_FALSE){
  
@@ -173,4 +187,7 @@ void Shader::setVec4(glm::fvec4 value, std::string name){
 void Shader::setMat3fv(glm::mat3 value, std::string name, GLboolean transpose = GL_FALSE){
     glUniformMatrix3fv(glGetUniformLocation(this->idP, name.c_str()), 1,transpose, glm::value_ptr(value));
 
+}
+void Shader::setUniform1f(const std::string &name, float value){
+    glUniform1f(glGetUniformLocation(this->idP, name.c_str()),value);
 }
