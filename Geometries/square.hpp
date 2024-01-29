@@ -5,6 +5,11 @@ class Square : public Primitive{
 
 public: 
     Square();
+    Square(const std::string  &path);
+    ~Square();
+
+    void draw();
+
 
 
 

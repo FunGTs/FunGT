@@ -2,11 +2,20 @@
 #define _GEOMETRIES_H_
 #include <vector>
 #include "../Vertex/fungtVertex.hpp"
+#include "../VertexGL/vertexArrayObjects.hpp"
+#include "../VertexGL/vertexBuffers.hpp"
+#include "../VertexGL/vertexIndices.hpp"
+#include "../Textures/textures.hpp"
 class Primitive{
 
 private:
     std::vector<Vertex> vertex; 
-    std::vector<GLuint> index; 
+    std::vector<GLuint> index;
+public:
+    VAO vao; 
+    VB vertexBuffer; 
+    VI vertexIndex;
+    Texture texture;   
 
 
     public: 

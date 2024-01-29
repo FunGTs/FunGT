@@ -11,12 +11,13 @@ class Texture{
         int txt_width, txt_height,txt_BBP;
         unsigned int type; 
         GLint textureUnit; 
-    public: 
+    public:
+        Texture(); 
         Texture(const std::string  &path );
         Texture(const std::string  &path, GLenum type);
         ~Texture();
 
-
+        void genTexture(const std::string  &path );
         void bind(unsigned int slot=0);
         void unBind();
         int getID() const;    

@@ -8,7 +8,8 @@
 #include<fstream>
 #include<string>
 #include "../Geometries/square.hpp"
-#include "../Geometries/cube.hpp"
+#include "../Geometries/cube_2.hpp"
+#include "../Geometries/pyramid.hpp"
 
 class FunGL{
 

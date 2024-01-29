@@ -40,6 +40,8 @@ void FunGL::processInput(glm::vec3 &cameraUp, glm::vec3 &cameraFront, glm::vec3 
     cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp))*cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp))*cameraSpeed;
+    
+
 }
 void mouse_callback(GLFWwindow *window, double xpos,double ypos){
     // if(firstMouse){
@@ -103,7 +105,7 @@ int FunGL::set(){
     }
     glfwGetFramebufferSize(window,&frameBufferWidth,&frameBufferHeight);
     
-    glViewport(0,0,frameBufferWidth,frameBufferWidth);
+    glViewport(0,0,frameBufferWidth,frameBufferHeight);
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
@@ -137,52 +139,55 @@ int FunGL::set(){
         #define GLFW_INCLUDE_GLCOREARB
             Shader core_program{"../resources/vertex_core_OSX.glsl","../resources/fragment_core_OSX.glsl"};
         #else
-            Shader core_program{"../resources/vertex_ball.glsl","../resources/fragment_ball.glsl"};
+            Shader core_program{"../resources/shaders_course/vertex_canvas.glsl","../resources/shaders_course/ex01_shader.glsl"};
         #endif
 
-    /* Here it starts to show an image*/
-    Square cube{};     
+    // /* Here it starts to show an image*/
+    Square square{};
+    // Square cube{};
+    // //Cube cube{"../img/box.jpg"};
+    // //Pyramid pyramid{"../img/stone2.jpg"};
     // //VAO, hold data and send to graphics card 
-    GLuint VAO;
-    glCreateVertexArrays(1, &VAO);
-    glBindVertexArray(VAO); //Bind;
-    //TEXTURE
-    // Texture texture{"../img/pusheen.png"};
-    // texture.bind();
-    //Generate VBO: sends data to the GPU
+    // GLuint VAO;
+    // glCreateVertexArrays(1, &VAO);
+    // glBindVertexArray(VAO); //Bind;
+    // // //TEXTURE
+    // // Texture texture{"../img/darkbrown.png"};
+    // //  texture.bind();
 
-    GLuint VBO;
-    glGenBuffers(1 /* One buffer*/, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER/*Target*/, VBO);
-    glBufferData(GL_ARRAY_BUFFER /*Target*/,cube.sizeOfVertices(),cube.getVertices(),GL_STATIC_DRAW /*Does not change once is sents*/); //data we are sending to the graphics card
-    // GEN EBO adn BIND and SEND DATA
+    // //Generate VBO: sends data to the GPU
+    // GLuint VBO;
+    // glGenBuffers(1 /* One buffer*/, &VBO);
+    // glBindBuffer(GL_ARRAY_BUFFER/*Target*/, VBO);
+    // glBufferData(GL_ARRAY_BUFFER /*Target*/,cube.sizeOfVertices(),cube.getVertices(),GL_STATIC_DRAW /*Does not change once is sents*/); //data we are sending to the graphics card
+    // // GEN EBO adn BIND and SEND DATA
 
-    GLuint EBO; //For indexing;
-    glGenBuffers(1,&EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube.sizeOfIndices(),cube.getIndices(),GL_STATIC_DRAW);
+    // GLuint EBO; //For indexing;
+    // glGenBuffers(1,&EBO);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube.sizeOfIndices(),cube.getIndices(),GL_STATIC_DRAW);
 
-    //Set Vertex Attributes pointers and enable n
-    //glVertexAttribPointer(0 /*First element: positions*/,3 /* 3 floats*/, GL_FLOAT/*Type*/,GL_FALSE, 3*sizeof(GLfloat)/*how much steps to the next vertex pos*/, (GLvoid*)0);
-    //glEnableVertexAttribArray(0); 
-    //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
-        //POSITION 
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
-        glEnableVertexAttribArray(0);
-        //COLOR
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,color));
-        glEnableVertexAttribArray(1);
-        //TEXTURE COORDS
-        //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        glEnableVertexAttribArray(2);
-    //Bind VAO
+    // //Set Vertex Attributes pointers and enable n
+    // //glVertexAttribPointer(0 /*First element: positions*/,3 /* 3 floats*/, GL_FLOAT/*Type*/,GL_FALSE, 3*sizeof(GLfloat)/*how much steps to the next vertex pos*/, (GLvoid*)0);
+    // //glEnableVertexAttribArray(0); 
+    // //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
+    //     //POSITION 
+    //     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
+    //     glEnableVertexAttribArray(0);
+    //     //COLOR
+    //     glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,color));
+    //     glEnableVertexAttribArray(1);
+    //     //TEXTURE COORDS
+    //     //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+    //     glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+    //     glEnableVertexAttribArray(2);
+    // //Bind VAO
 
-    glBindVertexArray(0);
+    // glBindVertexArray(0);
 
     //Shader init
     // UNIFORMS
-    // float timeValue = glfwGetTime();
+    float timeValue = glfwGetTime();
     // float greenValue = (sin(timeValue)/2.0f)+0.5f;
     // core_program.setUniform4f(0.f,greenValue,0.f,"change_color");
     // core_program.Bind();
@@ -240,10 +245,12 @@ int FunGL::set(){
         core_program.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
         core_program.setUniform1f("frameSizeX",frameSizeX); 
         core_program.setUniform1f("frameSizeY",frameSizeY);
+        core_program.setUniform1f("time",timeValue);
         core_program.setUniformVec2f(mouseInput,"mouseInput");
     core_program.unBind();
          float deltaTime = 0.0f; 
         float lastFrame = 0.0f;
+    int keydraw = 1; 
     while (!glfwWindowShouldClose(window))
     {
          /* Render here */
@@ -266,10 +273,10 @@ int FunGL::set(){
         //USE A PROGRAM
 
         core_program.Bind();
-        //Bind texture
-        // rotation.y = (float)glfwGetTime()*10.0;
-        // rotation.x = (float)glfwGetTime()*10.0;
-        // rotation.z = (float)glfwGetTime()*10.0;
+  
+        rotation.y = (float)glfwGetTime()*10.0;
+        rotation.x = (float)glfwGetTime()*10.0;
+        rotation.z = (float)glfwGetTime()*10.0;
         ModelMatrix = glm::mat4(1.f);
         ModelMatrix = glm::translate(ModelMatrix, position);
         ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
@@ -284,17 +291,31 @@ int FunGL::set(){
         processInput(cameraUP,cameraFront,cameraPos,deltaTime);
         glm::mat4 ViewMatrix(1.f);
         ViewMatrix = glm::lookAt(cameraPos,cameraPos+cameraFront, cameraUP);
-         core_program.setUniformMat4fv("ViewMatrix",ViewMatrix);
+        core_program.setUniformMat4fv("ViewMatrix",ViewMatrix);
         core_program.setUniformVec2f(mouseInput,"mouseInput");
-
+        core_program.setUniform1f("time",currentFrame);
+        // if(glfwGetKey(window, GLFW_KEY_1)){
+        //     keydraw = 1; 
+            
+        // }
+        // if(glfwGetKey(window, GLFW_KEY_2)){
+        //     keydraw=2; 
+            
+        // }
+        // if(keydraw==1){
+        //     cube.draw();
+        // }
+        // else{
+        //     pyramid.draw();
+        // }
         //Bind vertex array object
-        glBindVertexArray(VAO);
-
+        // glBindVertexArray(VAO);
+        square.draw();
        
         
-        //DRAW
-        glDrawElements(GL_TRIANGLES,cube.getNumOfIndices(), GL_UNSIGNED_INT,0);
-        //imguiRender();
+        // //DRAW
+        // glDrawElements(GL_TRIANGLES,cube.getNumOfIndices(), GL_UNSIGNED_INT,0);
+        // //imguiRender();
        
         glFlush();
     }
