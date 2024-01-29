@@ -19,7 +19,7 @@ endif
 
 #************ CLASS DIR ***********
 
-DISP = ../Display
+APP = ../App
 SHADER = ../Shaders
 VERTEX = ../VertexGL
 TEXTURES = ../Textures
@@ -28,12 +28,13 @@ IMGUI = ../vendor/imgui
 IMGUI_SET = ../Imgui_Setup
 MATERIAL = ../Material
 MESH = ../Mesh
+GEOM = ../Geometries
 # ********** SOURCE *************
 
 SOURCE += main.cpp
 SOURCE += $(wildcard $(VERTEX)/*.cpp)
 SOURCE += $(SHADER)/shader.cpp
-SOURCE += $(DISP)/display.cpp
+SOURCE += $(App)/fungl.cpp
 SOURCE += $(TEXTURES)/textures.cpp
 SOURCE += $(STB)/stb_image.cpp
 SOURCE += $(IMGUI)/imgui.cpp 
@@ -43,21 +44,23 @@ SOURCE += $(IMGUI)/imgui_impl_glfw.cpp $(IMGUI)/imgui_impl_opengl3.cpp
 SOURCE += $(IMGUI_SET)/imgui_setup.cpp
 SOURCE += $(MATERIAL)/material.cpp
 SOURCE += $(MESH)/fungtMesh.cpp
+SOURCE += $(wildcard $(GEOM)/*.cpp)
 
 #****** HEADERS ************
-INV += $(wildcard $(VERTEX)/*.hpp)
+INC += $(wildcard $(VERTEX)/*.hpp)
 INC += $(SHADER)/shader.hpp
-INC += $(DISP)/display.hpp
+INC += $(APP)/fungl.hpp
 INC += $(TEXTURES)/textures.hpp
 INC += $(STB)/stb_image.h
 INC += $(IMGUI_SET)/imgui_setup.hpp
 INC += $(MATERIAL)/material.hpp
 INC += $(MESH)/fungtMesh.hpp
+INC += $(wildcard $(GEOM)/*.hpp)
 
 
 
 #**********
-VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(DISP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) $(MESH)
+VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) $(MESH) $(GEOM)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
 #OBJ = $(SOURCE:.cpp=.o)
