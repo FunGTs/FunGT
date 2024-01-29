@@ -3,6 +3,7 @@
 out vec4 vs_color;
 uniform float frameSizeX; 
 uniform float frameSizeY;
+uniform float time; 
 const vec3 baseColor = vec3(0.6, 0.5, 0.0); 
 const vec3 starBaseColor = vec3(0.6,0.0,0.0);
 float sdStar5(vec2 p, float r, float rf)
@@ -22,8 +23,13 @@ float sdStar5(vec2 p, float r, float rf)
 void main() {
     // convert resolution to coordinates int the -1,1 range
     vec2 coord;
-    coord.x = (gl_FragCoord.x /frameSizeX-0.5)*2.0;
-    coord.y = (gl_FragCoord.y /frameSizeY-0.5)*2.0;
+    float scale  = 1; /*= 1. * ((1.01 + sin(.5 * time)) * 6.);*/
+    coord.x = (gl_FragCoord.x /frameSizeX);
+    coord.y = (gl_FragCoord.y /frameSizeY);
+    //Convert from [0,1] to [-1,1]
+    //This moves the pixel (0,0) to the middle of of the screen
+    coord.x = scale*coord.x*2.0 - 1; 
+    coord.y = scale*coord.y*2.0 - 1;
     float aspect = frameSizeX/frameSizeY; 
     coord.x = coord.x*aspect; 
     // coord.x+=pos.x; 
