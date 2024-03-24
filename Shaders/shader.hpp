@@ -8,6 +8,7 @@ class Shader{
     GLuint idP; 
 
     public:
+        Shader(); 
         Shader(std::string pathVert, std::string pathFrag, std::string pathgeom);
         Shader(std::string pathVert, std::string pathFrag);
         ~Shader();
@@ -17,6 +18,8 @@ class Shader{
       void linkProgram(GLuint vShader, GLuint geomShader, GLuint fShader);
       void Bind();
       void unBind();
+      void create(std::string pathVert, std::string pathFrag);
+      void create(std::string pathVert, std::string pathFrag, std::string pathgeom); 
       //Setting the uniforms
       void setUniform1i(const std::string &name, int value);
       void setUniform1f(const std::string &name, float value);

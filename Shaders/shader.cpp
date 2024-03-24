@@ -1,9 +1,13 @@
 #include "shader.hpp"
 
+Shader::Shader(){
+    std::cout<<"Shader default constructor"<<std::endl; 
+}
 
-Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom){
+Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom)
+{
     //USES A GEOMETRY SHADER
-    std::string vPath; 
+
     GLuint vShader = 0; 
     GLuint geomShader = 0; 
     GLuint fShader = 0; 
@@ -17,12 +21,10 @@ Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom)
     glDeleteShader(vShader);
     glDeleteShader(geomShader);
     glDeleteShader(fShader);
-
 }
 Shader::Shader(std::string pathVert, std::string pathFrag){
     std::cout<<"Shader Constructor"<<std::endl;
 
-    std::string vPath; 
     GLuint vShader = 0; 
     GLuint geomShader = 0; 
     GLuint fShader = 0; 
@@ -77,7 +79,7 @@ std::string Shader::loadShaderFromSource(std::string& source){
     glGetShaderiv(shader,GL_COMPILE_STATUS,&success);
     if(!success){
         glGetShaderInfoLog(shader,512,NULL,infoLog);
-        std::cout<<"ERROR::LOADSHADERS::COULD_NOT_COMPLILE_VERTEX_SHADER\n";
+        std::cout<<"ERROR::LOADSHADERS::COULD_NOT_COMPILE_VERTEX_SHADER\n";
         std::cout<<infoLog<<std::endl;
         //loadSuccess = false;
     }
@@ -115,8 +117,41 @@ void Shader::unBind(){
 
     glUseProgram(0);
 }
-void Shader::setUniformVec3f(glm::fvec3 value, std::string name){
-    
+void Shader::create(std::string pathVert, std::string pathFrag){
+    GLuint vShader = 0; 
+    GLuint geomShader = 0; 
+    GLuint fShader = 0; 
+
+    vShader = loadShader(GL_VERTEX_SHADER, pathVert); 
+    fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag); 
+
+    this->linkProgram(vShader,geomShader,fShader);
+
+    glDeleteShader(vShader);
+    glDeleteShader(geomShader);
+    glDeleteShader(fShader);
+}
+void Shader::create(std::string pathVert, std::string pathFrag, std::string pathgeom){
+
+    GLuint vShader = 0; 
+    GLuint geomShader = 0; 
+    GLuint fShader = 0; 
+    vShader = loadShader(GL_VERTEX_SHADER, pathVert); 
+    geomShader = loadShader(GL_GEOMETRY_SHADER, pathgeom); 
+    fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag);  
+
+
+    this->linkProgram(vShader,geomShader,fShader);
+
+    glDeleteShader(vShader);
+    glDeleteShader(geomShader);
+    glDeleteShader(fShader);
+
+
+}
+void Shader::setUniformVec3f(glm::fvec3 value, std::string name)
+{
+
     glUniform3fv(glGetUniformLocation(this->idP, name.c_str()),1, glm::value_ptr(value));
 }
 void Shader::setUniformVec4f(glm::fvec4 value, std::string name){
