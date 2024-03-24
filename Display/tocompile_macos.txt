@@ -1,2 +1,0 @@
-g++-11 main.cpp display.cpp  -I/usr/local/include -L/usr/local/lib -o main.exe -lglfw -framework Cocoa -framework OpenGL -framework IOKit
-
