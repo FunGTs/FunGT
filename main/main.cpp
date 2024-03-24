@@ -1,13 +1,13 @@
-#include "../App/fungl.hpp"
+#include "../funGT/fungt.hpp"
 
-
-
+const unsigned int SCR_WIDTH = 1600;
+const unsigned int SCR_HEIGHT = 1000;
 int main(){
 
     
-    FunGL myWindow{1600,1000,"FunGL App"};
+    FunGT myWindow{SCR_WIDTH,SCR_HEIGHT};
     myWindow.setBackground(0.0f, 0.f, 0.f, 1.0f);
-    myWindow.set();
+    myWindow.run();
 
     return 0;
 }

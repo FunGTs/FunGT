@@ -12,14 +12,15 @@ CC = c++-11
 TARGET = $(BIN)/funGT_macos.exe
 endif
 ifeq ($(UNAME), Linux)
-LIB = -lGL -lGLU -lglut -lglfw -lGLEW -ldl
+LIB = -lGL -lGLU -lglut -lglfw -lGLEW -ldl -lassimp
+ASSIMP_LIBS = -lassimp
 TARGET = $(BIN)/funGL.exe
-CC = c++
+CC = g++-11
 endif
 
 #************ CLASS DIR ***********
 
-APP = ../App
+APP = ../funGT
 SHADER = ../Shaders
 VERTEX = ../VertexGL
 TEXTURES = ../Textures
@@ -29,12 +30,16 @@ IMGUI_SET = ../Imgui_Setup
 MATERIAL = ../Material
 MESH = ../Mesh
 GEOM = ../Geometries
+CAM = ../Camera
+GT = ../GT
+MODEL = ../Model
 # ********** SOURCE *************
 
 SOURCE += main.cpp
 SOURCE += $(wildcard $(VERTEX)/*.cpp)
 SOURCE += $(SHADER)/shader.cpp
-SOURCE += $(App)/fungl.cpp
+SOURCE += $(App)/fungt.cpp
+#SOURCE += $(GT)/graphicsTool.cpp
 SOURCE += $(TEXTURES)/textures.cpp
 SOURCE += $(STB)/stb_image.cpp
 SOURCE += $(IMGUI)/imgui.cpp 
@@ -43,24 +48,29 @@ SOURCE += $(IMGUI)/imgui_tables.cpp $(IMGUI)/imgui_widgets.cpp
 SOURCE += $(IMGUI)/imgui_impl_glfw.cpp $(IMGUI)/imgui_impl_opengl3.cpp
 SOURCE += $(IMGUI_SET)/imgui_setup.cpp
 SOURCE += $(MATERIAL)/material.cpp
-SOURCE += $(MESH)/fungtMesh.cpp
+SOURCE += $(MESH)/mesh.cpp
+SOURCE += $(CAM)/camera.cpp
 SOURCE += $(wildcard $(GEOM)/*.cpp)
+SOURCE += $(MODEL)/model.cpp
 
 #****** HEADERS ************
 INC += $(wildcard $(VERTEX)/*.hpp)
 INC += $(SHADER)/shader.hpp
-INC += $(APP)/fungl.hpp
+INC += $(APP)/fungt.hpp
+INC += $(GT)/graphicsTool.hpp
 INC += $(TEXTURES)/textures.hpp
 INC += $(STB)/stb_image.h
 INC += $(IMGUI_SET)/imgui_setup.hpp
 INC += $(MATERIAL)/material.hpp
-INC += $(MESH)/fungtMesh.hpp
+INC += $(MESH)/mesh.hpp
+INC += $(CAM)/camera.hpp
 INC += $(wildcard $(GEOM)/*.hpp)
+INC += $(MODEL)/model.hpp
 
 
 
 #**********
-VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) $(MESH) $(GEOM)
+VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) $(MESH) $(GEOM) $(CAM) $(GT) $(MODEL)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
 #OBJ = $(SOURCE:.cpp=.o)
