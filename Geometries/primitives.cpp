@@ -10,30 +10,30 @@ void Primitive::set(const Vertex *vertices, const unsigned numOfvert, const GLui
 
     for(size_t i = 0; i<numOfvert; i++){
         //use size_t for array indexing and loop counting
-        this->vertex.push_back(vertices[i]);
+        this->m_vertex.push_back(vertices[i]);
     }
     for(size_t i = 0; i<numOfindices; i++){
         //use size_t for array indexing and loop counting
-        this->index.push_back(indices[i]);
+        this->m_index.push_back(indices[i]);
     }
 
 
 }
 Vertex* Primitive::getVertices(){
-    return this->vertex.data();
+    return this->m_vertex.data();
 }
 GLuint* Primitive::getIndices(){
-    return this->index.data();
+    return this->m_index.data();
 }
  unsigned Primitive::getNumOfVertices(){
-    return this->vertex.size();
+    return this->m_vertex.size();
 }
  unsigned Primitive::getNumOfIndices(){
-    return this->index.size();
+    return this->m_index.size();
 }
 long unsigned Primitive::sizeOfVertices(){
-    return sizeof(Vertex)*this->vertex.size();
+    return sizeof(Vertex)*this->m_vertex.size();
 }
 long unsigned Primitive::sizeOfIndices(){
-    return sizeof(Vertex)*this->vertex.size();
+    return sizeof(Vertex)*this->m_index.size();
 }

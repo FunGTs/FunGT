@@ -1,22 +1,22 @@
 #include "vertexArrayObjects.hpp"
 
-VAO::VAO(){
+VertexArrayObject::VertexArrayObject(){
 
 }
-VAO::VAO(int index){
+VertexArrayObject::VertexArrayObject(int index){
     glGenVertexArrays(1,&id_vao);
     glBindVertexArray(id_vao);
 }
-VAO::~VAO(){
+VertexArrayObject::~VertexArrayObject(){
     glDeleteBuffers(1,&id_vao);
 }
-void VAO::genVAO(){
+void VertexArrayObject::genVAO(){
     glGenVertexArrays(1,&id_vao);
     glBindVertexArray(id_vao);
 }
-void VAO::build(){
+void VertexArrayObject::bind(){
     glBindVertexArray(id_vao);
 }
-void VAO::release(){
+void VertexArrayObject::unbind(){
     glBindVertexArray(0);
 }

@@ -33,7 +33,7 @@ Square::Square(const std::string  &path)
         glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
         glEnableVertexAttribArray(0);
         //COLOR
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,color));
+        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
         glEnableVertexAttribArray(1);
         //TEXTURE COORDS
         //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
@@ -41,11 +41,12 @@ Square::Square(const std::string  &path)
         glEnableVertexAttribArray(2);
 
     //Texture
-        texture.genTexture(path);
+    texture.genTexture(path);
+    texture.active();
     texture.bind();
 
     //All binded above must be released
-    vao.release();
+    vao.unbind();
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     vertexBuffer.release(); 
@@ -85,7 +86,7 @@ Square::Square()
         glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
         glEnableVertexAttribArray(0);
         //COLOR
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,color));
+        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
         glEnableVertexAttribArray(1);
         //TEXTURE COORDS
         //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
@@ -93,7 +94,7 @@ Square::Square()
         glEnableVertexAttribArray(2);
 
     //All binded above must be released
-    vao.release();
+    vao.unbind();
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     vertexBuffer.release(); 
@@ -102,7 +103,7 @@ Square::Square()
 }
 void Square::draw(){
     //texture.bind();
-    vao.build();
+    vao.bind();
     glDrawElements(GL_TRIANGLES,this->getNumOfIndices(), GL_UNSIGNED_INT,0);
 }
 Square::~Square(){

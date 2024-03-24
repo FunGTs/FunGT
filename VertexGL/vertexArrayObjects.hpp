@@ -8,17 +8,17 @@
 #include <GL/glew.h>
 #endif
 
-class VAO{
+class VertexArrayObject{
     unsigned int id_vao;
 
 
     public:
-        VAO(int);
-        VAO();
-        ~VAO();
+        VertexArrayObject(int);
+        VertexArrayObject();
+        ~VertexArrayObject();
         void genVAO();
-        void build();
-        void release();
+        void bind();
+        void unbind();
 }; 
 
 #endif // _VERTEX_ARRAY_OBJECS_H_

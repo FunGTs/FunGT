@@ -7,14 +7,15 @@
 #else
 #include <GL/glew.h>
 #endif
-class VB{
+class VertexBuffer{
 
     private: 
         unsigned int id_Render; // OpenGL  needs a numeric ID, keeps track of every type of object: texture, vertex, shader, etc. 
     public:
-        VB();
-        VB(const void* data, unsigned int size);
-        ~VB();
+        VertexBuffer();
+        VertexBuffer(int numBuffers); 
+        VertexBuffer(const void* data, unsigned int size);
+        ~VertexBuffer();
 
         void genVB(const void* data, unsigned int size);
         void build();

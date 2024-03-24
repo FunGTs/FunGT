@@ -9,12 +9,13 @@
 class Primitive{
 
 private:
-    std::vector<Vertex> vertex; 
-    std::vector<GLuint> index;
+    std::vector<Vertex> m_vertex; 
+    std::vector<GLuint> m_index;
+    
 public:
-    VAO vao; 
-    VB vertexBuffer; 
-    VI vertexIndex;
+    VertexArrayObject vao; 
+    VertexBuffer vertexBuffer; 
+    VertexIndex vertexIndex;
     Texture texture;   
 
 

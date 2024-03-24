@@ -1,10 +1,10 @@
 #include "vertexBuffers.hpp"
 
-VB::VB(){
+VertexBuffer::VertexBuffer(){
 
 }
-
-VB::VB(const void* data, unsigned int size){
+    
+VertexBuffer::VertexBuffer(const void* data, unsigned int size){
 
 
     glGenBuffers(1,&id_Render);
@@ -12,20 +12,20 @@ VB::VB(const void* data, unsigned int size){
     glBufferData(GL_ARRAY_BUFFER,size,data, GL_STATIC_DRAW);
 
 }
-VB::~VB(){
+VertexBuffer::~VertexBuffer(){
     glDeleteBuffers(1,&id_Render);
 }
-void VB::genVB(const void* data, unsigned int size){
+void VertexBuffer::genVB(const void* data, unsigned int size){
     glGenBuffers(1,&id_Render);
     glBindBuffer(GL_ARRAY_BUFFER,id_Render);
     glBufferData(GL_ARRAY_BUFFER,size,data, GL_STATIC_DRAW);
 
 }
-void VB::build(){
+void VertexBuffer::build(){
     glBindBuffer(GL_ARRAY_BUFFER,id_Render);
 
 }
-void VB::release(){
+void VertexBuffer::release(){
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
 }

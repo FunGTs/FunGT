@@ -1,5 +1,7 @@
 #include "cube_2.hpp"
-
+Cube::Cube(){
+    std::cout<<"Cube constructor"<<std::endl; 
+}
 Cube::Cube(const std::string  &path){
     //Cube vertices for creating a cube with texture coords
     float vertices[] = {
@@ -58,10 +60,11 @@ Cube::Cube(const std::string  &path){
     glEnableVertexAttribArray(1);
     
     texture.genTexture(path);
+    texture.active();
     texture.bind();
 
     //All binded above must be released
-    vao.release();
+    vao.unbind();
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     vertexBuffer.release(); 
@@ -69,11 +72,80 @@ Cube::Cube(const std::string  &path){
 }
 void Cube::draw(){
     texture.bind();
-    vao.build();
+    vao.bind();
     glDrawArrays(GL_TRIANGLES, 0, 36);
         //imguiRender();
     
 }
-Cube::~Cube(){
+void Cube::create(const std::string  &path)
+{
+  //Cube vertices for creating a cube with texture coords
+    float vertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+
+    vao.genVAO();
+    vertexBuffer.genVB(vertices,sizeof(vertices));
+    
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // texture coord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    
+    texture.genTexture(path);
+    texture.active();
+    texture.bind();
+
+    //All binded above must be released
+    vao.unbind();
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    vertexBuffer.release();    
+}
+Cube::~Cube()
+{
     std::cout<<"Cube destructor\n";
 }

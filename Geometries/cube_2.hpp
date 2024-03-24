@@ -10,15 +10,17 @@
 class Cube{
 
     private: 
-        VAO vao; 
-        VB vertexBuffer; 
-        VI vertexIndex;
+        VertexArrayObject vao; 
+        VertexBuffer vertexBuffer; 
+        VertexIndex vertexIndex;
         Texture texture;  
 
-    public: 
+    public:
+        Cube();  
         Cube(const std::string  &path);
         ~Cube();
-        void draw(); 
+        void draw();
+        void create(const std::string  &path); 
 
 };
 

@@ -119,8 +119,11 @@ void Texture::genTexture(const std::string  &path ){
 
     }
 }
-void Texture::bind(unsigned int slot /* = 0*/){
+void Texture::active(unsigned int slot /* = 0*/){
     glActiveTexture(GL_TEXTURE0+slot);
+}
+void Texture::bind(){
+    
     glBindTexture(type,txt_ID);
 }
 void Texture::unBind(){

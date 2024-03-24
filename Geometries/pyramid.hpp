@@ -9,17 +9,19 @@
 class Pyramid{
 
 private: 
-        VAO vao; 
-        VB vertexBuffer; 
-        VI vertexIndex;
+        VertexArrayObject vao; 
+        VertexBuffer vertexBuffer; 
+        VertexIndex vertexIndex;
         Texture texture; 
 
 public:
+    Pyramid(); 
     Pyramid(const std::string  &path);
     ~Pyramid();
 
 
     void draw();
+    void create(const std::string &path); 
 
 
 

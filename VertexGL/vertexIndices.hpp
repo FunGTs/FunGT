@@ -7,20 +7,20 @@
 #else
 #include <GL/glew.h>
 #endif
-class VI{
+class VertexIndex{
 
     unsigned int id_rnd;
     unsigned int numId_rnd;
 
     public:
-        VI();
-        VI(const unsigned int *data, unsigned int totIndices);
-        ~VI();
+        VertexIndex();
+        VertexIndex(const unsigned int *data, unsigned int totIndices);
+        ~VertexIndex();
 
 
-        void build();
+        void bind();
         void genVI(const unsigned int *data, unsigned int totIndices);
-        void release();
+        void unbind();
         unsigned int getNumIndices() const ; 
 
 };

@@ -4,6 +4,8 @@
 
 class Texture{
 
+    public: 
+        std::string name; 
     private:
         unsigned int txt_ID;
         std::string txt_Path;
@@ -18,7 +20,8 @@ class Texture{
         ~Texture();
 
         void genTexture(const std::string  &path );
-        void bind(unsigned int slot=0);
+        void active(unsigned int slot = 0); 
+        void bind();
         void unBind();
         int getID() const;    
 
