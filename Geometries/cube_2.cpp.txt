@@ -1,4 +1,5 @@
 #include "cube_2.hpp"
+#include "cube.hpp"
 Cube::Cube(){
     std::cout<<"Cube constructor"<<std::endl; 
 }
@@ -77,6 +78,7 @@ void Cube::draw(){
         //imguiRender();
     
 }
+
 void Cube::create(const std::string  &path)
 {
   //Cube vertices for creating a cube with texture coords
