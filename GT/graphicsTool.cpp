@@ -90,6 +90,7 @@ void GraphicsTool<Derived>::render()
 
     while (!glfwWindowShouldClose(m_Window)){
         /* Render here */
+         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         this->update();
         /*IMGUI*/
         /*END IMGUI*/
@@ -99,7 +100,7 @@ void GraphicsTool<Derived>::render()
         /* Poll for and process events */
         glfwPollEvents();
         
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+       
             //UPDATE
             //updateInput(window);
             //USE A PROGRAM
