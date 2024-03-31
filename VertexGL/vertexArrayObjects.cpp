@@ -12,7 +12,7 @@ VertexArrayObject::~VertexArrayObject(){
 }
 void VertexArrayObject::genVAO(){
     glGenVertexArrays(1,&id_vao);
-    glBindVertexArray(id_vao);
+    //glBindVertexArray(id_vao);
 }
 void VertexArrayObject::bind(){
     glBindVertexArray(id_vao);

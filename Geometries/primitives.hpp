@@ -19,9 +19,9 @@ protected:
 
     
 public:
-    VertexArrayObject vao; 
-    VertexBuffer vertexBuffer; 
-    VertexIndex vertexIndex;
+    VertexArrayObject m_vao; 
+    VertexBuffer m_vb;
+    VertexIndex m_vi; 
     Texture texture;
   
 

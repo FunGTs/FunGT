@@ -17,9 +17,10 @@ class VertexBuffer{
         VertexBuffer(const void* data, unsigned int size);
         ~VertexBuffer();
 
-        void genVB(const void* data, unsigned int size);
-        void build();
-        void release();
+        void genVB();
+        void bind();
+        void unbind();
+        void bufferData(const void* data, unsigned int size);
 
 
 };

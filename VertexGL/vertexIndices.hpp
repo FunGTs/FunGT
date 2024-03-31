@@ -19,8 +19,9 @@ class VertexIndex{
 
 
         void bind();
-        void genVI(const unsigned int *data, unsigned int totIndices);
+        void genVI();
         void unbind();
+        void indexData(const unsigned int *data, unsigned int totIndices);
         unsigned int getNumIndices() const ; 
 
 };

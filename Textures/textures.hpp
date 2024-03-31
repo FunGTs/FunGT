@@ -5,7 +5,11 @@
 class Texture{
 
     public: 
-        std::string name; 
+        std::string name;
+        unsigned int m_id;
+        std::string m_type;
+     
+ 
     private:
         unsigned int txt_ID;
         std::string txt_Path;
@@ -23,16 +27,20 @@ class Texture{
         void active(unsigned int slot = 0); 
         void bind();
         void unBind();
+        void Delete();
         int getID() const;    
 
         inline int getWidth() const {return txt_width;}
         inline int getHeight() const {return txt_height;}
+        inline void setPath(std::string path) { this->txt_Path = path; }
+        inline std::string getPath()const { return this->txt_Path;}
+        inline void setTypeName(std::string textureType){ this->m_type = textureType; }
+        inline std::string getTypeName()const { return this->m_type; }
         GLint getTextureUnit() const{
             return this->textureUnit;
         }
 
 
 };
-
 
 #endif // _TEXTURES_H_

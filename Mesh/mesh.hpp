@@ -13,22 +13,33 @@
 #include "../VertexGL/vertexBuffers.hpp"
 #include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
+#include "../Material/material.hpp"
 
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 #define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices)
+struct Texture_struct {
+    unsigned int id;
+    std::string type;
+    std::string path;
+};
 
 class Mesh{
     
     public: 
         std::vector<funGTVERTEX> m_vertex; //An array of vertices
-        std::vector<GLuint> m_index; // an array of indices 
-        std::vector<Texture> m_texture; //An array of textures
+        std::vector<unsigned int> m_index;// an array of indices 
+        std::vector<Texture> m_texture; //An array of texturesç
+        std::vector<Material> m_material; 
+        //unsigned int VAO;
+        VertexArrayObject m_vao; 
 
     private: 
         //Render data: 
-        VertexArrayObject m_vao; 
+       
         VertexBuffer m_vb;
         VertexIndex m_vi; 
+       
+         //unsigned int VBO, EBO; 
     
     public:
         Mesh();
@@ -39,7 +50,7 @@ class Mesh{
         void draw(Shader &shader); 
         void render(); 
         bool initScene(const aiScene* pScene, const std::string& Filename); 
-
+       
 
 }; 
 

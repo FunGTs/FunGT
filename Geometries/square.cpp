@@ -19,13 +19,22 @@ Square::Square(const std::string  &path)
     };
     unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
     this->set(vertices,nOfvertices,indices,nOfIndices);
-    vao.genVAO();
-    vertexBuffer.genVB(vertices,sizeof(vertices));
-    vertexIndex.genVI(indices,sizeof(indices));
+    
+    //
+    m_vao.genVAO(); //Generates a Vertex array object
+    m_vb.genVB(); //Generates the Vertex Buffer
+    m_vi.genVI(); //Generates the Vertex Buffer
 
 
+    m_vao.bind();
 
-        //Set Vertex Attributes pointers and enable n
+    m_vb.bind();
+    m_vb.bufferData(&vertices,sizeof(vertices));
+
+    m_vi.bind(); 
+    m_vi.indexData(indices,sizeof(indices));
+    //
+     //Set Vertex Attributes pointers and enable n
     //glVertexAttribPointer(0 /*First element: positions*/,3 /* 3 floats*/, GL_FLOAT/*Type*/,GL_FALSE, 3*sizeof(GLfloat)/*how much steps to the next vertex pos*/, (GLvoid*)0);
     //glEnableVertexAttribArray(0); 
     //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
@@ -46,10 +55,10 @@ Square::Square(const std::string  &path)
     texture.bind();
 
     //All binded above must be released
-    vao.unbind();
+    m_vao.unbind();
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-    vertexBuffer.release(); 
+    m_vb.unbind(); 
 
 
 }
@@ -72,10 +81,19 @@ Square::Square()
     };
     unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
     this->set(vertices,nOfvertices,indices,nOfIndices);
-    vao.genVAO();
-    vertexBuffer.genVB(vertices,sizeof(vertices));
-    vertexIndex.genVI(indices,sizeof(indices));
+     //
+    m_vao.genVAO(); //Generates a Vertex array object
+    m_vb.genVB(); //Generates the Vertex Buffer
+    m_vi.genVI(); //Generates the Vertex Buffer
 
+
+    m_vao.bind();
+
+    m_vb.bind();
+    m_vb.bufferData(&vertices,sizeof(vertices));
+
+    m_vi.bind(); 
+    m_vi.indexData(indices,sizeof(indices));
 
 
         //Set Vertex Attributes pointers and enable n
@@ -94,16 +112,17 @@ Square::Square()
         glEnableVertexAttribArray(2);
 
     //All binded above must be released
-    vao.unbind();
+  //All binded above must be released
+    m_vao.unbind();
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-    vertexBuffer.release(); 
-
+    m_vb.unbind(); 
 
 }
 void Square::draw(){
-    //texture.bind();
-    vao.bind();
+    texture.active();
+    texture.bind();
+    m_vao.bind();
     glDrawElements(GL_TRIANGLES,this->getNumOfIndices(), GL_UNSIGNED_INT,0);
 }
 Square::~Square(){

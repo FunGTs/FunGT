@@ -22,19 +22,26 @@ void Cube::create(const std::string &pathToTexture){
     std::cout<<"Cube Create function : "<<std::endl;
     this->setData();
 	std::cout<<"Create function : "<<std::endl;
-
     std::cout<<"vertices : "<< this->getNumOfVertices()<<std::endl;
-	vao.genVAO();
-    vertexBuffer.genVB(this->getVertices(),this->sizeOfVertices());
+
+    m_vao.genVAO(); //Generates a Vertex array object
+    m_vb.genVB(); //Generates the Vertex Buffer
+    m_vi.genVI(); //Generates the Vertex Buffer
+
+    m_vao.bind();
+
+    m_vb.bind();
+    m_vb.bufferData(this->getVertices(),this->sizeOfVertices());
+
     this->setAttribs();
 	texture.genTexture(pathToTexture);
     texture.active();
     texture.bind();
 
     //All binded above must be released
-    vao.unbind();
+    m_vao.unbind();
     this->unsetAttribs();
-    vertexBuffer.release();    
+    m_vb.unbind();    
     std::cout<<"End Cube Create function : "<<std::endl;
 
 }
@@ -43,7 +50,7 @@ void Cube::draw(){
 
     texture.active();
     texture.bind();
-    vao.bind();
+    m_vao.bind();
     glDrawArrays(GL_TRIANGLES, 0, 36);
         //imguiRender();
 }

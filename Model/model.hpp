@@ -3,6 +3,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <stack> 
+#include <memory>
 
 #include "../Mesh/mesh.hpp"
 class Model{
@@ -13,24 +15,28 @@ class Model{
         ~Model();
     
     //Methods
-        void draw();
+        void draw(Shader &shader);
         void loadModel(const std::string &fullPath); 
         void Info();  
 
     private:
     //Members
-        std::vector<Mesh> m_vMesh; 
+        std::vector<std::unique_ptr<Mesh>> m_vMesh; 
         std::string m_dirPath; 
+        std::vector<Texture> m_loadedTextures;
 
     //Methods
 
         
         std::vector<funGTVERTEX> getVertices(aiMesh *mesh, const aiScene *scene);
         std::vector<GLuint> getIndices(aiMesh *mesh, const aiScene *scene);
-        std::vector<Texture> getTextures(aiMesh *mesh, const aiScene *scene);
+        std::vector<Texture > getTextures(aiMesh *mesh, const aiScene *scene);
         void processNodes(aiNode * node, const aiScene *scene); 
-        Mesh processMesh(aiMesh *mesh, const aiScene *scene); 
-        std::vector<Texture> loadMaterials(aiMaterial *mat, aiTextureType type, std::string typeName); 
+        void processAssimpScene(aiNode * node, const aiScene *scene);
+        std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene); 
+        std::vector<Texture > loadMaterials(aiMaterial *mat, aiTextureType type, std::string typeName);
+        unsigned int TextureFromFile( const std::string &directory, bool gamma=false);
+ 
         
         
 

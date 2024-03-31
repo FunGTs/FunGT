@@ -1,25 +1,38 @@
 #include "mesh.hpp"
+
 Mesh::Mesh(){
     std::cout<<"Mesh Default Destructor"<<std::endl; 
 }
 
 Mesh::Mesh(std::vector<funGTVERTEX> inVertex,std::vector<GLuint> inIndex,std::vector<Texture> inTexture){
      //Populate the mesh with the input vertices
-    std::cout<<"Mesh Constructor"<<std::endl; 
+    // std::cout<<"Mesh Constructor"<<std::endl; 
      this->m_vertex = inVertex; 
      this->m_index = inIndex; 
      this->m_texture = inTexture; 
-
+     this->initMesh();
+     
 }
 Mesh::~Mesh(){
-    std::cout<<"Mesh Destructor"<<std::endl; 
+    // std::cout<<"Mesh Destructor"<<std::endl; 
 }
 //Methods
 void Mesh::initMesh() {
-     //This method initialize a Mesh
+   //  //This method initialize a Mesh
     m_vao.genVAO(); //Generates a Vertex array object
-    m_vb.genVB(&m_vertex[0],m_vertex.size()*sizeof(funGTVERTEX));
-    m_vi.genVI(&m_index[0],m_index.size()*sizeof(GLuint));
+    m_vb.genVB(); //Generates the Vertex Buffer
+    m_vi.genVI(); //Generates the Vertex Buffer
+
+
+    m_vao.bind();
+
+    m_vb.bind();
+    m_vb.bufferData(&m_vertex[0],m_vertex.size()*sizeof(Vertex));
+
+    m_vi.bind(); 
+    m_vi.indexData(&m_index[0],static_cast<unsigned int>(m_index.size()));
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index.size() * sizeof(unsigned int), &m_index[0], GL_STATIC_DRAW);
 
     //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
         //POSITION 
@@ -36,48 +49,43 @@ void Mesh::initMesh() {
         glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
         glEnableVertexAttribArray(2);
     //All binded above must be released
-
-    m_vao.unbind();
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
-    m_vb.release(); 
-
-
+      m_vao.unbind();
+  
 }
 void Mesh::draw(Shader &shader){
 
-    int numOfTextures = m_texture.size(); //How many textures do we have? 
+int numOfTextures = m_texture.size(); //How many textures do we have? 
 
     unsigned int diffuseL = 1; 
     unsigned int specularL = 1;
-
+    std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
     for(unsigned int i=0; i<numOfTextures; i++){
       
-        m_texture[i].active(i);
-
+        //m_texture[i].active(i);
+        glActiveTexture(GL_TEXTURE0 + i);
+        std::cout<<"Texture : "<<m_texture[i].getTypeName()<<" activated"<<std::endl; 
         std::string iter; //Asign a number at the end of the name
-        if(m_texture[i].name=="diffuse"){
+        if(m_texture[i].getTypeName()=="texture_diffuse"){
             iter = std::to_string(diffuseL++);
         }
-        else if(m_texture[i].name=="specular"){
+        else if(m_texture[i].getTypeName()=="texture_specular"){
             iter = std::to_string(specularL++); 
         }
-        std::string textName = "material."+m_texture[i].name+iter; //Builds the full name of the texture
+        std::string textName = m_texture[i].getTypeName()+iter; //Builds the full name of the texture
+        std::cout<<"Sending : "<<textName<<" to the shader"<<std::endl;
+        std::cout<<"Texture ID : "<<m_texture[i].getID()<<std::endl; 
         shader.set1i(i,textName);//Send texture to the shader
-        m_texture[i].bind(); 
+        //m_texture[i].active();
+        //m_texture[i].bind();
+        glBindTexture(GL_TEXTURE_2D, static_cast<unsigned int>(m_texture[i].getID())); 
     } 
 
-    //Draw your mesh!
+       //Draw your mesh!
+        m_vao.bind();
+        //glBindVertexArray(VAO);
 
-    m_vao.bind(); //Bind the vertex array object
-    glDrawElements(GL_TRIANGLES, m_index.size(), GL_UNSIGNED_INT, 0); 
-
-    //return to the defaults: 
-
-    
-
-
-    
-
+        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_index.size()), GL_UNSIGNED_INT, 0);
+        //glBindVertexArray(0);
+        m_vao.unbind();
+        glActiveTexture(GL_TEXTURE0); 
 }

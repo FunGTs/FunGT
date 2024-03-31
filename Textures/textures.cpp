@@ -81,7 +81,7 @@ Texture::Texture(const std::string & path, GLenum _type)
 
 }
 Texture::~Texture(){
-    glDeleteTextures(1, &txt_ID);
+    
 }
 void Texture::genTexture(const std::string  &path ){
     txt_Path = path;
@@ -129,7 +129,11 @@ void Texture::bind(){
 void Texture::unBind(){
     glBindTexture(type,0);
 }
-int Texture::getID() const{
-    return this->txt_ID;    
+void Texture::Delete()
+{
+    glDeleteTextures(1, &txt_ID);
 }
-
+int Texture::getID() const
+{
+    return this->txt_ID;
+}
