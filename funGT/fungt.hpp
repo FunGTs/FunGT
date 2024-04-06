@@ -1,7 +1,7 @@
 #if !defined(_FUNGT_H_)
 #define _FUNGT_H_
 #include "../GT/graphicsTool.hpp"
-
+#include <memory> 
 
 class FunGT : public GraphicsTool<FunGT>{
 
@@ -15,7 +15,7 @@ class FunGT : public GraphicsTool<FunGT>{
 
     glm::vec3 position = glm::vec3(0.f);
     glm::vec3 rotation = glm::vec3(0.f);
-    glm::vec3 scale =  glm::vec3(0.5f);
+    glm::vec3 scale =  glm::vec3(1.0);
 
     //Matrices
      glm::mat4 ProjectionMatrix = glm::mat4(1.f);
@@ -32,10 +32,10 @@ class FunGT : public GraphicsTool<FunGT>{
      bool  m_firstMouse;
     
 
-    //Meshes or Models
-    Cube cube;
-    Pyramid pyr;
-    Model m_model; 
+    Model m_model;
+    std::unique_ptr<Primitive> cube; 
+    std::unique_ptr<Primitive> plane;
+    
 
 
   

@@ -20,47 +20,52 @@ void FunGT::set() {
         #define GLFW_INCLUDE_GLCOREARB
              m_shader.create("../resources/vertex_core_OSX.glsl","../resources/fragment_core_OSX.glsl");
         #else
-             m_shader.create("../resources/vertex_cube.glsl","../resources/fragment_cube.glsl");
+             m_shader.create("../resources/vertex_luxo.glsl","../resources/fragment_luxo.glsl");
+            // m_shader.create("../resources/vertex_cube.glsl","../resources/fragment_cube.glsl");
         #endif
 
-
-    // /* Here it starts to show an image*/
-    //Square square{};
-    // Square cube{};
-    // for(int i = 0; i<2; i++){
-    //     Cube input{"../img/box.jpg"};
-    //     cube.push_back(input); 
-    // }
-    cube.create("../img/box.jpg");
-    pyr.create("../img/stone2.jpg");
+    glm::vec3 scale = glm::vec3(0.5);
     //m_model.loadModel("../Obj/backpack.obj");
-
-    
-    //Creating model matrix to perform movements 
-     //INIT MATRICES
-     position.z = 1.0;
+    m_model.loadModel("../Obj/luxo/Luxo.obj");
+    // //Shape 2
+    // plane = std::make_unique<Plane>(0.0,0.0,1.0);
+    // plane->create("../img/wood.png");
+    // plane->setScale(scale);
+    // plane->setModelMatrix();
+  
+    // //Cube
+    // cube = std::make_unique<Cube>(-1.0,0.5,1.0);
+    // cube->create("../img/box.jpg");
    
+    // cube->setModelMatrix();
 
+    position.z = -10.0; 
     //Projection matrix 
 
     ProjectionMatrix = glm::perspective(glm::radians(fov),
                                         static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
     //Model Matrix
     ModelMatrix = glm::translate(ModelMatrix, position);
-    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
-    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
-    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+    // ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
+    // ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
+    // ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
     ModelMatrix = glm::scale(ModelMatrix, scale);
 
 
     //once the matrices have been created, let's send them to the shader
-     m_shader.Bind(); //Important to bind shader
+    //plane.create("../img/box.jpg");
+    //plane.setModelMatrix(); 
+    m_shader.Bind(); //Important to bind shader
+        //m_shader.setUniformMat4fv("ModelMatrix",plane->getModelMatrix());
+        //m_shader.setUniformMat4fv("ModelMatrix",cube->getModelMatrix());
+        m_shader.setUniformVec3f(m_camera.getPosition(),"ViewPos");
         m_shader.setUniformMat4fv("ModelMatrix",ModelMatrix);
         m_shader.setUniformMat4fv("ViewMatrix",m_camera.getViewMatrix());
         m_shader.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
+        //m_shader.set1i(0,"ourTexture");
     m_shader.unBind();
-
-                                    
+    
+    //m_model.draw(m_shader); 
     
 }
 
@@ -111,25 +116,34 @@ void FunGT::mouse_callback(GLFWwindow *window, double xpos, double ypos){
 
 void FunGT::setBackground(float red, float green, float blue, float alfa){
 
-    m_colors[0] = red; m_colors[1] = green; m_colors[2] = blue; m_colors[3] = alfa; 
+    m_colors[0] = red/255.f; m_colors[1] = green/255.f; m_colors[2] = blue/255.f; m_colors[3] = alfa; 
 
 }
 
 void FunGT::update() {
-    
+
     m_shader.Bind(); //To give instructions to the gpu 
 
     rotation.y = (float)glfwGetTime()*10.0;
-    rotation.x = (float)glfwGetTime()*10.0;
-    rotation.z = (float)glfwGetTime()*10.0;
-    ModelMatrix = glm::mat4(1.f);
-    ModelMatrix = glm::translate(ModelMatrix, position);
+    //rotation.x = (float)glfwGetTime()*10.0;
+    // rotation.z = (float)glfwGetTime()*10.0;
+     ModelMatrix = glm::mat4(1.f);
+     ModelMatrix = glm::translate(ModelMatrix, position);
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
-    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
-    ModelMatrix = glm::scale(ModelMatrix, scale); 
+     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+     ModelMatrix = glm::scale(ModelMatrix, scale); 
+     m_shader.setUniformMat4fv("ModelMatrix",ModelMatrix);
 
-    m_shader.setUniformMat4fv("ModelMatrix",ModelMatrix);
+     m_model.draw(m_shader);   
+    
+    //     cube->updateModelMatrix(rotation.y);  
+    //     m_shader.setUniformMat4fv("ModelMatrix",cube->getModelMatrix());
+    //     cube->draw();
+
+    //   plane->updateModelMatrix(rotation.y);
+    //    m_shader.setUniformMat4fv("ModelMatrix",plane->getModelMatrix());
+    //    plane->draw();
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame-lastFrame; 
     lastFrame = currentFrame; 
@@ -139,7 +153,8 @@ void FunGT::update() {
     m_shader.setUniformMat4fv("ViewMatrix",m_camera.getViewMatrix());
         //m_shader.setUniformVec2f(mouseInput,"mouseInput");
         //m_shader.setUniform1f("time",currentFrame);
-    cube.draw();
+    //shape->draw();
+    
 
     glFlush();
 }

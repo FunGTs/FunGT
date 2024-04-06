@@ -42,8 +42,11 @@ void Model::loadModel(const std::string &path)
     //Process the Nodes: 
      
     //std::cout<< " Dir : "<< m_dirPath << std::endl; 
-    processNodes(pScene->mRootNode, pScene);
-    //processAssimpScene(pScene->mRootNode, pScene);
+    //processNodes(pScene->mRootNode, pScene);
+
+    processAssimpScene(pScene->mRootNode, pScene);
+    
+    
 }
 
 std::vector<funGTVERTEX> Model::getVertices(aiMesh *mesh, const aiScene *scene)
@@ -68,7 +71,7 @@ std::vector<funGTVERTEX> Model::getVertices(aiMesh *mesh, const aiScene *scene)
             internalVertex.normal = auxVec;
         }
 
-       //checks if the mesh has any textures
+       //checks if the mesh has any textures just in the 0 position 
        if(mesh->mTextureCoords[0]){
             glm::vec2 vec;
             vec.x = mesh->mTextureCoords[0][i].x; 
@@ -111,7 +114,7 @@ std::vector<Texture > Model::getTextures(aiMesh *mesh, const aiScene *scene)
     std::vector<Texture > textures; 
     aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
- std::vector<Texture > diffuseM  = loadMaterials(material,aiTextureType_DIFFUSE,"texture_diffuse");
+    std::vector<Texture > diffuseM  = loadTextures(material,aiTextureType_DIFFUSE,"texture_diffuse");
     textures.insert(textures.end(),diffuseM.begin(),diffuseM.end());
 
 
@@ -121,6 +124,16 @@ std::vector<Texture > Model::getTextures(aiMesh *mesh, const aiScene *scene)
 
 
     return textures;
+}
+
+std::vector<Material> Model::getMaterials(aiMesh *mesh, const aiScene *scene)
+{    
+    std::vector<Material> vMaterial;
+    aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+
+    vMaterial = loadMaterials(material);
+
+    return vMaterial;
 }
 
 void Model::processNodes(aiNode * node, const aiScene *scene){
@@ -179,17 +192,27 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
     std::vector<funGTVERTEX> vertices; 
     std::vector<unsigned int> indices; 
     std::vector<Texture > texture; //Texture is a class
-   
+    std::vector<Material> materials; 
+
+
+
     vertices = getVertices(mesh, scene); 
     indices = getIndices(mesh,scene);
     texture  = getTextures(mesh,scene);
-    std::cout<<"Indices loaded : "<<indices.size()<<std::endl; 
-    std::cout<<"Vertices loaded : "<<vertices.size()<<std::endl; 
-    std::cout<<"Textures loaded : "<<texture.size()<<std::endl; 
+    materials = getMaterials(mesh, scene);
+    std::cout<<"Indices loaded   : "<<indices.size()<<std::endl; 
+    std::cout<<"Vertices loaded  : "<<vertices.size()<<std::endl; 
+    std::cout<<"Textures loaded  : "<<texture.size()<<std::endl; 
+    std::cout<<"Materials loaded : "<<materials.size()<<std::endl; 
+    if(texture.size()==0 && materials.size()>0){
+         std::cout<<"Mesh with only material"<<std::endl; 
+        return std::make_unique<Mesh>(vertices,indices,materials);
+    }
+    std::cout<<"Hi"<<std::endl; 
     return std::make_unique<Mesh>(vertices,indices,texture);
 }
 
-std::vector<Texture > Model::loadMaterials(aiMaterial *mat, aiTextureType type, std::string typeName)
+std::vector<Texture > Model::loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
 {
     //std::cout<<"Loading : "<<typeName<<std::endl; 
     std::vector<Texture > textures;
@@ -219,64 +242,61 @@ std::vector<Texture > Model::loadMaterials(aiMaterial *mat, aiTextureType type, 
             textures.push_back(internalTexture);
             m_loadedTextures.push_back(internalTexture);  
 
-            // Texture_struct  texture;
-            //     texture.id = TextureFromFile(txt_path);
-            //     texture.type = typeName;
-            //     texture.path = txt_path;
-            //     textures.push_back(texture);
-            //     m_loadedTextures.push_back(texture);  // store it as texture loaded for 
+        
         } 
 
         
     } 
     return textures;
 }
+std::vector<Material> Model::loadMaterials(aiMaterial *mat)
+{   std::vector<Material> internalMat; 
+    glm::vec3 ka;
+    glm::vec3 kd; 
+    glm::vec3 ks;
+    float shininess;
+    
 
-unsigned int Model::TextureFromFile(const std::string &directory, bool gamma)
-{
-     stbi_set_flip_vertically_on_load(true);
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
+    aiString aiName; 
 
-    int width, height, nrComponents;
-    unsigned char *data = stbi_load(directory.c_str(), &width, &height, &nrComponents, 0);
-    if (data)
-    {
-        GLenum format;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
+    //Gets the name of the material: 
+    mat->Get(AI_MATKEY_NAME,aiName);
 
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    const char * name = aiName.C_Str();
 
-        stbi_image_free(data);
-    }
-    else
-    {
-        std::cout << "Texture failed to load at path: " << directory << std::endl;
-        stbi_image_free(data);
-    }
+    std::string nameMaterial(name);
 
-    return textureID;
+    std::cout<<"Loading : " << nameMaterial <<std::endl;
+    
+    aiColor3D aiAmbientColor, aiDiffuseColor, aiSpecularColor;
+    float aiShininess;
+    //Gets the values of the properties
+    mat->Get(AI_MATKEY_COLOR_AMBIENT, aiAmbientColor);
+    ka = glm::vec3(aiAmbientColor.r,aiAmbientColor.g,aiAmbientColor.b);
+    //std::cout<<"ka : " << ka.x << ", " << ka.y <<", " << ka.z <<std::endl;
+    mat->Get(AI_MATKEY_COLOR_DIFFUSE, aiDiffuseColor);
+    kd = glm::vec3(aiDiffuseColor.r,aiDiffuseColor.g,aiDiffuseColor.b);
+
+    mat->Get(AI_MATKEY_COLOR_SPECULAR, aiSpecularColor);
+    ks = glm::vec3(aiSpecularColor.r,aiSpecularColor.g,aiSpecularColor.b);
+
+    mat->Get(AI_MATKEY_SHININESS, aiShininess);
+    shininess = static_cast<float>(aiShininess);
+
+    Material myMaterial(ka,ks,kd,shininess,name);
+
+    internalMat.push_back(myMaterial); 
+
+    return internalMat;
 }
-
-// void Model::Info()
-// {
-//      std::cout << "Number of meshes of this model : " << m_vMesh.size() << std::endl;
-//      for(int i=0; i<m_vMesh.size(); i++){
-//         std::cout<<"Mesh : "<<i<<std::endl; 
-//         std::cout<<" Has : " <<m_vMesh[i]->m_vertex.size()<< " vertices"<<std::endl; 
-//         std::cout<<" Has : " <<m_vMesh[i]->m_index.size()<< " indices"<<std::endl; 
+void Model::Info()
+{
+     std::cout << "Number of meshes of this model : " << m_vMesh.size() << std::endl;
+     for(int i=0; i<m_vMesh.size(); i++){
+        std::cout<<"Mesh : "<<i<<std::endl; 
+        std::cout<<" Has : " <<m_vMesh[i]->m_vertex.size()<< " vertices"<<std::endl; 
+        std::cout<<" Has : " <<m_vMesh[i]->m_index.size()<< " indices"<<std::endl; 
         
-//      }
-// }
+     }
+}

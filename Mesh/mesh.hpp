@@ -43,7 +43,8 @@ class Mesh{
     
     public:
         Mesh();
-        Mesh(std::vector<funGTVERTEX> inVertex,std::vector<GLuint> inIndex,std::vector<Texture> inTexture);
+        Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Texture> &inTexture);
+        Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inmaterial);
         ~Mesh();
         void initMesh();
         bool loadMesh(const std::string &filename);

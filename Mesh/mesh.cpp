@@ -4,17 +4,21 @@ Mesh::Mesh(){
     std::cout<<"Mesh Default Destructor"<<std::endl; 
 }
 
-Mesh::Mesh(std::vector<funGTVERTEX> inVertex,std::vector<GLuint> inIndex,std::vector<Texture> inTexture){
-     //Populate the mesh with the input vertices
-    // std::cout<<"Mesh Constructor"<<std::endl; 
-     this->m_vertex = inVertex; 
-     this->m_index = inIndex; 
-     this->m_texture = inTexture; 
+Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Texture> &inTexture)
+: m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_texture{inTexture}{
+     
+     //Calls the init mesh to populate the VAO, VBO and EBO
      this->initMesh();
      
 }
-Mesh::~Mesh(){
-    // std::cout<<"Mesh Destructor"<<std::endl; 
+Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inMaterial)
+: m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_material{inMaterial}{
+      //Calls the init mesh to populate the VAO, VBO and EBO
+     this->initMesh();
+}
+Mesh::~Mesh()
+{
+    // std::cout<<"Mesh Destructor"<<std::endl;
 }
 //Methods
 void Mesh::initMesh() {
@@ -54,15 +58,15 @@ void Mesh::initMesh() {
 }
 void Mesh::draw(Shader &shader){
 
-int numOfTextures = m_texture.size(); //How many textures do we have? 
+   int numOfTextures = m_texture.size(); //How many textures do we have? 
 
     unsigned int diffuseL = 1; 
     unsigned int specularL = 1;
-    std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
+    //std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
     for(unsigned int i=0; i<numOfTextures; i++){
       
-        //m_texture[i].active(i);
-        glActiveTexture(GL_TEXTURE0 + i);
+        m_texture[i].active(i);
+        //glActiveTexture(GL_TEXTURE0 + i);
         std::cout<<"Texture : "<<m_texture[i].getTypeName()<<" activated"<<std::endl; 
         std::string iter; //Asign a number at the end of the name
         if(m_texture[i].getTypeName()=="texture_diffuse"){
@@ -76,9 +80,13 @@ int numOfTextures = m_texture.size(); //How many textures do we have?
         std::cout<<"Texture ID : "<<m_texture[i].getID()<<std::endl; 
         shader.set1i(i,textName);//Send texture to the shader
         //m_texture[i].active();
-        //m_texture[i].bind();
-        glBindTexture(GL_TEXTURE_2D, static_cast<unsigned int>(m_texture[i].getID())); 
+        m_texture[i].bind();
+        //glBindTexture(GL_TEXTURE_2D, static_cast<unsigned int>(m_texture[i].getID())); 
     } 
+    //loading the materials
+    for(int i=0; i<m_material.size(); i++){
+        m_material[i].sendToShader(shader);
+    }
 
        //Draw your mesh!
         m_vao.bind();
@@ -87,5 +95,5 @@ int numOfTextures = m_texture.size(); //How many textures do we have?
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_index.size()), GL_UNSIGNED_INT, 0);
         //glBindVertexArray(0);
         m_vao.unbind();
-        glActiveTexture(GL_TEXTURE0); 
+        //glActiveTexture(GL_TEXTURE0); 
 }

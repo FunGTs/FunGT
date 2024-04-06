@@ -13,7 +13,7 @@ Camera::Camera(){
     m_vWorldUp = m_vUp; 
 
 
-    m_vPos = glm::vec3(0.f,0.f,3.f); //Location of the camera 
+    m_vPos = glm::vec3(0.f,0.0,3.f); //Location of the camera 
     m_vFront = glm::vec3(0.f,0.0f,-1.f); //where the camera is looking
   
 

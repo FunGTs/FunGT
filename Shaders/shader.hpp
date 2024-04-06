@@ -22,7 +22,7 @@ class Shader{
       void create(std::string pathVert, std::string pathFrag, std::string pathgeom); 
       //Setting the uniforms
       void setUniform1i(const std::string &name, int value);
-      void setUniform1f(const std::string &name, float value);
+      void setUniform1f(float value,const std::string &name);
       void set1i(GLint value, std::string name);
       void setUniformVec3f(glm::fvec3 value,std::string name);
       void setUniformVec2f(glm::fvec2 value,std::string name);
