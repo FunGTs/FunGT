@@ -46,7 +46,7 @@ void Pyramid::create(const std::string &path)
 
 void Pyramid::setData()
 {
-      Vertex vertices[] = {
+      PrimitiveVertex vertices[] = {
         //Front face
         glm::vec3(0.0f, 1.0f, 0.0f),glm::vec3(0.f, 0.f, 0.f), glm::vec2( 0.5f, 1.0f),
         glm::vec3( -1.0f, -1.0f, 1.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(0.0f, 0.0f),
@@ -73,7 +73,7 @@ void Pyramid::setData()
         glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(0.0f, 0.0f)
     };
     
-      unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
+      unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
   
     this->set(vertices,nOfvertices);
 }

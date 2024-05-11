@@ -57,7 +57,7 @@ void Cube::draw(){
 
 void Cube::setData()
 {
-    Vertex vertices[] = {
+    PrimitiveVertex vertices[] = {
         glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0.f, 0.f, 0.f), glm::vec2(0.0f, 0.0f),
         glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.f, 0.f, 0.f), glm::vec2(1.0f, 0.0f),
         glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.f, 0.f, 0.f), glm::vec2(1.0f, 1.0f),
@@ -101,7 +101,7 @@ void Cube::setData()
         glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(0.f, 0.f, 0.f), glm::vec2(0.0f, 1.0f)
     };
 
-    unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
+    unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
   
     this->set(vertices,nOfvertices);
 }

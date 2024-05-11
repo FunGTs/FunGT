@@ -9,7 +9,7 @@ Model::Model(const std::string &path)
 {
 
     std::cout<<"Model Constructor"<<std::endl;
-    loadModel(path);
+   
 }
 Model::~Model(){
 

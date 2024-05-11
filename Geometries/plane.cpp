@@ -73,7 +73,7 @@ void Plane::setData()
     //     glm::vec3(-1.0f, 0.0f, -1.0f),   glm::vec3(0.f, 0.f, 0.f), glm::vec2(0.0f, 1.0f), // Bottom-left
     //     glm::vec3(-1.0f, 0.0f, 1.0f),   glm::vec3(0.f, 0.f, 0.f), glm::vec2( 0.0f, 0.0f)  // Top-left
     // };
-    Vertex vertices[] = {
+    PrimitiveVertex vertices[] = {
     // Positions             // Texture Coords
     glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(0.0f, 1.0f) ,
     glm::vec3(-1.0f, -1.0f, 0.0f),glm::vec3(0.f, 0.f, 0.f), glm::vec2(0.0f, 0.0f),
@@ -83,7 +83,7 @@ void Plane::setData()
     glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(1.0f, 0.0f) ,
      glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(1.0f, 1.0f) 
 };
-    unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
+    unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
     // GLuint indices[] = {
     //     0, 1, 3, // First triangle
     //     1, 2, 3  // Second triangle

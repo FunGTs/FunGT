@@ -3,7 +3,7 @@
 Square::Square(const std::string  &path)
 : Primitive(){
     //Square with  texture
-    Vertex vertices[] = 
+    PrimitiveVertex vertices[] = 
     {
         //POSITION                         //COLOR                  //Texcoords        
         glm::vec3( -1.0f,1.0,0.0f),      glm::vec3(1.f,0.f,0.f),   glm::vec2(0.f,1.f),
@@ -11,7 +11,7 @@ Square::Square(const std::string  &path)
         glm::vec3(1.0f,  -1.0f, 0.0f),     glm::vec3(0.f,0.f,1.f),    glm::vec2(1.f,0.f), 
         glm::vec3(1.0f,  1.0f, 0.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f)
     };
-    unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
+    unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
     GLuint indices[] = {
 
         0, 1, 2,
@@ -39,14 +39,14 @@ Square::Square(const std::string  &path)
     //glEnableVertexAttribArray(0); 
     //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
         //POSITION 
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
+        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,position));
         glEnableVertexAttribArray(0);
         //COLOR
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
+        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,normal));
         glEnableVertexAttribArray(1);
         //TEXTURE COORDS
         //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,texcoord));
         glEnableVertexAttribArray(2);
 
     //Texture
@@ -65,7 +65,7 @@ Square::Square(const std::string  &path)
 Square::Square()
 : Primitive(){
     //Square with no texture
-    Vertex vertices[] = 
+    PrimitiveVertex vertices[] = 
     {
         //POSITION                         //COLOR                  //Texcoords        
         glm::vec3( -1.0f,1.0,0.0f),      glm::vec3(1.f,0.f,0.f),   glm::vec2(0.f,1.f),
@@ -73,7 +73,7 @@ Square::Square()
         glm::vec3(1.0f,  -1.0f, 0.0f),     glm::vec3(0.f,0.f,1.f),    glm::vec2(1.f,0.f), 
         glm::vec3(1.0f,  1.0f, 0.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f)
     };
-    unsigned nOfvertices = sizeof(vertices)/sizeof(Vertex);
+    unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
     GLuint indices[] = {
 
         0, 1, 2,
@@ -101,14 +101,14 @@ Square::Square()
     //glEnableVertexAttribArray(0); 
     //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
         //POSITION 
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
+        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,position));
         glEnableVertexAttribArray(0);
         //COLOR
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
+        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,normal));
         glEnableVertexAttribArray(1);
         //TEXTURE COORDS
         //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,texcoord));
         glEnableVertexAttribArray(2);
 
     //All binded above must be released

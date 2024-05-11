@@ -1,19 +1,17 @@
 #include "material.hpp"
 
-Material::Material(glm::vec3 _ambientLight, glm::vec3 _diffLigth, glm::vec3 _specLight, GLint _diffTexture, GLint _specTexture)
-: ambientLight{_ambientLight}, diffLigth{_diffLigth}, specLight{_specLight}, diffTexture{_diffTexture}, specTexture{_specTexture}{
+Material::Material(glm::vec3 _ambientLight, glm::vec3 _diffLigth, glm::vec3 _specLight,float inShin,std::string name)
+: m_ambientLight{_ambientLight}, m_diffLigth{_diffLigth}, m_specLight{_specLight},m_shininess{inShin},m_name{name}{
     
 }
 Material::~Material(){
 
 }
 void Material::sendToShader(Shader& program){
-    //program.Bind();
 
-    program.setUniformVec3f(ambientLight, "material.ambientLight");
-    program.setUniformVec3f(diffLigth, "material.diffLigth");
-    program.setUniformVec3f(specLight, "material.specLight");
-    program.set1i(diffTexture, "material.diffTexture");
-    program.set1i(specTexture, "material.specTexture");
-    //program.unBind();
+    program.setUniformVec3f(m_ambientLight, "material.ambient");
+    program.setUniformVec3f(m_diffLigth, "material.diffuse");
+    program.setUniformVec3f(m_specLight, "material.specular");
+    program.setUniform1f(m_shininess,"material.shininess");
+   
 }

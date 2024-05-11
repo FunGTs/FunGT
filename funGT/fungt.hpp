@@ -33,6 +33,7 @@ class FunGT : public GraphicsTool<FunGT>{
     
 
     Model m_model;
+    AnimatedModel m_Amodel; 
     std::unique_ptr<Primitive> cube; 
     std::unique_ptr<Primitive> plane;
     
@@ -51,6 +52,7 @@ class FunGT : public GraphicsTool<FunGT>{
         void processMouseInput(double xpos, double ypos);
         static void mouse_callback(GLFWwindow *window, double xpos, double ypos); 
         void setBackground(float red, float green, float blue, float alfa);
+        void setBackground(float color = 0.f);
 
 
      

@@ -1,15 +1,25 @@
 #if !defined(_GEOMETRIES_H_)
 #define _GEOMETRIES_H_
 #include <vector>
-#include "../Vertex/fungtVertex.hpp"
+#include "../include/prequisites.hpp"
+#include "../include/glmath.hpp"
 #include "../VertexGL/vertexArrayObjects.hpp"
 #include "../VertexGL/vertexBuffers.hpp"
 #include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
+
+struct PrimitiveVertex{
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texcoord;
+
+}; 
+
+
 class Primitive{
 
 private:
-    std::vector<Vertex> m_vertex; 
+    std::vector<PrimitiveVertex> m_vertex; 
     std::vector<GLuint> m_index;
 protected:
     glm::mat4 m_ShapeModelMatrix = glm::mat4(1.f);
@@ -32,9 +42,9 @@ public:
         virtual ~Primitive();
 
 
-        void set(const Vertex *vertices, const unsigned numOfvert, const GLuint *indices, const unsigned numOfindices);
-        void set(const Vertex *vertices, const unsigned numOfvert);
-        Vertex *getVertices();
+        void set(const PrimitiveVertex *vertices, const unsigned numOfvert, const GLuint *indices, const unsigned numOfindices);
+        void set(const PrimitiveVertex *vertices, const unsigned numOfvert);
+        PrimitiveVertex *getVertices();
         GLuint* getIndices();
         unsigned getNumOfVertices();
         unsigned getNumOfIndices();

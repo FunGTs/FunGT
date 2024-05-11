@@ -12,7 +12,7 @@ class Model{
     public:
         Model(); 
         Model(const std::string &path);
-        ~Model();
+        virtual ~Model();
     
     //Methods
         void draw(Shader &shader);
@@ -27,25 +27,19 @@ class Model{
 
     //Methods
 
-        
-        std::vector<funGTVERTEX> getVertices(aiMesh *mesh, const aiScene *scene);
+        void processNodes(aiNode * node, const aiScene *scene); 
+        void processAssimpScene(aiNode * node, const aiScene *scene);
+        virtual std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene); 
+        std::vector<Texture > loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
+        std::vector<Material> loadMaterials(aiMaterial *mat);
+    protected: 
+        virtual std::vector<funGTVERTEX> getVertices(aiMesh *mesh, const aiScene *scene);
         std::vector<GLuint> getIndices(aiMesh *mesh, const aiScene *scene);
         std::vector<Texture > getTextures(aiMesh *mesh, const aiScene *scene);
         std::vector<Material> getMaterials(aiMesh *mesh, const aiScene *scene);
-        void processNodes(aiNode * node, const aiScene *scene); 
-        void processAssimpScene(aiNode * node, const aiScene *scene);
-        std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene); 
-        std::vector<Texture > loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
-        std::vector<Material> loadMaterials(aiMaterial *mat);
       
  
-        
-        
-
-
-
-
-
+    
 };
 
 

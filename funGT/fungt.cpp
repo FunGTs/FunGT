@@ -20,13 +20,14 @@ void FunGT::set() {
         #define GLFW_INCLUDE_GLCOREARB
              m_shader.create("../resources/vertex_core_OSX.glsl","../resources/fragment_core_OSX.glsl");
         #else
-             m_shader.create("../resources/vertex_luxo.glsl","../resources/fragment_luxo.glsl");
+             m_shader.create("../resources/vertex_model_loading.glsl","../resources/fragment_model_loading.glsl");
             // m_shader.create("../resources/vertex_cube.glsl","../resources/fragment_cube.glsl");
         #endif
 
     glm::vec3 scale = glm::vec3(0.5);
+    m_Amodel.loadModel("../Animations/boblampclean.md5mesh");
     //m_model.loadModel("../Obj/backpack.obj");
-    m_model.loadModel("../Obj/luxo/Luxo.obj");
+    //m_model.loadModel("../Obj/luxo/Luxo.obj");
     // //Shape 2
     // plane = std::make_unique<Plane>(0.0,0.0,1.0);
     // plane->create("../img/wood.png");
@@ -120,6 +121,10 @@ void FunGT::setBackground(float red, float green, float blue, float alfa){
 
 }
 
+void FunGT::setBackground(float color){
+     m_colors[0] = color/255.f; m_colors[1] = color/255.f; m_colors[2] = color/255.f; m_colors[3] = 1.0; 
+}
+
 void FunGT::update() {
 
     m_shader.Bind(); //To give instructions to the gpu 
@@ -134,8 +139,8 @@ void FunGT::update() {
      ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
      ModelMatrix = glm::scale(ModelMatrix, scale); 
      m_shader.setUniformMat4fv("ModelMatrix",ModelMatrix);
-
-     m_model.draw(m_shader);   
+    m_Amodel.draw(m_shader);
+    //m_model.draw(m_shader);   
     
     //     cube->updateModelMatrix(rotation.y);  
     //     m_shader.setUniformMat4fv("ModelMatrix",cube->getModelMatrix());

@@ -6,7 +6,7 @@ int main(){
 
     
     FunGT myWindow{SCR_WIDTH,SCR_HEIGHT};
-    myWindow.setBackground(0.0f, 0.f, 0.f, 1.0f);
+    myWindow.setBackground(255.f);
     myWindow.run();
 
     return 0;

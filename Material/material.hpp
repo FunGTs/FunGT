@@ -3,14 +3,14 @@
 #include "../Shaders/shader.hpp"
 class Material
 {   private:
-        glm::vec3 ambientLight; 
-        glm::vec3 diffLigth; 
-        glm::vec3 specLight;
-        GLint diffTexture; 
-        GLint specTexture;
+        glm::vec3 m_ambientLight; 
+        glm::vec3 m_diffLigth; 
+        glm::vec3 m_specLight;
+        float m_shininess; 
 
     public:
-        Material(glm::vec3 ambientLight, glm::vec3 diffLigth, glm::vec3 specLight, GLint diffTexture, GLint specTexture);
+        std::string m_name; 
+        Material(glm::vec3 ambientLight, glm::vec3 diffLigth, glm::vec3 specLight,float inShin,std::string name);
         ~Material();
         void sendToShader(Shader& program);
 

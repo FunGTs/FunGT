@@ -16,7 +16,7 @@ Primitive::Primitive(float xpos, float ypos, float zpos)
 Primitive::~Primitive()
 {
 }
-void Primitive::set(const Vertex *vertices, const unsigned numOfvert, const GLuint *indices, const unsigned numOfindices){
+void Primitive::set(const PrimitiveVertex *vertices, const unsigned numOfvert, const GLuint *indices, const unsigned numOfindices){
 
     for(size_t i = 0; i<numOfvert; i++){
         //use size_t for array indexing and loop counting
@@ -29,14 +29,14 @@ void Primitive::set(const Vertex *vertices, const unsigned numOfvert, const GLui
 
 
 }
-void Primitive::set(const Vertex *vertices, const unsigned numOfvert)
+void Primitive::set(const PrimitiveVertex *vertices, const unsigned numOfvert)
 {
     for(size_t i = 0; i<numOfvert; i++){
         //use size_t for array indexing and loop counting
         this->m_vertex.push_back(vertices[i]);
     }
 }
-Vertex *Primitive::getVertices()
+PrimitiveVertex *Primitive::getVertices()
 {
     return this->m_vertex.data();
 }
@@ -50,10 +50,10 @@ GLuint* Primitive::getIndices(){
     return this->m_index.size();
 }
 long unsigned Primitive::sizeOfVertices(){
-    return sizeof(Vertex)*this->m_vertex.size();
+    return sizeof(PrimitiveVertex)*this->m_vertex.size();
 }
 long unsigned Primitive::sizeOfIndices(){
-    return sizeof(Vertex)*this->m_index.size();
+    return sizeof(PrimitiveVertex)*this->m_index.size();
 }
 
 void Primitive::setAttribs()
@@ -64,15 +64,15 @@ void Primitive::setAttribs()
     //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
         //POSITION 
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
+        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,position));
        
         //COLOR
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
+        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,normal));
         
         //TEXTURE COORDS
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,texcoord));
         
 }
 

@@ -33,13 +33,15 @@ GEOM = ../Geometries
 CAM = ../Camera
 GT = ../GT
 MODEL = ../Model
+AMODEL = ../AnimatedModel
+HELP = ../Helpers
 # ********** SOURCE *************
 
 SOURCE += main.cpp
 SOURCE += $(wildcard $(VERTEX)/*.cpp)
 SOURCE += $(SHADER)/shader.cpp
 SOURCE += $(App)/fungt.cpp
-#SOURCE += $(GT)/graphicsTool.cpp
+SOURCE += $(AMODEL)/animated_model.cpp
 SOURCE += $(TEXTURES)/textures.cpp
 SOURCE += $(STB)/stb_image.cpp
 SOURCE += $(IMGUI)/imgui.cpp 
@@ -52,6 +54,8 @@ SOURCE += $(MESH)/mesh.cpp
 SOURCE += $(CAM)/camera.cpp
 SOURCE += $(wildcard $(GEOM)/*.cpp)
 SOURCE += $(MODEL)/model.cpp
+SOURCE += $(HELP)/helpers.cpp
+
 
 #****** HEADERS ************
 INC += $(wildcard $(VERTEX)/*.hpp)
@@ -66,11 +70,14 @@ INC += $(MESH)/mesh.hpp
 INC += $(CAM)/camera.hpp
 INC += $(wildcard $(GEOM)/*.hpp)
 INC += $(MODEL)/model.hpp
+INC += $(AMODEL)/animated_modele.hpp
+INC += $(HELP)/helpers.hpp
 
 
 
 #**********
-VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) $(MESH) $(GEOM) $(CAM) $(GT) $(MODEL)
+VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) \
+ 	$(MESH) $(GEOM) $(CAM) $(GT) $(MODEL) $(AMODEL) $(HELP)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
 #OBJ = $(SOURCE:.cpp=.o)
@@ -87,6 +94,8 @@ print-%  : ; @echo $* = $($*)
 
 
 .PHONY : help clean
+run :
+	./funGL.exe
 
 clean :
 	rm -f $(OBJECT) $(BIN)/$(TARGET)
