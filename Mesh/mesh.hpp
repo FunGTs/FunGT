@@ -47,12 +47,7 @@ class Mesh{
         Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inmaterial);
         ~Mesh();
         void initMesh();
-        bool loadMesh(const std::string &filename);
         void draw(Shader &shader); 
-        void render(); 
-        bool initScene(const aiScene* pScene, const std::string& Filename); 
-       
-
 }; 
 
 #endif // _MESH_H_
