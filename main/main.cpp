@@ -6,7 +6,8 @@ int main(){
 
     
     FunGT myWindow{SCR_WIDTH,SCR_HEIGHT};
-    myWindow.setBackground(255.f);
+    //use 255.f fpr pure white, 
+    myWindow.setBackground();
     myWindow.run();
 
     return 0;

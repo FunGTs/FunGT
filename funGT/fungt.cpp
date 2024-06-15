@@ -62,7 +62,7 @@ void FunGT::set() {
    
     // cube->setModelMatrix();
 
-    position.z = -20; 
+    position.z = -250; 
     //Projection matrix 
 
     ProjectionMatrix = glm::perspective(glm::radians(fov),
