@@ -33,3 +33,6 @@ My Game Engine is a high-performance, real-time 3D rendering engine designed for
 ### Examples:
 -Luxo Jr Pixar lamp
 ![image_pixar](fungt_images/luxoJr.png)
+
+-Raptoid model animation:
+https://youtu.be/hpsQ7xQkosA
