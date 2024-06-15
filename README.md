@@ -28,3 +28,8 @@ My Game Engine is a high-performance, real-time 3D rendering engine designed for
 - GLFW
 - GLAD
 - stb_image
+
+
+### Examples:
+-Luxo Jr Pixar lamp
+![image_pixar](fungt_images/luxoJr.png)
