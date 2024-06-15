@@ -11,7 +11,7 @@ class FunGT : public GraphicsTool<FunGT>{
     //Projection matrix 
     float fov = 45.f; 
     float nearPlane = 0.1f; 
-    float farPlane = 100.f; 
+    float farPlane = 500.f; 
 
     glm::vec3 position = glm::vec3(0.f);
     glm::vec3 rotation = glm::vec3(0.f);
@@ -32,10 +32,14 @@ class FunGT : public GraphicsTool<FunGT>{
      bool  m_firstMouse;
     
 
-    Model m_model;
-    AnimatedModel m_Amodel; 
+    std::unique_ptr<Model> m_model; //Could be Model (static) or Animated Model
+    std::shared_ptr<AnimatedModel> m_aModel; 
     std::unique_ptr<Primitive> cube; 
     std::unique_ptr<Primitive> plane;
+    
+    //Creates an animation:
+
+    Animation animation; 
     
 
 

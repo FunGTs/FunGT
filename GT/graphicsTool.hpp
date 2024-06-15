@@ -12,6 +12,7 @@
 #include "../Camera/camera.hpp"
 #include "../Model/model.hpp"
 #include "../AnimatedModel/animated_model.hpp"
+#include "../Animation/animation.hpp"
 
 //This class uses the Curiously Recurring Template Pattern (CRTP) 
 template<typename Derived> class GraphicsTool{

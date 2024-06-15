@@ -29,6 +29,10 @@ void Model::draw(Shader &shader)
 
 void Model::loadModel(const std::string &path)
 {
+    std::cout << "Assimp Version: "
+              << aiGetVersionMajor() << "."
+              << aiGetVersionMinor() << "."
+              << aiGetVersionRevision() << std::endl;
     std::cout<<"Model Loading"<<std::endl;
     Assimp::Importer import; 
     const aiScene *pScene = import.ReadFile(path, ASSIMP_LOAD_FLAGS); 
@@ -116,9 +120,7 @@ std::vector<Texture > Model::getTextures(aiMesh *mesh, const aiScene *scene)
 
     std::vector<Texture > diffuseM  = loadTextures(material,aiTextureType_DIFFUSE,"texture_diffuse");
     textures.insert(textures.end(),diffuseM.begin(),diffuseM.end());
-
-
-    //std::vector<Texture > specularM  = loadMaterials(material,aiTextureType_SPECULAR,"texture_specular");
+    //std::vector<Texture > specularM  = loadTextures(material,aiTextureType_SPECULAR,"texture_specular");
     //textures.insert(textures.end(),specularM.begin(),specularM.end());
 
 
@@ -179,9 +181,8 @@ void Model::processAssimpScene(aiNode *node, const aiScene *scene)
         for (unsigned int i = 0; i < currentNode->mNumChildren; i++) {
             aiNodeStackTrack.push(currentNode->mChildren[i]);
         }
-
-
     }
+    
 
 
 
@@ -208,7 +209,6 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
          std::cout<<"Mesh with only material"<<std::endl; 
         return std::make_unique<Mesh>(vertices,indices,materials);
     }
-    std::cout<<"Hi"<<std::endl; 
     return std::make_unique<Mesh>(vertices,indices,texture);
 }
 

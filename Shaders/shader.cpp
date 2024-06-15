@@ -7,13 +7,13 @@ Shader::Shader(){
 Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom)
 {
     //USES A GEOMETRY SHADER
-
+    bool error;
     GLuint vShader = 0; 
     GLuint geomShader = 0; 
     GLuint fShader = 0; 
-    vShader = loadShader(GL_VERTEX_SHADER, pathVert); 
-    geomShader = loadShader(GL_GEOMETRY_SHADER, pathgeom); 
-    fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag);  
+    vShader = loadShader(error,GL_VERTEX_SHADER, pathVert); 
+    geomShader = loadShader(error,GL_GEOMETRY_SHADER, pathgeom); 
+    fShader = loadShader(error,GL_FRAGMENT_SHADER, pathFrag);  
 
 
     this->linkProgram(vShader,geomShader,fShader);
@@ -24,13 +24,13 @@ Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom)
 }
 Shader::Shader(std::string pathVert, std::string pathFrag){
     std::cout<<"Shader Constructor"<<std::endl;
-
+    bool error = false; 
     GLuint vShader = 0; 
     GLuint geomShader = 0; 
     GLuint fShader = 0; 
 
-    vShader = loadShader(GL_VERTEX_SHADER, pathVert); 
-    fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag); 
+    vShader = loadShader(error,GL_VERTEX_SHADER, pathVert); 
+    fShader = loadShader(error,GL_FRAGMENT_SHADER, pathFrag); 
 
     this->linkProgram(vShader,geomShader,fShader);
 
@@ -66,7 +66,7 @@ std::string Shader::loadShaderFromSource(std::string& source){
     return src;
 
 }
- GLuint Shader::loadShader(GLenum type, std::string& source){
+ GLuint Shader::loadShader(bool &error,GLenum type, std::string& source){
    
     char infoLog[512];
     GLint success;  
@@ -81,7 +81,7 @@ std::string Shader::loadShaderFromSource(std::string& source){
         glGetShaderInfoLog(shader,512,NULL,infoLog);
         std::cout<<"ERROR::LOADSHADERS::COULD_NOT_COMPILE_VERTEX_SHADER\n";
         std::cout<<infoLog<<std::endl;
-        //loadSuccess = false;
+        error = true; 
     }
     
     return shader;
@@ -118,12 +118,24 @@ void Shader::unBind(){
     glUseProgram(0);
 }
 void Shader::create(std::string pathVert, std::string pathFrag){
+    bool errorVS = false;
+    bool errorFS = false;  
     GLuint vShader = 0; 
     GLuint geomShader = 0; 
     GLuint fShader = 0; 
 
-    vShader = loadShader(GL_VERTEX_SHADER, pathVert); 
-    fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag); 
+    vShader = loadShader(errorVS,GL_VERTEX_SHADER, pathVert);
+    std::cout<<"Loading VS : " <<errorVS<<std::endl;
+    if(errorVS == true){
+        std::cout<<"Vertex Shader Error "<<std::endl;
+        exit(0); 
+    }  
+    fShader = loadShader(errorFS,GL_FRAGMENT_SHADER, pathFrag);
+    std::cout<<"Loading FS : " <<errorVS<<std::endl;
+    if(errorFS == true){
+        std::cout<<"Fragment Shader Error "<<std::endl;
+        exit(0); 
+    } 
 
     this->linkProgram(vShader,geomShader,fShader);
 
@@ -132,13 +144,13 @@ void Shader::create(std::string pathVert, std::string pathFrag){
     glDeleteShader(fShader);
 }
 void Shader::create(std::string pathVert, std::string pathFrag, std::string pathgeom){
-
+    bool error; 
     GLuint vShader = 0; 
     GLuint geomShader = 0; 
     GLuint fShader = 0; 
-    vShader = loadShader(GL_VERTEX_SHADER, pathVert); 
-    geomShader = loadShader(GL_GEOMETRY_SHADER, pathgeom); 
-    fShader = loadShader(GL_FRAGMENT_SHADER, pathFrag);  
+    vShader = loadShader(error, GL_VERTEX_SHADER, pathVert); 
+    geomShader = loadShader(error,GL_GEOMETRY_SHADER, pathgeom); 
+    fShader = loadShader(error,GL_FRAGMENT_SHADER, pathFrag);  
 
 
     this->linkProgram(vShader,geomShader,fShader);

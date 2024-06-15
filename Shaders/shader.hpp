@@ -2,7 +2,7 @@
 #define _SHADERS_H_
 #include "../include/prequisites.hpp"
 #include "../include/glmath.hpp"
-
+#include <variant>
 class Shader{
 
     GLuint idP; 
@@ -14,7 +14,7 @@ class Shader{
         ~Shader();
 
       std::string loadShaderFromSource(std::string& source);
-      GLuint loadShader(GLenum type, std::string& source);
+      GLuint loadShader(bool &error,GLenum type, std::string& source);
       void linkProgram(GLuint vShader, GLuint geomShader, GLuint fShader);
       void Bind();
       void unBind();

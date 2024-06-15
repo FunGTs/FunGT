@@ -54,12 +54,12 @@ void Mesh::initMesh() {
         glEnableVertexAttribArray(2);
 
         // ids
-		glEnableVertexAttribArray(5);
-		glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
+		glEnableVertexAttribArray(3);
+		glVertexAttribIPointer(3, maxBoneInfluencePerVertex, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
 
 		// weights
-		glEnableVertexAttribArray(6);
-		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, maxBoneInfluencePerVertex, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
     //All binded above must be released
       m_vao.unbind();
   
@@ -75,7 +75,7 @@ void Mesh::draw(Shader &shader){
       
         m_texture[i].active(i);
         //glActiveTexture(GL_TEXTURE0 + i);
-        std::cout<<"Texture : "<<m_texture[i].getTypeName()<<" activated"<<std::endl; 
+        //std::cout<<"Texture : "<<m_texture[i].getTypeName()<<" activated"<<std::endl; 
         std::string iter; //Asign a number at the end of the name
         if(m_texture[i].getTypeName()=="texture_diffuse"){
             iter = std::to_string(diffuseL++);
@@ -84,8 +84,8 @@ void Mesh::draw(Shader &shader){
             iter = std::to_string(specularL++); 
         }
         std::string textName = m_texture[i].getTypeName()+iter; //Builds the full name of the texture
-        std::cout<<"Sending : "<<textName<<" to the shader"<<std::endl;
-        std::cout<<"Texture ID : "<<m_texture[i].getID()<<std::endl; 
+        //std::cout<<"Sending : "<<textName<<" to the shader"<<std::endl;
+        //std::cout<<"Texture ID : "<<m_texture[i].getID()<<std::endl; 
         shader.set1i(i,textName);//Send texture to the shader
         //m_texture[i].active();
         m_texture[i].bind();

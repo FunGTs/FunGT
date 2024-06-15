@@ -5,6 +5,7 @@
 #include <assimp/postprocess.h>
 #include <stack> 
 #include <memory>
+#include <assimp/version.h>
 
 #include "../Mesh/mesh.hpp"
 class Model{
@@ -16,10 +17,10 @@ class Model{
     
     //Methods
         void draw(Shader &shader);
-        void loadModel(const std::string &fullPath); 
+        virtual void loadModel(const std::string &fullPath); 
         void Info();  
 
-    private:
+    protected:
     //Members
         std::vector<std::unique_ptr<Mesh>> m_vMesh; 
         std::string m_dirPath; 
@@ -28,7 +29,7 @@ class Model{
     //Methods
 
         void processNodes(aiNode * node, const aiScene *scene); 
-        void processAssimpScene(aiNode * node, const aiScene *scene);
+        
         virtual std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene); 
         std::vector<Texture > loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
         std::vector<Material> loadMaterials(aiMaterial *mat);
@@ -37,6 +38,7 @@ class Model{
         std::vector<GLuint> getIndices(aiMesh *mesh, const aiScene *scene);
         std::vector<Texture > getTextures(aiMesh *mesh, const aiScene *scene);
         std::vector<Material> getMaterials(aiMesh *mesh, const aiScene *scene);
+        void processAssimpScene(aiNode * node, const aiScene *scene);
       
  
     
