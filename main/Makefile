@@ -12,7 +12,7 @@ CC = c++-11
 TARGET = $(BIN)/funGT_macos.exe
 endif
 ifeq ($(UNAME), Linux)
-LIB = -lGL -lGLU -lglut -lglfw -lGLEW -ldl -lassimp
+LIB = -lGL -lGLU -lglfw -lGLEW -ldl -lassimp
 ASSIMP_LIBS = -lassimp
 TARGET = $(BIN)/funGL.exe
 CC = g++-11
@@ -35,6 +35,8 @@ GT = ../GT
 MODEL = ../Model
 AMODEL = ../AnimatedModel
 HELP = ../Helpers
+ANIMATION = ../Animation
+BONE = ../Bone
 # ********** SOURCE *************
 
 SOURCE += main.cpp
@@ -55,6 +57,8 @@ SOURCE += $(CAM)/camera.cpp
 SOURCE += $(wildcard $(GEOM)/*.cpp)
 SOURCE += $(MODEL)/model.cpp
 SOURCE += $(HELP)/helpers.cpp
+SOURCE += $(ANIMATION)/animation.cpp
+SOURCE += $(BONE)/bone.cpp
 
 
 #****** HEADERS ************
@@ -72,12 +76,14 @@ INC += $(wildcard $(GEOM)/*.hpp)
 INC += $(MODEL)/model.hpp
 INC += $(AMODEL)/animated_modele.hpp
 INC += $(HELP)/helpers.hpp
+INC += $(ANIMATION)/animation.hpp
+INC += $(BONE)/bone.cpp
 
 
 
 #**********
 VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) \
- 	$(MESH) $(GEOM) $(CAM) $(GT) $(MODEL) $(AMODEL) $(HELP)
+ 	$(MESH) $(GEOM) $(CAM) $(GT) $(MODEL) $(AMODEL) $(HELP) $(ANIMATION) $(BONE)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
 #OBJ = $(SOURCE:.cpp=.o)
