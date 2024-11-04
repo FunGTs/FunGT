@@ -1,3 +1,4 @@
+#-std=c++17 -g -fsanitize=address
 BIN = bin
 OBJ_DIR = obj
 RED = \033[1;31m
@@ -13,6 +14,8 @@ TARGET = $(BIN)/funGT_macos.exe
 endif
 ifeq ($(UNAME), Linux)
 LIB = -lGL -lGLU -lglfw -lGLEW -ldl -lassimp
+LDFLAGS = 
+CFLAGS = -Wall 
 ASSIMP_LIBS = -lassimp
 TARGET = $(BIN)/funGL.exe
 CC = g++-11
@@ -37,6 +40,11 @@ AMODEL = ../AnimatedModel
 HELP = ../Helpers
 ANIMATION = ../Animation
 BONE = ../Bone
+MATRIX = ../Matrix
+SCENE_MAN = ../SceneManager
+CUBEMAP = ../CubeMap
+RENDER = ../Renderable
+DATAPATH = ../DataPaths
 # ********** SOURCE *************
 
 SOURCE += main.cpp
@@ -59,6 +67,9 @@ SOURCE += $(MODEL)/model.cpp
 SOURCE += $(HELP)/helpers.cpp
 SOURCE += $(ANIMATION)/animation.cpp
 SOURCE += $(BONE)/bone.cpp
+SOURCE += $(MATRIX)/matrix4x4f.cpp
+SOURCE += $(SCENE_MAN)/scene_manager.cpp
+SOURCE += $(CUBEMAP)/cube_map.cpp
 
 
 #****** HEADERS ************
@@ -77,19 +88,25 @@ INC += $(MODEL)/model.hpp
 INC += $(AMODEL)/animated_modele.hpp
 INC += $(HELP)/helpers.hpp
 INC += $(ANIMATION)/animation.hpp
-INC += $(BONE)/bone.cpp
+INC += $(BONE)/bone.hpp
+INC += $(MATRIX)/matrix4x4f.hpp
+INC += $(SCENE_MAN)/scene_manager.hpp
+INC += $(CUBEMAP)/cube_map.hpp
+INC += $(RENDERABLE)/renderable.hpp
+INC += $(DATAPATH)/datapaths.hpp
 
 
 
 #**********
 VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) \
- 	$(MESH) $(GEOM) $(CAM) $(GT) $(MODEL) $(AMODEL) $(HELP) $(ANIMATION) $(BONE)
+ 	$(MESH) $(GEOM) $(CAM) $(GT) $(MODEL) $(AMODEL) $(HELP) $(ANIMATION) $(BONE) \
+	$(MATRIX) $(SCENE_MAN) $(CUBEMAP) $(RENDERABLE) $(DATAPATH)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
 #OBJ = $(SOURCE:.cpp=.o)
 $(TARGET) : $(OBJECT)
 	@echo -e "$(RED)LINKING...$(NC)"
-	$(CC) -o  $@ $^ -lm $(LIB)
+	$(CC) -o  $@ $^ -lm $(LIB) $(LDFLAGS)
 	@echo -e "$(YELLOW)DONE!!!$(NC)"
 	@echo -e "$(BLUE)OPERATING SYSTEM: $(UNAME)!!!...$(NC)"
 $(OBJ_DIR)/%.o : %.cpp
