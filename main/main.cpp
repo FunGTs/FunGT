@@ -45,11 +45,11 @@ int main(){
     //shader->load(ModelConfig);
 
 
-    CubeMapSP cube_map = CubeMap::create(); 
+    FunGTCubeMap cube_map = CubeMap::create(); 
     
     cube_map->addData(cube_data);
 
-    AnimationSP animation  = Animation::create();
+    FunGTAnimation animation  = Animation::create();
 
     animation->load(model);
     

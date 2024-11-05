@@ -19,6 +19,7 @@ CFLAGS = -Wall
 ASSIMP_LIBS = -lassimp
 TARGET = $(BIN)/funGL.exe
 CC = g++-11
+#CC = /home/juanchuletas/Documents/DeveloperZone/sycl_workspace/llvm/build/bin/clang++
 endif
 
 #************ CLASS DIR ***********
