@@ -1,0 +1,64 @@
+#include "scene_manager.hpp"
+
+SceneManager::SceneManager(){
+        std::cout<<"Scene Manager Constructor"<<std::endl;
+        
+}
+SceneManager:: ~SceneManager(){
+    std::cout<<"Scene Manager Destructor"<<std::endl;
+}
+
+void SceneManager::loadShaders(std::string &vs_pat, std::string &fs_path)
+{
+    m_shader.create(vs_pat,fs_path);
+}
+Shader& SceneManager::getShader(){
+    //std::cout<<"Returning Shader reference"<<std::endl;
+    return m_shader;
+}
+std::vector<std::shared_ptr<Renderable>> SceneManager::getRenderable()
+{
+    return m_render_node;
+}
+void SceneManager::updateViewMatrix(const glm::mat4 &viewMatrix)
+{
+    m_ViewMatrix = viewMatrix; 
+}
+void SceneManager::updateProjectionMatrix(const glm::mat4 &projectionMatrix)
+{
+    m_ProjectionMatrix = projectionMatrix; 
+}
+void SceneManager::updateModelMatrix(const glm::mat4 &modelMatrix)
+{
+    m_ModelMAtrix = modelMatrix;
+}
+void SceneManager::renderScene()
+{
+    for(auto & node : m_render_node){
+        node->getShader().Bind();
+        node->enableDepthFunc(); //For Cubemap purposes
+        node->setViewMatrix(m_ViewMatrix);
+        node->updateTime(m_deltaTime);
+        node->getShader().setUniformMat4fv("ViewMatrix",node->getViewMatrix());
+        node->getShader().setUniformMat4fv("ProjectionMatrix",m_ProjectionMatrix);
+        node->getShader().setUniformMat4fv("ModelMatrix",m_ModelMAtrix);
+        node->draw();
+        node->disableDepthFunc(); //For CubeMap purposes
+
+
+    }
+}
+void SceneManager::addRenderableObj(std::shared_ptr<Renderable> node)
+{
+    m_render_node.push_back(node);
+}
+
+void SceneManager::setDeltaTime(float deltaT)
+{
+    m_deltaTime = deltaT;
+}
+
+float SceneManager::getDetaTime()
+{
+    return m_deltaTime;
+}

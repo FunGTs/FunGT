@@ -8,7 +8,9 @@
 #include <assimp/version.h>
 
 #include "../Mesh/mesh.hpp"
-class Model{
+#include "../Renderable/renderable.hpp"
+#include "../DataPaths/datapaths.hpp"
+class Model : public Renderable {
 
     public:
         Model(); 
@@ -19,12 +21,32 @@ class Model{
         void draw(Shader &shader);
         virtual void loadModel(const std::string &fullPath); 
         void Info();  
+         // Setter declaration for m_dirPath
+        void setDirPath(const std::string& dirPath);
+        // Getter declaration for m_dirPath
+        const std::string& getDirPath() const;
+        void processAssimpScene(aiNode * node, const aiScene *scene);
+        void createShader(std::string vertex_shader, std::string fragment_shader); 
+        
+    //Implementations for the Rendetable class: 
+        void draw() override;
+        glm::mat4 getViewMatrix() override;
+        glm::mat4 getProjectionMatrix() override;
+        Shader &getShader() override;
+        void setViewMatrix(const glm::mat4 &viewMatrix) override;  
 
     protected:
     //Members
         std::vector<std::unique_ptr<Mesh>> m_vMesh; 
         std::string m_dirPath; 
         std::vector<Texture> m_loadedTextures;
+        Shader m_shader;
+    
+    private:
+       
+        glm::mat4 m_viewMatrix = glm::mat4(1.f); 
+        glm::mat4 m_projectionMatrix  = glm::mat4(1.f); 
+
 
     //Methods
 
@@ -38,7 +60,8 @@ class Model{
         std::vector<GLuint> getIndices(aiMesh *mesh, const aiScene *scene);
         std::vector<Texture > getTextures(aiMesh *mesh, const aiScene *scene);
         std::vector<Material> getMaterials(aiMesh *mesh, const aiScene *scene);
-        void processAssimpScene(aiNode * node, const aiScene *scene);
+        
+        
       
  
     

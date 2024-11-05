@@ -5,15 +5,18 @@
 #include<assimp/matrix4x4.h>
 #include<glm/gtc/quaternion.hpp>
 #include "../include/glmath.hpp"
-#include "../include/prequisites.hpp"
+#include "../include/prerequisites.hpp"
+#include "../Matrix/matrix4x4f.h"
 namespace funGL
 {
     class Helpers
     {
         public:
             static glm::mat4 convertMatToGlm(const aiMatrix4x4 &from);
-            static  glm::vec3 gtGLMVec(const aiVector3D& vec);
-            static  glm::quat getGLMQuat(const aiQuaternion& pOrientation); 
+            static glm::vec3 gtGLMVec(const aiVector3D& vec);
+            static glm::quat getGLMQuat(const aiQuaternion& pOrientation);
+            static void printAiMatrix4x4( const aiMatrix4x4 &mat);
+            static void printGlmMat4(glm::mat4 &mat);
 
     };
         

@@ -4,6 +4,7 @@
 AnimatedModel::AnimatedModel()
 : Model(){
     std::cout<<"Animated Model Default Constructor"<<std::endl;
+    m_filePath = "";
 }
 
 AnimatedModel::~AnimatedModel(){
@@ -13,7 +14,7 @@ AnimatedModel::~AnimatedModel(){
 }
 
 void AnimatedModel::loadModel(const std::string &path){
-   
+   m_filePath = path;
     /*std::cout << "Assimp Version: "
               << aiGetVersionMajor() << "."
               << aiGetVersionMinor() << "."
@@ -24,7 +25,8 @@ void AnimatedModel::loadModel(const std::string &path){
     if(!pScene || pScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !pScene->mRootNode){
         
         std::cout<<"ERROR in ASSIMP :"<<import.GetErrorString()<<std::endl;
-        return;  
+        exit(0);
+        //return;  
     }
     auto anim = pScene->mAnimations[0];
     m_numOfAnim = pScene->mNumAnimations;
@@ -44,6 +46,8 @@ void AnimatedModel::loadModel(const std::string &path){
     processAssimpScene(pScene->mRootNode, pScene);
 
     readHeirarchyData(m_rootNode,pScene->mRootNode);
+
+    boneTransform();    
 
     setBones(anim);
 
@@ -80,9 +84,13 @@ AssimpNodeData &AnimatedModel::getRootNode()
 void AnimatedModel::readHeirarchyData(AssimpNodeData &dest, const aiNode *source){
 
     dest.name = source->mName.data; 
-    dest.transform = funGL::Helpers::convertMatToGlm(source->mTransformation);
+    dest.transform = fungl::Matrix4f(source->mTransformation);
+    std::cout<<"Source Mat : "<<dest.name<<std::endl;
+    funGL::Helpers::printAiMatrix4x4(source->mTransformation);
     dest.childrenCount = source->mNumChildren; 
-    
+    std::cout<<"Node Name : "<<dest.name<<std::endl;
+    std::cout<<"After convert  :"<<std::endl; 
+    dest.transform.print();
     for(int i = 0; i<source->mNumChildren; i++){
         AssimpNodeData newData; 
         readHeirarchyData(newData,source->mChildren[i]);
@@ -95,7 +103,7 @@ void AnimatedModel::setBones(aiAnimation *animation){
     std::cout<<"Setting the Bones " <<std::endl;
     int size = animation->mNumChannels; //Bone animation channels
 
-    //reading channels (bones engaged in an animation adn their keyframes)
+    //reading channels (bones engaged in an animation and their keyframes)
     for(int i = 0; i<size; i++){
         aiNodeAnim* channel = animation->mChannels[i]; 
         std::string boneName = channel->mNodeName.data;
@@ -147,6 +155,16 @@ std::unique_ptr<Mesh> AnimatedModel::processMesh(aiMesh *mesh, const aiScene *sc
         return std::make_unique<Mesh>(vertices,indices,materials);
     }
     return std::make_unique<Mesh>(vertices,indices,texture);
+}
+
+void AnimatedModel::printGlmMat4(glm::mat4 &mat)
+{
+    for(int i = 0; i<4; i++){
+        for(int j = 0; j<4; j++){
+            printf("%f ", mat[i][j]);
+        }
+        printf("\n");
+    }
 }
 
 std::vector<funGTVERTEX> AnimatedModel::getVertices(aiMesh *mesh, const aiScene *scene){
@@ -202,7 +220,8 @@ void AnimatedModel::extractBoneWeights(std::vector<funGTVERTEX> &vertices, aiMes
             std::cout<<"Adding new bone info : "<<boneName<<std::endl; 
             BoneInfo bone_info; 
             bone_info.m_id = m_boneCounter;
-            bone_info.m_offset = funGL::Helpers::convertMatToGlm(mesh->mBones[index]->mOffsetMatrix);
+            //bone_info.m_offset = funGL::Helpers::convertMatToGlm(mesh->mBones[index]->mOffsetMatrix);
+            bone_info.m_offset = fungl::Matrix4f(mesh->mBones[index]->mOffsetMatrix);
             m_mapBoneInfo[boneName] = bone_info;   //inserts to map
             id = m_boneCounter; // zero at the start
             m_boneCounter++; //increases the bone counter
@@ -267,4 +286,67 @@ void AnimatedModel::setVertexBoneData(funGTVERTEX &vertex){
         vertex.m_BoneIDs[i] = -1; 
         vertex.m_Weights[i] = 0.0f; 
     }
+}
+
+void AnimatedModel::computeBoneTransform(const AssimpNodeData *node, fungl::Matrix4f parentTransform)
+{
+    std::cout << " **** Computing Bone Transformations ****" << std::endl;
+    std::string nodeName = node->name;
+    //fungl::Matrix4f nodeTransform(node->transform);
+    std::cout << "Node Name : " << nodeName << std::endl;
+
+
+    fungl::Matrix4f globalTransform =  parentTransform*node->transform;
+    //printf("Parent Transform : \n");    
+    //parentTransform.print();
+    //printf("Node Transform : \n");    
+    //node->transform.print();
+    //printf("Global Transform : \n");    
+    //globalTransform.print();
+
+    if (m_mapBoneInfo.find(nodeName) != m_mapBoneInfo.end())
+    {
+        int index = m_mapBoneInfo[nodeName].m_id;
+        fungl::Matrix4f offsetMat(m_mapBoneInfo[nodeName].m_offset);
+        //printf("Offset Matrix : \n");
+        //offsetMat.print();
+        //std::cout << "m_finalBoneMat.size() : " << m_finalBoneMat.size() << std::endl;
+        if (index >= this->m_finalBoneMat.size())
+        {
+            m_finalBoneMat.resize(index + 1, glm::mat4(1.0f));
+        }
+        fungl::Matrix4f finalMatrix;
+        finalMatrix = globalTransform * offsetMat;
+        //printf("Final Bone Matrix for index: %d \n", index); 
+        //finalMatrix.print(); 
+        glm::mat4 glmMatFinal = fungl::Matrix4fToGlmMat4(finalMatrix);
+        m_finalBoneMat[index] = glmMatFinal;
+        //printf("Final glm::Bone Matrix for index: %d \n", index);   
+        //printGlmMat4(glmMatFinal);
+        
+        
+    }
+    for (int i = 0; i < node->childrenCount; i++)
+    {
+        computeBoneTransform(&node->children[i], globalTransform);
+    }
+}
+
+void AnimatedModel::boneTransform()
+{
+    std::cout << "Bone Transform" << std::endl;
+    fungl::Matrix4f matId;
+    matId.identity();
+    //matId.print();  
+    computeBoneTransform(&m_rootNode, matId);
+}
+
+std::vector<glm::mat4> AnimatedModel::getFinalBoneMatrices()
+{   
+    return m_finalBoneMat;
+}
+
+std::string AnimatedModel::getFilePath()
+{
+    return m_filePath;
 }

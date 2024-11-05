@@ -39,7 +39,7 @@ void Model::loadModel(const std::string &path)
     if(!pScene || pScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !pScene->mRootNode){
         
         std::cout<<"ERROR in ASSIMP :"<<import.GetErrorString()<<std::endl;
-        return;  
+        exit(0);  
     }
     m_dirPath = path.substr(0, path.find_last_of('/'));
     
@@ -188,6 +188,39 @@ void Model::processAssimpScene(aiNode *node, const aiScene *scene)
 
 }
 
+void Model::createShader(std::string vertex_shader, std::string fragment_shader)
+{
+    m_shader.create(vertex_shader,fragment_shader);
+}
+
+void Model::draw()
+{
+      //std::cout<<"Drawing a Model "<<std::endl; 
+    for(unsigned int i=0; i<m_vMesh.size(); i++){
+        m_vMesh[i]->draw(m_shader);
+    }   
+}
+
+glm::mat4 Model::getViewMatrix()
+{
+    return m_viewMatrix; 
+}
+
+glm::mat4 Model::getProjectionMatrix()
+{
+    return m_projectionMatrix;
+}
+
+Shader &Model::getShader()
+{
+   return m_shader; 
+}
+
+void Model::setViewMatrix(const glm::mat4 &viewMatrix)
+{
+    m_viewMatrix = viewMatrix; 
+}
+
 std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
 {
     std::vector<funGTVERTEX> vertices; 
@@ -299,4 +332,15 @@ void Model::Info()
         std::cout<<" Has : " <<m_vMesh[i]->m_index.size()<< " indices"<<std::endl; 
         
      }
+}
+
+void Model::setDirPath(const std::string &dirPath)
+{
+    m_dirPath = dirPath;   
+}
+
+const std::string &Model::getDirPath() const
+{
+    // TODO: insert return statement here
+    return m_dirPath;
 }

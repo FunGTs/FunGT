@@ -18,7 +18,7 @@ void Bone::setBonePos(const aiNodeAnim *channel)
         aiVector3D aiPos = channel->mPositionKeys[i].mValue; 
         float time = channel->mPositionKeys[i].mTime; 
         KeyPosition inputData;
-        inputData.m_position = funGL::Helpers::gtGLMVec(aiPos);
+        inputData.m_position = aiPos;
         inputData.m_timeStamp = time; 
         m_bPosition.push_back(inputData);
 
@@ -33,7 +33,7 @@ void Bone::setBoneRot(const aiNodeAnim *channel) {
         aiQuaternion aiOr = channel-> mRotationKeys[i].mValue; 
         float time = channel->mRotationKeys[i].mTime; 
         KeyRotation inputData; 
-        inputData.m_orientation = funGL::Helpers::getGLMQuat(aiOr); 
+        inputData.m_rotation = aiOr; 
         inputData.m_timeStamp = time; 
         m_bRotation.push_back(inputData); 
 
@@ -48,7 +48,7 @@ void Bone::setBoneScale(const aiNodeAnim *channel){
         aiVector3D aiScales = channel->mScalingKeys[i].mValue; 
         float time = channel->mScalingKeys[i].mTime; 
         KeyScale inputData; 
-        inputData.m_scale = funGL::Helpers::gtGLMVec(aiScales);
+        inputData.m_scale = aiScales;
         inputData.m_timeStamp = time; 
         m_bScale.push_back(inputData);  
 
@@ -76,7 +76,7 @@ int Bone::getPosIndex(float animTime){
             return index; 
         }
     }
-    return -1;
+    return 0;
 }
 
 int Bone::getRotIndex(float animTime){
@@ -87,7 +87,7 @@ int Bone::getRotIndex(float animTime){
             return index; 
         }
     }
-    return -1;
+    return 0;
 }
 
 int Bone::getScaleIndex(float animTime){
@@ -99,7 +99,7 @@ int Bone::getScaleIndex(float animTime){
         }
     }
 
-    return -1;
+    return 0;
 }
 
 void Bone::update(float animTime){
@@ -109,6 +109,29 @@ void Bone::update(float animTime){
     glm::mat4 scale = interpolateScale(animTime);
 
     m_bLocaleTrans = position*rotation*scale;
+}
+
+void Bone::computeLocalTransforms(float animTime)
+{
+    //std::cout<<"Computing Bone Transfornations at : "<<animTime<<std::endl;
+    aiVector3D pos   = computeInterpolatedPosition(animTime);
+    aiVector3D scale = computeInterpolatedScale(animTime);
+    aiQuaternion rot = computeInterpolatedRotation(animTime);
+
+    fungl::Matrix4f posMatrix; 
+    fungl::Matrix4f scaleMatrix;
+
+    posMatrix.transformTranslation(pos.x,pos.y,pos.z);
+    scaleMatrix.scaleTransform(scale.x,scale.y,scale.z);
+
+    fungl::Matrix4f rotMat(rot.GetMatrix());
+
+    m_BoneLocalTransformsMat = posMatrix*rotMat*scaleMatrix;
+}
+
+fungl::Matrix4f Bone::getBoneLocalTransformMat()
+{
+    return m_BoneLocalTransformsMat;
 }
 
 float Bone::getScaleFactor(float lastTimeStamp, float nextTimeStamp, float animTime){
@@ -127,44 +150,130 @@ glm::mat4 Bone::interpolatePos(float animTime)
 {
     /*figures out which position keys to interpolate b/w and performs the interpolation 
     and returns the translation matrix*/
-    if(m_numPos == 1){
-        return glm::translate(glm::mat4(1.f),m_bPosition[0].m_position);
-    }
+    // if(m_numPos == 1){
+    //     return glm::translate(glm::mat4(1.f),m_bPosition[0].m_position);
+    // }
     
-    int p0Index = getPosIndex(animTime);
+    // int p0Index = getPosIndex(animTime);
   
-    int p1Index = p0Index + 1;
-    float scaleFactor = getScaleFactor(m_bPosition[p0Index].m_timeStamp,m_bPosition[p1Index].m_timeStamp,animTime);
-    glm::vec3 finalPos = glm::mix(m_bPosition[p0Index].m_position,m_bPosition[p1Index].m_position,scaleFactor); 
+    // int p1Index = p0Index + 1;
+    // float scaleFactor = getScaleFactor(m_bPosition[p0Index].m_timeStamp,m_bPosition[p1Index].m_timeStamp,animTime);
+    // glm::vec3 finalPos = glm::mix(m_bPosition[p0Index].m_position,m_bPosition[p1Index].m_position,scaleFactor); 
 
-    return glm::translate(glm::mat4(1.0f),finalPos);
+    return glm::translate(glm::mat4(1.0f),glm::vec3(1.0f));
+    // int nextIndex = (index + 1);
+    // float deltaTime = m_bPosition[nextIndex].m_timeStamp - m_bPosition[index].m_timeStamp;
+    // float factor = (animTime - m_bPosition[index].m_timeStamp) / deltaTime;
+    // glm::vec3 start = m_bPosition[index].m_position;
+    // glm::vec3 end = m_bPosition[nextIndex].m_position;
+    // glm::vec3 delta = end - start;
+    //return glm::translate(glm::mat4(1.0f),start + factor * delta);
 }
 
 glm::mat4 Bone::interpolateRot(float animTime){
 
-    if(m_numRot == 1){
-        glm::quat  rot = glm::normalize(m_bRotation[0].m_orientation);
-        return glm::toMat4(rot);
-    }
-    int p0Index = getRotIndex(animTime);
-    int p1Index = p0Index + 1; 
+    // if(m_numRot == 1){
+    //     glm::quat  rot = glm::normalize(m_bRotation[0].m_orientation);
+    //     return glm::toMat4(rot);
+    // }
+    // int p0Index = getRotIndex(animTime);
+    // int p1Index = p0Index + 1; 
 
-    float scaleFactor = getScaleFactor(m_bRotation[p0Index].m_timeStamp,m_bRotation[p1Index].m_timeStamp,animTime);
-    glm::quat finalRot = glm::slerp(m_bRotation[p0Index].m_orientation,m_bRotation[p1Index].m_orientation,scaleFactor); 
-    finalRot = glm::normalize(finalRot); 
-    return glm::toMat4(finalRot);
+    // float scaleFactor = getScaleFactor(m_bRotation[p0Index].m_timeStamp,m_bRotation[p1Index].m_timeStamp,animTime);
+    // glm::quat finalRot = glm::slerp(m_bRotation[p0Index].m_orientation,m_bRotation[p1Index].m_orientation,scaleFactor); 
+    // finalRot = glm::normalize(finalRot); 
+    return glm::mat4(1.0f);
 }
 
 glm::mat4 Bone::interpolateScale(float animTime){
 
+    // if(m_numScale == 1){
+    //     return glm::scale(glm::mat4(1.0f),m_bScale[0].m_scale); 
+    // }
+    // int p0Index = getScaleIndex(animTime);
+    // int p1Index = p0Index + 1; 
+
+    // float scaleFactor = getScaleFactor(m_bScale[p0Index].m_timeStamp,m_bScale[p1Index].m_timeStamp,animTime);
+    // glm::vec3 finalScale = glm::mix(m_bScale[p0Index].m_scale,m_bScale[p1Index].m_scale,scaleFactor); 
+
+    //return glm::translate(glm::mat4(1.0f),finalScale);
+
+    return glm::mat4(1.f);
+}
+
+aiVector3D Bone::computeInterpolatedPosition(float animTime)
+{
+    aiVector3D outPut; 
+    if(m_numPos==1){
+        outPut = m_bPosition[0].m_position;
+        return outPut;
+    }
+    int p0Index = getPosIndex(animTime);
+    int p1Index = p0Index + 1;
+
+    float t1 = m_bPosition[p0Index].m_timeStamp;
+    float t2 = m_bPosition[p1Index].m_timeStamp;
+    float deltaTime = t2-t1;
+    float factor = (animTime - t1)/deltaTime;
+
+    aiVector3D start =  m_bPosition[p0Index].m_position; 
+    aiVector3D end = m_bPosition[p1Index].m_position; 
+    aiVector3D deltaPos =  end - start;
+    
+    outPut = start + factor*deltaPos;
+   
+    return outPut;
+}
+
+aiQuaternion Bone::computeInterpolatedRotation(float animTime)
+{
+    aiQuaternion outPut;
+     if(m_numRot == 1){
+        
+        return m_bRotation[0].m_rotation;
+    }
+
+    int p0Index = getRotIndex(animTime);
+    int p1Index = p0Index + 1; 
+
+    float t1 = m_bRotation[p0Index].m_timeStamp;
+    float t2 = m_bRotation[p1Index].m_timeStamp;
+
+    float deltaTime = t2-t1;
+    float factor = (animTime - t1)/deltaTime;
+
+
+    aiQuaternion start = m_bRotation[p0Index].m_rotation;
+    aiQuaternion end = m_bRotation[p1Index].m_rotation;
+
+    aiQuaternion::Interpolate(outPut,start,end,factor);
+
+
+
+    return outPut.Normalize();
+}
+
+aiVector3D Bone::computeInterpolatedScale(float animTime)
+{
+    aiVector3D outPut;
     if(m_numScale == 1){
-        return glm::scale(glm::mat4(1.0f),m_bScale[0].m_scale); 
+        return m_bScale[0].m_scale; 
     }
     int p0Index = getScaleIndex(animTime);
     int p1Index = p0Index + 1; 
 
-    float scaleFactor = getScaleFactor(m_bScale[p0Index].m_timeStamp,m_bScale[p1Index].m_timeStamp,animTime);
-    glm::vec3 finalScale = glm::mix(m_bScale[p0Index].m_scale,m_bScale[p1Index].m_scale,scaleFactor); 
+    float t1 = m_bScale[p0Index].m_timeStamp; 
+    float t2 = m_bScale[p1Index].m_timeStamp; 
 
-    return glm::translate(glm::mat4(1.0f),finalScale);
+    float deltaTime = t2 - t1; 
+    float factor = (animTime - t1)/deltaTime;
+
+    aiVector3D start = m_bScale[p0Index].m_scale;
+    aiVector3D end = m_bScale[p1Index].m_scale;
+    aiVector3D deltaScale = end - start;
+
+    outPut = start + factor*deltaScale;
+
+
+    return outPut;
 }

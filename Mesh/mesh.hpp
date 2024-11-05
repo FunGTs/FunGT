@@ -8,7 +8,7 @@
 #include "../Shaders/shader.hpp"
 #include "../Vertex/fungtVertex.hpp"
 #include "../include/glmath.hpp"
-#include "../include/prequisites.hpp"
+#include "../include/prerequisites.hpp"
 #include "../VertexGL/vertexArrayObjects.hpp"
 #include "../VertexGL/vertexBuffers.hpp"
 #include "../VertexGL/vertexIndices.hpp"
