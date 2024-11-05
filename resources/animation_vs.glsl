@@ -27,9 +27,7 @@ void main(){
     vec4 totalPos = vec4(0.0f);
     //totalPos = vec4(vertex_position,1.0f);
     for(int i = 0; i<maxBoneInfluencePerVertex; i++){
-        if(bone_weights[i]==0.0f){
-            continue; 
-        }
+     
         if(bone_weights[i]>0.0){
             vec4 localPos = finalBonesMatrix[bone_ids[i]]*vec4(vertex_position,1.0f);
             totalPos += localPos*bone_weights[i];

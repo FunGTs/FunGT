@@ -27,23 +27,14 @@ void main(){
 
     vec4 totalPos = vec4(0.0f);
     vec3 totalNorm = vec3(0.0f);
-    //totalPos = vec4(vertex_position,1.0f);
     for(int i = 0; i<maxBoneInfluencePerVertex; i++){
-        // if(bone_ids[i]==-1){
-        //     continue; 
-        // }
-        // if(bone_ids[i] >= maxBonesAllowed){
-        //     totalPos = vec4(vertex_position,1.0f);
-        //     break; 
-        // }
+  
         if(bone_weights[i]>0.0){
             vec4 localPos = finalBonesMatrix[bone_ids[i]]*vec4(vertex_position,1.0f);
             totalPos += localPos*bone_weights[i];
             vec3 localNormal = mat3(finalBonesMatrix[bone_ids[i]])*normal_position;
             totalNorm += localNormal; 
-        }
-        
-
+        }   
     }
     FragPos = vec3(totalPos); 
     Normal  =  mat3(transpose(inverse(ModelMatrix)))*totalNorm; 
