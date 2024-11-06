@@ -109,6 +109,7 @@ void Shader::linkProgram(GLuint vShader, GLuint geomShader, GLuint fShader){
 
       //END
      glUseProgram(0);
+     std::cout<<"leaving linking"<<std::endl;
 }
 void Shader::Bind(){
     glUseProgram(this->idP);
@@ -225,10 +226,10 @@ void Shader::setUniformMat4fv(std::string name, const glm::mat4 &proj){
 
     //this->unBind();
 }
-void Shader::set1i(GLint value, std::string name){
-    
+void Shader::set1i(GLint value, std::string name)
+{
+
     glUniform1i(glGetUniformLocation(this->idP,name.c_str()), value);
-   
 }
 void Shader::setVec4(glm::fvec4 value, std::string name){
     glUniform4fv(glGetUniformLocation(this->idP,name.c_str()), 1, glm::value_ptr(value)); 

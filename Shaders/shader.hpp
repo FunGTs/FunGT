@@ -1,6 +1,6 @@
 #if !defined(_SHADERS_H_)
 #define _SHADERS_H_
-#include "../include/prequisites.hpp"
+#include "../include/prerequisites.hpp"
 #include "../include/glmath.hpp"
 #include <variant>
 class Shader{

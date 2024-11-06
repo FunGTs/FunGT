@@ -1,7 +1,7 @@
 #if !defined(_VERTEX_FUNGL_H_)
 #define _VERTEX_FUNGL_H_
 
-#include "../include/prequisites.hpp"
+#include "../include/prerequisites.hpp"
 #include "../include/glmath.hpp"
 
 const int maxBoneInfluencePerVertex = 4; 
