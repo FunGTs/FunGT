@@ -60,7 +60,7 @@ int GraphicsTool<Derived>::initGL(){
     // Clean the back buffer and assign the new color to it
     //OPENGL OPTIONS
     glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     // glCullFace(GL_BACK);
     glFrontFace(GL_CW);
     glEnable(GL_BLEND);
@@ -84,9 +84,8 @@ int GraphicsTool<Derived>::initGL(){
 template <typename Derived>
 void GraphicsTool<Derived>::render()
 {
-    
-    this->initGL();
-    this->set();
+    //this->initGL();
+    //this->set();
 
     while (!glfwWindowShouldClose(m_Window)){
         /* Render here */
@@ -126,6 +125,34 @@ void GraphicsTool<Derived>::set()
 }
 
 template <typename Derived>
+void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda)
+{
+     while (!glfwWindowShouldClose(m_Window)){
+        /* Render here */
+         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        this->update(renderLambda);
+        /*IMGUI*/
+        /*END IMGUI*/
+            
+        /* Swap front and back buffers */
+        glfwSwapBuffers(m_Window);
+        /* Poll for and process events */
+        glfwPollEvents();
+        
+       
+            //UPDATE
+            //updateInput(window);
+            //USE A PROGRAM
+    }    
+}
+
+template <typename Derived>
+void GraphicsTool<Derived>::update(const std::function<void()> &renderLambda)
+{
+    static_cast<Derived *> (this)->update(renderLambda); 
+}
+
+template <typename Derived>
 void GraphicsTool<Derived>::mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
     std::cout<<"using mouse_callback"<<std::endl; 
@@ -136,4 +163,10 @@ template <typename Derived>
 void GraphicsTool<Derived>::run()
 {
     this->render(); 
+}
+
+template <typename Derived>
+void GraphicsTool<Derived>::run(const std::function<void()> &renderLambda)
+{
+    this->render();
 }

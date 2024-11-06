@@ -3,6 +3,7 @@
 #include<iostream>
 #include<fstream>
 #include<string>
+#include <functional>   
 #include "../Textures/textures.hpp"
 #include "../Imgui_Setup/imgui_setup.hpp"
 #include "../Geometries/square.hpp"
@@ -30,19 +31,26 @@ template<typename Derived> class GraphicsTool{
     public: 
         GraphicsTool(int _width, int _height);
         virtual ~GraphicsTool();
+        int initGL(); //initialize OpenGL stuff
 
 
     private: 
-        int initGL(); //initialize OpenGL stuff
+        
         void render();
         void setWindowUserPointer(void* pointer);  
     protected:
         /* implemented in the derived class*/
         void update(); // update scenes
         void set(); //Set all the textures, meshes, shaders
+        
+        void update(const std::function<void()> &renderLambda);
         static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
     public:
         void run(); //Run the program
+        void run(const std::function<void()>& renderLambda);
+        void render(const std::function<void()> &renderLambda);
+      
+        
 
 
 }; 
