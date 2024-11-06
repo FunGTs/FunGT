@@ -9,43 +9,60 @@ FunGT::FunGT(int _width, int _height)
     m_lastXmouse = _width/2; 
     m_lastYmouse = _height/2;
     m_firstMouse = true;
+
+    m_sceneManager = std::make_shared<SceneManager>();
+
 }
 FunGT::~FunGT(){
     std::cout<<"FunGT destructor"<<std::endl; 
 }
 
 void FunGT::set() {
-    std::cout<<"Setting OpenGL "<<std::endl; 
-    #ifdef __APPLE__
-        #define GLFW_INCLUDE_GLCOREARB
-             m_shader.create("../resources/vertex_core_OSX.glsl","../resources/fragment_core_OSX.glsl");
-        #else
-            // m_shader.create("../resources/pixar_vs.glsl","../resources/pixar_fs.glsl");
-             m_shader.create("../resources/animation_vs.glsl","../resources/animation_fs.glsl");
-             //m_shader.create("../resources/model_loading_vs.glsl","../resources/model_loading_fs.glsl");
-            // m_shader.create("../resources/vertex_cube.glsl","../resources/fragment_cube.glsl");
-        #endif
+    std::cout<<"Setting OpenGL ************************** "<<std::endl; 
+    // #ifdef __APPLE__
+    //     #define GLFW_INCLUDE_GLCOREARB
+    //          m_shader.create("../resources/vertex_core_OSX.glsl","../resources/fragment_core_OSX.glsl");
+    //     #else
+    //         // m_shader.create("../resources/pixar_vs.glsl","../resources/pixar_fs.glsl");
+    //          m_shader.create("../resources/animation_material_vs.glsl","../resources/animation_material_fs.glsl");
+    //          //m_shader.create("../resources/model_loading_vs.glsl","../resources/model_loading_fs.glsl");
+    //         // m_shader.create("../resources/vertex_cube.glsl","../resources/fragment_cube.glsl");
+    //     #endif
 
-    glm::vec3 scale = glm::vec3(0.1);
-    m_aModel = std::make_shared<AnimatedModel>(); 
-    //m_Amodel.loadModel("../Animations/boblampclean.md5mesh");
+    //glm::vec3 scale = glm::vec3(0.1);
+    std::vector<std::string> faces
+    {
+        "../img/sky/right.jpg",
+        "../img/sky/left.jpg",
+        "../img/sky/top.jpg",
+        "../img/sky/bottom.jpg",
+        "../img/sky/front.jpg",
+        "../img/sky/back.jpg"
+    };
+    //m_shader = m_sceneManager->getShader();
+    //m_aModel = std::make_shared<AnimatedModel>(); 
+    //m_model = std::make_unique<Model>();
+    //m_aModel->loadModel("../Animations/bob/boblampclean.md5mesh");
     //m_model->loadModel("../Obj/backpack.obj");
     //m_model->loadModel("../Obj/luxo/Luxo.obj");
     //m_aModel->loadModel("../Animations/Luxo/Luxo-Jr-Model-Anim.dae"); 
-    //m_aModel->loadModel("../Animations/SillyDancing/SillyDancing.dae"); 
+    //m_aModel->loadModel("../Animations/SillyDancing/SillyDancing.dae");
+    // if(m_animation==nullptr || m_sceneManager==nullptr){
+    //     std::cout<<"Invalid animation pointer"<<std::endl;
+    //     exit(0);
+    // }else{
+    //     std::cout<<"**** Correct animation pointer ********"<<std::endl;
+    // }
+    // m_animation->load("../Animations/trashcan/trash-can-color2.gltf");
+    //animation.load("../Animations/SillyDancing/SillyDancing.dae"); 
     //m_aModel->loadModel("../Animations/FBX/def.fbx"); 
     //m_aModel->loadModel("../Animations/PF/Pointing_Forward.dae"); 
     //m_aModel->loadModel("../Animations/vampire/dancing_vampire.dae"); 
     //m_aModel->loadModel("../Animations/Jump/Jump.dae"); 
-    m_aModel->loadModel("../Animations/raptoid/scene.gltf"); 
+    //m_aModel->loadModel("../Animations/raptoid/scene.gltf"); 
+    //m_aModel->loadModel("../Animations/car3/source/FC-6.fbx"); 
     //m_aModel->loadModel("../Animations/Capoeira/Capoeira.dae"); 
-    
-    //Sets the model to the animation class
-    animation.create(m_aModel);
-    if(m_aModel==nullptr){
-        std::cout<<"There is no pointer to a model "<<std::endl;
-        exit(0); 
-    } 
+
     // float delta = 1.0f;
     // animation.update(delta);
     // auto transforms = animation.getFinalBoneMatrices(); 
@@ -57,18 +74,26 @@ void FunGT::set() {
     // plane->setModelMatrix();
   
     // //Cube
+    //m_cube_map = std::make_unique<CubeMap>(0.0,0.0,0.0);
+    
+    for(std::size_t i = 0; i<faces.size(); i++){
+        std::cout<<faces[i]<<std::endl;
+    }
+    //m_cube_map->create(faces);
+    // Cube Map
     // cube = std::make_unique<Cube>(-1.0,0.5,1.0);
     // cube->create("../img/box.jpg");
-   
     // cube->setModelMatrix();
+    
+   
 
-    position.z = -250; 
+    //position.z = -20; 
     //Projection matrix 
 
     ProjectionMatrix = glm::perspective(glm::radians(fov),
                                         static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
     //Model Matrix
-    rotation.y = -45.f; 
+   // rotation.y = -20.f; 
     ModelMatrix = glm::translate(ModelMatrix, position);
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
@@ -77,17 +102,19 @@ void FunGT::set() {
 
 
     //once the matrices have been created, let's send them to the shader
-    //plane.create("../img/box.jpg");
+    
     //plane.setModelMatrix();
      
-    m_shader.Bind(); //Important to bind shader
-        //m_shader.setUniformMat4fv("ModelMatrix",plane->getModelMatrix());
+    m_sceneManager->getShader().Bind(); //Important to bind shader
+        //m_sceneManager->getShader().setUniform1i("skybox",0);
+        m_sceneManager->getShader().setUniformMat4fv("ModelMatrix",ModelMatrix);
         //m_shader.setUniformMat4fv("ModelMatrix",cube->getModelMatrix());
-        m_shader.setUniformVec3f(m_camera.getPosition(),"ViewPos");
-        m_shader.setUniformMat4fv("ModelMatrix",ModelMatrix);
-        m_shader.setUniformMat4fv("ViewMatrix",m_camera.getViewMatrix());
-        m_shader.setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
-    m_shader.unBind();
+        //m_sceneManager->getShader().setUniformVec3f(m_camera.getPosition(),"ViewPos");
+        //m_sceneManager->getShader().setUniformMat4fv("ModelMatrix",ModelMatrix);
+        glm::mat4 ViewMatrix = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
+        m_sceneManager->getShader().setUniformMat4fv("ViewMatrix",ViewMatrix);
+        m_sceneManager->getShader().setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
+    m_sceneManager->getShader().unBind();
     
     //m_model.draw(m_shader); 
     
@@ -138,25 +165,77 @@ void FunGT::mouse_callback(GLFWwindow *window, double xpos, double ypos){
 
 }
 
-void FunGT::setBackground(float red, float green, float blue, float alfa){
+void FunGT::setBackgroundColor(float red, float green, float blue, float alfa){
 
     m_colors[0] = red/255.f; m_colors[1] = green/255.f; m_colors[2] = blue/255.f; m_colors[3] = alfa; 
 
 }
 
-void FunGT::setBackground(float color){
+void FunGT::setBackgroundColor(float color){
      m_colors[0] = color/255.f; m_colors[1] = color/255.f; m_colors[2] = color/255.f; m_colors[3] = 1.0; 
+}
+
+Camera FunGT::getCamera()
+{
+    return m_camera;
+}
+
+std::shared_ptr<SceneManager> FunGT::getSceneManager()
+{
+    return m_sceneManager;
+}
+
+void FunGT::set(const std::function<void()>& renderLambda){
+    std::cout << "Starting FunGT rendering process..." << std::endl;
+
+    renderLambda();
+
+
+    ProjectionMatrix = glm::perspective(glm::radians(fov),
+                                        static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
+    //Model Matrix
+   // rotation.y = -20.f; 
+    ModelMatrix = glm::translate(ModelMatrix, position);
+    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
+    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
+    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+    ModelMatrix = glm::scale(ModelMatrix, scale);
+
+
+     for(const auto& node : m_sceneManager->getRenderable()){
+
+        node->getShader().Bind();
+       
+
+    }
+
+
+
+    std::cout << "Finished rendering process..." << std::endl;
+
+}
+
+std::unique_ptr<FunGT> FunGT::createScene(int _width, int _height)
+{
+    return std::make_unique<FunGT>(_width, _height);
 }
 
 void FunGT::update() {
 
-    m_shader.Bind(); //To give instructions to the gpu 
+    for(const auto& node : m_sceneManager->getRenderable()){
+
+        node->getShader().Bind();
+       
+
+    }
+    //m_sceneManager->getCubeMap().getShader().Bind(); //To give instructions to the gpu 
+    glDepthFunc(GL_LEQUAL);
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame-lastFrame; 
     lastFrame = currentFrame; 
 
-    animation.update(deltaTime);
-    //rotation.y = (float)glfwGetTime()*10.0;
+    //animation.update(deltaTime);
+    rotation.y = (float)glfwGetTime()*10.0;
     //rotation.x = (float)glfwGetTime()*10.0;
     // rotation.z = (float)glfwGetTime()*10.0;
     ModelMatrix = glm::mat4(1.f);
@@ -164,34 +243,83 @@ void FunGT::update() {
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
-    ModelMatrix = glm::scale(ModelMatrix, scale); 
-    m_shader.setUniformMat4fv("ModelMatrix",ModelMatrix);
+    ModelMatrix = glm::scale(ModelMatrix, scale);
+     
+    //m_sceneManager->getShader().setUniformMat4fv("ModelMatrix",ModelMatrix);
 
+    // m_animation->updateTime(deltaTime);
+    // m_animation->display( m_sceneManager->getShader() );
 
-    auto transforms = animation.getFinalBoneMatrices(); 
-    for(int i = 0; i<transforms.size(); i++){
-            m_shader.setUniformMat4fv("finalBonesMatrix[" + std::to_string(i) + "]",transforms[i]);
-    }
-    m_aModel->draw(m_shader);
     //m_model->draw(m_shader);   
+    //m_cube_map->draw();
     
-    //     cube->updateModelMatrix(rotation.y);  
-    //     m_shader.setUniformMat4fv("ModelMatrix",cube->getModelMatrix());
-    //     cube->draw();
+         
 
     //   plane->updateModelMatrix(rotation.y);
     //    m_shader.setUniformMat4fv("ModelMatrix",plane->getModelMatrix());
     //    plane->draw();
 
     processKeyBoardInput();
-    glm::mat4 ViewMatrix(1.f);
+    glm::mat4 ViewMatrix = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
+
+    ProjectionMatrix = glm::perspective(glm::radians(fov),
+                                        static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
         //ViewMatrix = glm::lookAt(cameraPos,cameraPos+cameraFront, cameraUP);
-    m_shader.setUniformMat4fv("ViewMatrix",m_camera.getViewMatrix());
+    m_sceneManager->updateViewMatrix(m_camera.getViewMatrix());
+    m_sceneManager->updateProjectionMatrix(ProjectionMatrix);
+    m_sceneManager->renderScene();
+    //  m_sceneManager->getCubeMap().getShader().setUniformMat4fv("ViewMatrix",ViewMatrix);
+    //  m_sceneManager->getCubeMap().getShader().setUniformMat4fv("ProjectionMatrix",ProjectionMatrix);
         //m_shader.setUniformVec2f(mouseInput,"mouseInput");
         //m_shader.setUniform1f("time",currentFrame);
     //shape->draw();
-    
-
+    //m_sceneManager->getCubeMap().draw();
+    glDepthFunc(GL_LESS);
     glFlush();
 }
 
+void FunGT::update(const std::function<void()> &renderLambda)
+{
+    // for(const auto& node : m_sceneManager->getRenderable()){
+
+    //     node->getShader().Bind();
+       
+
+    // }
+    //m_sceneManager->getCubeMap().getShader().Bind(); //To give instructions to the gpu 
+    //glDepthFunc(GL_LEQUAL);
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame-lastFrame; 
+    lastFrame = currentFrame; 
+
+    m_sceneManager->setDeltaTime(deltaTime);
+
+    //animation.update(deltaTime);
+    rotation.y = (float)glfwGetTime()*10.0;
+    //rotation.x = (float)glfwGetTime()*10.0;
+    // rotation.z = (float)glfwGetTime()*10.0;
+    ModelMatrix = glm::mat4(1.f);
+    ModelMatrix = glm::translate(ModelMatrix, position);
+    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
+    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
+    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+    ModelMatrix = glm::scale(ModelMatrix, scale);
+     
+
+    processKeyBoardInput();
+    glm::mat4 ViewMatrix = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
+
+    ProjectionMatrix = glm::perspective(glm::radians(fov),
+                                        static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
+
+    m_sceneManager->updateViewMatrix(m_camera.getViewMatrix());
+    m_sceneManager->updateProjectionMatrix(ProjectionMatrix);
+    m_sceneManager->updateModelMatrix(ModelMatrix);
+    
+    renderLambda();
+
+
+
+    //glDepthFunc(GL_LESS);
+    glFlush();
+}

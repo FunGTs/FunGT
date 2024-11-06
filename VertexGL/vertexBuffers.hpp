@@ -20,7 +20,8 @@ class VertexBuffer{
         void genVB();
         void bind();
         void unbind();
-        void bufferData(const void* data, unsigned int size);
+        void bufferData(const void* data, unsigned int size,GLenum usage = GL_STATIC_DRAW);
+        unsigned int getId(); 
 
 
 };

@@ -1,6 +1,7 @@
 #if !defined(_TEXTURES_H_)
 #define _TEXTURES_H_
-#include "../include/prequisites.hpp" 
+#include<vector>
+#include "../include/prerequisites.hpp" 
 
 class Texture{
 
@@ -18,12 +19,15 @@ class Texture{
         unsigned int type; 
         GLint textureUnit; 
     public:
-        Texture(); 
+        
+        Texture();
+        Texture(unsigned int type_texture); 
         Texture(const std::string  &path );
         Texture(const std::string  &path, GLenum type);
         ~Texture();
 
         void genTexture(const std::string  &path );
+        void genTextureCubeMap(const std::vector<std::string> &pathVector);
         void active(unsigned int slot = 0); 
         void bind();
         void unBind();
@@ -35,6 +39,7 @@ class Texture{
         inline void setPath(std::string path) { this->txt_Path = path; }
         inline std::string getPath()const { return this->txt_Path;}
         inline void setTypeName(std::string textureType){ this->m_type = textureType; }
+        inline void setTypeTexture(unsigned int type_texture){this->type = type_texture;}
         inline std::string getTypeName()const { return this->m_type; }
         GLint getTextureUnit() const{
             return this->textureUnit;

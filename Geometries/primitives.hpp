@@ -1,7 +1,7 @@
 #if !defined(_GEOMETRIES_H_)
 #define _GEOMETRIES_H_
 #include <vector>
-#include "../include/prequisites.hpp"
+#include "../include/prerequisites.hpp"
 #include "../include/glmath.hpp"
 #include "../VertexGL/vertexArrayObjects.hpp"
 #include "../VertexGL/vertexBuffers.hpp"

@@ -1,12 +1,17 @@
 #if !defined(_FUNGT_H_)
 #define _FUNGT_H_
 #include "../GT/graphicsTool.hpp"
+#include "../SceneManager/scene_manager.hpp"
+#include "../CubeMap/cube_map.hpp"
 #include <memory> 
+#include <unordered_map>
+
+
 
 class FunGT : public GraphicsTool<FunGT>{
 
     Camera m_camera;
-    Shader m_shader; 
+    //Shader m_shader; 
 
     //Projection matrix 
     float fov = 45.f; 
@@ -32,14 +37,14 @@ class FunGT : public GraphicsTool<FunGT>{
      bool  m_firstMouse;
     
 
-    std::unique_ptr<Model> m_model; //Could be Model (static) or Animated Model
-    std::shared_ptr<AnimatedModel> m_aModel; 
+    std::unique_ptr<Model> m_model; //Static model
     std::unique_ptr<Primitive> cube; 
     std::unique_ptr<Primitive> plane;
+   
     
     //Creates an animation:
-
-    Animation animation; 
+    
+    std::shared_ptr<SceneManager> m_sceneManager;
     
 
 
@@ -50,21 +55,29 @@ class FunGT : public GraphicsTool<FunGT>{
         FunGT(int _width, int _height); 
         ~FunGT();
 
-        void update(); 
+        virtual void update(); 
+        virtual void update(const std::function<void()> &renderLambda);
         void set(); 
         void processKeyBoardInput();
         void processMouseInput(double xpos, double ypos);
         static void mouse_callback(GLFWwindow *window, double xpos, double ypos); 
-        void setBackground(float red, float green, float blue, float alfa);
-        void setBackground(float color = 0.f);
-
-
-     
-
-
-
+        void setBackgroundColor(float red, float green, float blue, float alfa);
+        void setBackgroundColor(float color = 0.f);
+        void addShader();
+        Camera getCamera(); 
+      
+        std::shared_ptr<SceneManager> getSceneManager();
+        void set(const std::function<void()>& renderLambda);
+        static std::unique_ptr<FunGT> createScene(int _width, int _height); 
 };
 
+typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
+typedef std::shared_ptr<Animation> FunGTAnimation;
+typedef std::unique_ptr<FunGT> FunGTScene;
+typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer 
 
+void validate(std::shared_ptr<SceneManager>){
+
+}
 
 #endif // _FUNGT_H_

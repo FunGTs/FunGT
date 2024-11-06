@@ -7,7 +7,7 @@ const unsigned int SCREEN_HEIGHT = 1000;
 
 int main(){
 
-    //Path to yuor shaders:
+    //Path to your shaders and models:
     ModelPaths model,cube_data;
     cube_data.vs_path   = "../resources/skybox.vs";
     cube_data.fs_path   = "../resources/skybox.fs";
@@ -24,26 +24,14 @@ int main(){
     model.fs_path = "../resources/animation_material_fs.glsl"; 
     
     
-    //Creates a FunGT object
-    std::unique_ptr<FunGT> coreGame = std::make_unique<FunGT>(SCREEN_WIDTH,SCREEN_HEIGHT);
+    //Creates a FunGT Scene to display 
+    FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH,SCREEN_HEIGHT);
 
     //use 255.f for pure white, 
-    coreGame->setBackgroundColor(255.f);
-    coreGame->initGL();
+    myGame->setBackgroundColor(255.f);
+    myGame->initGL();
 
-    std::shared_ptr<SceneManager> scene_manager  = coreGame->getSceneManager();
-
-    //scene_manager->loadShaders(cube.vs_path, cube.fs_path);
-    // //scene_manager->LoadAnimModel(path);
-    if(scene_manager==nullptr){
-        std::cout<<"Invalid pointers "<<std::endl;
-        exit(0);
-    }else{
-        std::cout<<"Good pointer"<<std::endl;
-    }
-    // //load your animation and the corresponding shader:
-    //shader->load(ModelConfig);
-
+    FunGTSceneManager scene_manager  = myGame->getSceneManager();
 
     FunGTCubeMap cube_map = CubeMap::create(); 
     
@@ -54,7 +42,7 @@ int main(){
     animation->load(model);
     
 
-    coreGame->set([&](){ //Set all the scenes in your game
+    myGame->set([&](){ //Set all the scenes in your game
 
         
         scene_manager->addRenderableObj(animation);
@@ -62,11 +50,7 @@ int main(){
         
      
     });
-
-  
-
-    
-    coreGame->render([&](){
+    myGame->render([&](){
 
         scene_manager->renderScene();
         //scene_manager->renderNodes(); 

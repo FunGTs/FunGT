@@ -30,7 +30,12 @@ void VertexBuffer::unbind(){
 
 }
 
-void VertexBuffer::bufferData(const void *data, unsigned int size)
+void VertexBuffer::bufferData(const void *data, unsigned int size,GLenum usage)
 {
     glBufferData(GL_ARRAY_BUFFER,size,data, GL_STATIC_DRAW);
+}
+
+unsigned int VertexBuffer::getId()
+{
+    return id_Render; 
 }
