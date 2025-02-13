@@ -21,6 +21,7 @@ class VertexBuffer{
         void bind();
         void unbind();
         void bufferData(const void* data, unsigned int size,GLenum usage = GL_STATIC_DRAW);
+        void bufferSubData(const void* data, unsigned int size);
         unsigned int getId(); 
 
 

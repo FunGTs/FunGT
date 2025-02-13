@@ -1,3 +1,4 @@
+
 #-std=c++17 -g -fsanitize=address
 BIN = bin
 OBJ_DIR = obj
@@ -14,12 +15,11 @@ TARGET = $(BIN)/funGT_macos.exe
 endif
 ifeq ($(UNAME), Linux)
 LIB = -lGL -lGLU -lglfw -lGLEW -ldl -lassimp
-LDFLAGS = 
-CFLAGS = -Wall 
+CFLAGS = -Wall -MMD -MP
 ASSIMP_LIBS = -lassimp
 TARGET = $(BIN)/funGL.exe
-CC = g++-11
-#CC = /home/juanchuletas/Documents/DeveloperZone/sycl_workspace/llvm/build/bin/clang++
+#CC = g++-11
+CC = clang++-20
 endif
 
 #************ CLASS DIR ***********
@@ -46,6 +46,9 @@ SCENE_MAN = ../SceneManager
 CUBEMAP = ../CubeMap
 RENDER = ../Renderable
 DATAPATH = ../DataPaths
+PARTSYS = ../Physics/ParticleSystem
+SYCL = ../sycl
+RANDOM = ../Random
 # ********** SOURCE *************
 
 SOURCE += main.cpp
@@ -71,6 +74,9 @@ SOURCE += $(BONE)/bone.cpp
 SOURCE += $(MATRIX)/matrix4x4f.cpp
 SOURCE += $(SCENE_MAN)/scene_manager.cpp
 SOURCE += $(CUBEMAP)/cube_map.cpp
+SOURCE += $(PARTSYS)/particle_sys.cpp
+SOURCE += $(PARTSYS)/particle.cpp
+SOURCE += $(RANDOM)/random.cpp
 
 
 #****** HEADERS ************
@@ -95,25 +101,33 @@ INC += $(SCENE_MAN)/scene_manager.hpp
 INC += $(CUBEMAP)/cube_map.hpp
 INC += $(RENDERABLE)/renderable.hpp
 INC += $(DATAPATH)/datapaths.hpp
+INC += $(PARTSYS)/particle_sys.hpp
+INC += $(PARTSYS)/particle.hpp
+INC += $(SYCL)/sycl_headers.hpp
+INC += $(RANDOM)/random.hpp
 
 
 
 #**********
 VPATH = $(SHADER) $(VERTEX) $(TEXTURES) $(APP) $(STB) $(IMGUI) $(IMGUI_SET) $(MATERIAL) \
  	$(MESH) $(GEOM) $(CAM) $(GT) $(MODEL) $(AMODEL) $(HELP) $(ANIMATION) $(BONE) \
-	$(MATRIX) $(SCENE_MAN) $(CUBEMAP) $(RENDERABLE) $(DATAPATH)
+	$(MATRIX) $(SCENE_MAN) $(CUBEMAP) $(RENDERABLE) $(DATAPATH) $(SYCL) $(RANDOM) \
+	$(PARTSYS)
 
 OBJECT = $(patsubst %,$(OBJ_DIR)/%, $(notdir $(SOURCE:.cpp=.o)))
-#OBJ = $(SOURCE:.cpp=.o)
+# Dependency files
+DEPS = $(OBJECT:.o=.d)
 $(TARGET) : $(OBJECT)
 	@echo -e "$(RED)LINKING...$(NC)"
-	$(CC) -o  $@ $^ -lm $(LIB) $(LDFLAGS)
+	$(CC) $(SYCLFLAG) -o   $@ $^ -lm $(LIB) $(LDFLAGS)
 	@echo -e "$(YELLOW)DONE!!!$(NC)"
 	@echo -e "$(BLUE)OPERATING SYSTEM: $(UNAME)!!!...$(NC)"
 $(OBJ_DIR)/%.o : %.cpp
 	@echo -e "$(GREEN)COMPILING...$(NC)"
 	@echo -e  "\033[0;32m [OK] \033[0m       \033[0;33m Compiling:\033[0m" $<
-	$(CC) $(CFLAGS) $(LIB) -c  $< -o $@
+	$(CC) $(CFLAGS) $(SYCLFLAG) -c  $< -o $@
+
+-include $(DEPS)
 print-%  : ; @echo $* = $($*)
 
 

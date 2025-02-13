@@ -194,7 +194,8 @@ void FunGT::set(const std::function<void()>& renderLambda){
     ProjectionMatrix = glm::perspective(glm::radians(fov),
                                         static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
     //Model Matrix
-   // rotation.y = -20.f; 
+    //rotation.y = -50.f; 
+    //position.z = -300;   
     ModelMatrix = glm::translate(ModelMatrix, position);
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
@@ -295,7 +296,7 @@ void FunGT::update(const std::function<void()> &renderLambda)
     m_sceneManager->setDeltaTime(deltaTime);
 
     //animation.update(deltaTime);
-    rotation.y = (float)glfwGetTime()*10.0;
+    //rotation.y = (float)glfwGetTime()*10.0;
     //rotation.x = (float)glfwGetTime()*10.0;
     // rotation.z = (float)glfwGetTime()*10.0;
     ModelMatrix = glm::mat4(1.f);

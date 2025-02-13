@@ -3,6 +3,7 @@
 #include "../GT/graphicsTool.hpp"
 #include "../SceneManager/scene_manager.hpp"
 #include "../CubeMap/cube_map.hpp"
+#include "../Physics/ParticleSystem/noise_particle.hpp"
 #include <memory> 
 #include <unordered_map>
 
@@ -76,8 +77,5 @@ typedef std::shared_ptr<Animation> FunGTAnimation;
 typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer 
 
-void validate(std::shared_ptr<SceneManager>){
-
-}
 
 #endif // _FUNGT_H_

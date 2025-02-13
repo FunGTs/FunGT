@@ -1,6 +1,6 @@
 #if !defined(_IMGUI_SET_UP)
 #define _IMGUI_SET_UP
-#include "../include/prequisites.hpp"
+#include "../include/prerequisites.hpp"
 #include "../include/glmath.hpp"
 #include "../vendor/imgui/imgui.h"
 #include "../vendor/imgui/imgui_impl_glfw.h"
