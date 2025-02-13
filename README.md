@@ -29,6 +29,34 @@ My Game Engine is a high-performance, real-time 3D rendering engine designed for
 - GLAD
 - stb_image
 
+### Build Instructions
+
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/juanchuletas/FunGT.git
+    cd FunGT
+    ```
+
+2. Create a build directory:
+    ```sh
+    mkdir build
+    cd build
+    ```
+
+3. Run CMake to configure the project:
+    ```sh
+    cmake ..
+    ```
+
+4. Build the project:
+    ```sh
+    make
+    ```
+
+5. Run the executable:
+    ```sh
+    ./FunGT
+    ```
 
 ## Showcase
 ### Luxo Jr Pixar lamp
