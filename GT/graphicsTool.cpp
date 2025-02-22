@@ -32,9 +32,13 @@ int GraphicsTool<Derived>::initGL(){
     //OpenGL version : 4.4.0 <--- Using in this code (First number is MAJOR, second is the MINOR)
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,6);
     glfwWindowHint(GLFW_RESIZABLE,GL_FALSE);
     #endif
+     GLint maxVertexUniforms;
+    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &maxVertexUniforms);
+   
+
     //FOR MAC USERS:
 
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,GL_TRUE);
@@ -66,6 +70,13 @@ int GraphicsTool<Derived>::initGL(){
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL); //GL_LINE for just lines //GL_FILL for fill color
+    std::cout<<"**** OpenGL Information ****"<<std::endl;
+    std::cout << "Max Vertex Uniform Components: " << maxVertexUniforms << std::endl;
+    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+    std::cout << "OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
+    std::cout <<"*****************************"<<std::endl;
         #ifdef __APPLE__
         if(glfwInit()!=GL_TRUE)
         {
