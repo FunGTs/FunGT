@@ -1,4 +1,4 @@
-#version 440
+#version core 460
 
 
 layout (location = 0) in vec3 vertex_position;
@@ -8,7 +8,7 @@ layout (location = 3) in ivec4 bone_ids;
 layout (location = 4) in vec4 bone_weights;
 
 //Here come the uniform value form the matrices
-const int maxBonesAllowed = 300; 
+const int maxBonesAllowed = 200; 
 const int maxBoneInfluencePerVertex = 4; 
 //uniforms that main program sends
 uniform mat4 ModelMatrix; 
@@ -25,10 +25,17 @@ out vec2 textureCoords;
 void main(){
 
     vec4 totalPos = vec4(0.0f);
+
+    // Normalize bone weights (prevent extreme values)
+    float weightSum = bone_weights[0] + bone_weights[1] + bone_weights[2] + bone_weights[3];
+    // if (weightSum > 0.0) {
+    //     bone_weights[0] /= weightSum;
+    // }
+
     //totalPos = vec4(vertex_position,1.0f);
     for(int i = 0; i<maxBoneInfluencePerVertex; i++){
      
-        if(bone_weights[i]>0.0){
+        if(bone_ids[i] >= 0 && bone_ids[i] < maxBonesAllowed && bone_weights[i] > 0.0){
             vec4 localPos = finalBonesMatrix[bone_ids[i]]*vec4(vertex_position,1.0f);
             totalPos += localPos*bone_weights[i];
         }
