@@ -9,7 +9,18 @@ if(UNIX)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/release/linux)
 endif()
-
+if (WIN32)
+    # Add the macro definition
+    add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
+    # Set vcpkg toolchain file
+    set(CMAKE_TOOLCHAIN_FILE "C:/Users/juang/Documents/Development/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+    # Set CMake prefix path for vcpkg packages
+    set(CMAKE_PREFIX_PATH "C:/Users/juang/Documents/Development/vcpkg/installed/x64-windows")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGL_VENDOR_NVIDIA")
+    set(GLFW_BUILD_STATIC ON)
+    #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+    message(STATUS "Working Dir: " ${CMAKE_SOURCE_DIR})
+endif()
 # Include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}/../VertexGL
@@ -86,33 +97,19 @@ add_executable(FunGT ${SOURCE_FILES})
 
 # Platform-specific configurations
 if (WIN32)
-    # Windows-specific settings
-    find_library(OPENGL_LIB NAMES opengl32)
-    if (NOT OPENGL_LIB)
-        message(FATAL_ERROR "OpenGL library not found!")
-    endif()
-
-    find_library(GLFW_LIB NAMES glfw3)
-    if (NOT GLFW_LIB)
-        message(FATAL_ERROR "GLFW library not found!")
-    endif()
-
-    find_library(GLEW_LIB NAMES glew32)
-    if (NOT GLEW_LIB)
-        message(FATAL_ERROR "GLEW library not found!")
-    endif()
-
-    find_library(ASSIMP_LIB NAMES assimp)
-    if (NOT ASSIMP_LIB)
-        message(FATAL_ERROR "Assimp library not found!")
-    endif()
-
+    # Use vcpkg packages on Windows
+    find_package(OpenGL REQUIRED)
+    find_package(GLEW REQUIRED)
+    find_package(glfw3  REQUIRED)
+    find_package(assimp REQUIRED)
+    find_package(glm REQUIRED)
     target_link_libraries(FunGT
         PRIVATE
-        ${OPENGL_LIB}
-        ${GLFW_LIB}
-        ${GLEW_LIB}
-        ${ASSIMP_LIB}
+        OpenGL::GL 
+        glfw
+        GLEW::GLEW
+        assimp::assimp
+        glm::glm
     )
 elseif (UNIX)
     # Linux-specific settings

@@ -1,4 +1,4 @@
-#version 440
+#version 460
 
 out vec4 vs_color;
 in vec2 textureCoords;

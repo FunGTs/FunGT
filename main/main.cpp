@@ -19,7 +19,7 @@ int main(){
         getAssetPath("img/spaceboxred/bkg2_back.png")
     };
     
-    model.path   = getAssetPath("Animations/raptoid/scene.gltf");
+    model.path   = getAssetPath("Animations/dancing_alien/scene.gltf");
     model.vs_path = getAssetPath("resources/animation_vs.glsl");
     model.fs_path = getAssetPath("resources/animation_fs.glsl");
     //Creates a FunGT Scene to display 
