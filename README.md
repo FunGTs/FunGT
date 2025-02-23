@@ -45,10 +45,23 @@ git clone https://github.com/Microsoft/vcpkg.git
 cd vcpkg
 .\bootstrap-vcpkg.bat
 vcpkg integrate install
-vcpkg install assimp glfw3 glad
+vcpkg install assimp glfw3 glad glm
 ```
+After that you must add vcpkg\installed\x64-windows\bin to your PATH environment variable.
 
-### Build Instructions
+### Build Instructions for Windows
+
+1. Clone the repository:
+    ```sh
+    git clone  https://github.com/juanchuletas/FunGT.git
+    ```
+2. Open the project folder in Visual Studio.
+
+3. Visual Studio will automatically detect the CMakeLists.txt file and generate the project files.
+
+4. Hit the run button and that's it 
+
+### Build Instructions for Linux
 
 1. Clone the repository:
     ```sh
