@@ -1,4 +1,4 @@
-#version core 460
+#version 460
 
 
 layout (location = 0) in vec3 vertex_position;
