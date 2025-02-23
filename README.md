@@ -98,4 +98,4 @@ After that you must add vcpkg\installed\x64-windows\bin to your PATH environment
 https://youtu.be/hpsQ7xQkosA
 
 ### Demo of an animated model in Windows:
-![Demo Animation](dancing_alien.gif)
+![Demo Animation](demos/dancing_alien.gif)
