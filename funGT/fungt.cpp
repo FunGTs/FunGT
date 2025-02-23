@@ -11,6 +11,7 @@ FunGT::FunGT(int _width, int _height)
     m_firstMouse = true;
 
     m_sceneManager = std::make_shared<SceneManager>();
+    m_infoWindow = std::make_shared<InfoWindow>(); 
 
 }
 FunGT::~FunGT(){
@@ -185,6 +186,11 @@ std::shared_ptr<SceneManager> FunGT::getSceneManager()
     return m_sceneManager;
 }
 
+std::shared_ptr<GUI> FunGT::getInfoWindow()
+{
+    return m_infoWindow;
+}
+
 void FunGT::set(const std::function<void()>& renderLambda){
     std::cout << "Starting FunGT rendering process..." << std::endl;
 
@@ -210,7 +216,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
 
     }
 
-
+    m_infoWindow->setup(*m_Window);
 
     std::cout << "Finished rendering process..." << std::endl;
 
@@ -323,4 +329,9 @@ void FunGT::update(const std::function<void()> &renderLambda)
 
     //glDepthFunc(GL_LESS);
     glFlush();
+}
+
+void FunGT::guiUpdate(const std::function<void()> &guiRender)
+{
+    guiRender();
 }

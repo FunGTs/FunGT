@@ -4,6 +4,8 @@
 #include "../SceneManager/scene_manager.hpp"
 #include "../CubeMap/cube_map.hpp"
 #include "../Physics/ParticleSystem/noise_particle.hpp"
+#include "../Path_Manager/path_manager.hpp"
+#include "../InfoWindow/infowindow.hpp"
 #include <memory> 
 #include <unordered_map>
 
@@ -46,7 +48,7 @@ class FunGT : public GraphicsTool<FunGT>{
     //Creates an animation:
     
     std::shared_ptr<SceneManager> m_sceneManager;
-    
+    std::shared_ptr<GUI> m_infoWindow;
 
 
   
@@ -58,6 +60,7 @@ class FunGT : public GraphicsTool<FunGT>{
 
         virtual void update(); 
         virtual void update(const std::function<void()> &renderLambda);
+        virtual void guiUpdate(const std::function<void()>&guiRender);
         void set(); 
         void processKeyBoardInput();
         void processMouseInput(double xpos, double ypos);
@@ -68,6 +71,7 @@ class FunGT : public GraphicsTool<FunGT>{
         Camera getCamera(); 
       
         std::shared_ptr<SceneManager> getSceneManager();
+        std::shared_ptr<GUI> getInfoWindow();
         void set(const std::function<void()>& renderLambda);
         static std::unique_ptr<FunGT> createScene(int _width, int _height); 
 };
@@ -75,7 +79,8 @@ class FunGT : public GraphicsTool<FunGT>{
 typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
 typedef std::shared_ptr<Animation> FunGTAnimation;
 typedef std::unique_ptr<FunGT> FunGTScene;
-typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer 
+typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
+typedef std::shared_ptr<GUI> FunGTInfoWindow; 
 
 
 #endif // _FUNGT_H_
