@@ -96,3 +96,6 @@ After that you must add vcpkg\installed\x64-windows\bin to your PATH environment
 
 ### Raptoid model animation:
 https://youtu.be/hpsQ7xQkosA
+
+### Demo of an animated model in Windows:
+![Demo Animation](dancing_alien.gif)
