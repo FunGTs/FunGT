@@ -11,12 +11,12 @@ int main(){
     cube_data.vs_path   = getAssetPath("resources/skybox.vs");
     cube_data.fs_path   = getAssetPath("resources/skybox.fs");
     cube_data.data_path = {
-        getAssetPath("img/spacebox/bkg1_right.png"),
-        getAssetPath("img/spacebox/bkg1_left.png"),
-        getAssetPath("img/spacebox/bkg1_top.png"),
-        getAssetPath("img/spacebox/bkg1_bot.png"),
-        getAssetPath("img/spacebox/bkg1_front.png"),
-        getAssetPath("img/spacebox/bkg1_back.png")
+        getAssetPath("img/spaceboxred/bkg2_right.png"),
+        getAssetPath("img/spaceboxred/bkg2_left.png"),
+        getAssetPath("img/spaceboxred/bkg2_top.png"),
+        getAssetPath("img/spaceboxred/bkg2_bot.png"),
+        getAssetPath("img/spaceboxred/bkg2_front.png"),
+        getAssetPath("img/spaceboxred/bkg2_back.png")
     };
     
     model.path   = getAssetPath("Animations/raptoid/scene.gltf");
