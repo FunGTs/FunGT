@@ -106,8 +106,15 @@ void Shader::linkProgram(GLuint vShader, GLuint geomShader, GLuint fShader){
         std::cout<<"ERROR::SHADERS::COULD_NOT_LINK_PROGRAM\n";
         std::cout<<infoLog<<std::endl;
     }
-
-      //END
+    glValidateProgram(idP);
+    glGetProgramiv(idP,GL_VALIDATE_STATUS,&success);
+    if(!success){
+        glGetProgramInfoLog(idP,512,NULL,infoLog);
+        std::cout<<"ERROR::SHADERS::COULD_NOT_VALIDATE_PROGRAM\n";
+        std::cout<<infoLog<<std::endl;
+        exit(0);
+    }    
+     //END
      glUseProgram(0);
      std::cout<<"leaving linking"<<std::endl;
 }
