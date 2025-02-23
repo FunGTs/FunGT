@@ -148,18 +148,16 @@ void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, co
          glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         //
        
-        if (renderLambda) {
-            this->update(renderLambda);
-        } else {
-            std::cerr << "Error: renderLambda is null!" << std::endl;
-        }
+    
+        
+        this->update(renderLambda);
+     
+            
+   
         /*IMGUI*/
         
-        if (guiRender) {
-            this->guiUpdate(guiRender);
-        } else {
-            std::cerr << "Error: guiRender is null!" << std::endl;
-        }
+        
+        this->guiUpdate(guiRender);
 
       
         /*END IMGUI*/
