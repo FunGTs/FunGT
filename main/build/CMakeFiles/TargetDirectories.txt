@@ -1,3 +1,0 @@
-/home/juanchuletas/Documents/DeveloperZone/FunGT/main/build/CMakeFiles/FunGT.dir
-/home/juanchuletas/Documents/DeveloperZone/FunGT/main/build/CMakeFiles/edit_cache.dir
-/home/juanchuletas/Documents/DeveloperZone/FunGT/main/build/CMakeFiles/rebuild_cache.dir
