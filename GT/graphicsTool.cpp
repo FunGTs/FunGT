@@ -8,6 +8,7 @@ GraphicsTool<Derived>::GraphicsTool(int _width, int _height)
 template <typename Derived>
 GraphicsTool<Derived>::~GraphicsTool(){
     std::cout<<"GraphicsTool destructor"<<std::endl; 
+    imguiCleanUp();
     // Delete window before ending the program
     glfwDestroyWindow(m_Window);
     // Terminate GLFW before ending the program
@@ -61,6 +62,9 @@ int GraphicsTool<Derived>::initGL(){
 
     glClearColor(m_colors[0], m_colors[1],m_colors[2],m_colors[3]);
     glfwSwapBuffers(m_Window);
+
+  
+
     // Clean the back buffer and assign the new color to it
     //OPENGL OPTIONS
     glEnable(GL_DEPTH_TEST);
@@ -70,13 +74,7 @@ int GraphicsTool<Derived>::initGL(){
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL); //GL_LINE for just lines //GL_FILL for fill color
-    std::cout<<"**** OpenGL Information ****"<<std::endl;
-    std::cout << "Max Vertex Uniform Components: " << maxVertexUniforms << std::endl;
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-    std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
-    std::cout << "OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
-    std::cout <<"*****************************"<<std::endl;
+
         #ifdef __APPLE__
         if(glfwInit()!=GL_TRUE)
         {
@@ -88,6 +86,11 @@ int GraphicsTool<Derived>::initGL(){
             std::cout<<"ERROR"<<std::endl;
         }
     #endif
+
+    glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    glVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+    glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+ 
 
     return 1; 
 
@@ -103,6 +106,8 @@ void GraphicsTool<Derived>::render()
          glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         this->update();
         /*IMGUI*/
+       
+
         /*END IMGUI*/
             
         /* Swap front and back buffers */
@@ -136,15 +141,29 @@ void GraphicsTool<Derived>::set()
 }
 
 template <typename Derived>
-void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda)
+void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, const std::function<void()> &guiRender)
 {
      while (!glfwWindowShouldClose(m_Window)){
         /* Render here */
          glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        this->update(renderLambda);
+        //
+       
+        if (renderLambda) {
+            this->update(renderLambda);
+        } else {
+            std::cerr << "Error: renderLambda is null!" << std::endl;
+        }
         /*IMGUI*/
+        
+        if (guiRender) {
+            this->guiUpdate(guiRender);
+        } else {
+            std::cerr << "Error: guiRender is null!" << std::endl;
+        }
+
+      
         /*END IMGUI*/
-            
+        
         /* Swap front and back buffers */
         glfwSwapBuffers(m_Window);
         /* Poll for and process events */
@@ -161,6 +180,12 @@ template <typename Derived>
 void GraphicsTool<Derived>::update(const std::function<void()> &renderLambda)
 {
     static_cast<Derived *> (this)->update(renderLambda); 
+}
+
+template <typename Derived>
+void GraphicsTool<Derived>::guiUpdate(const std::function<void()> &guiRender)
+{
+    static_cast<Derived *> (this)->guiUpdate(guiRender);
 }
 
 template <typename Derived>

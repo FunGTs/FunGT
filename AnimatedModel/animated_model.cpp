@@ -247,6 +247,12 @@ void AnimatedModel::extractBoneWeights(std::vector<funGTVERTEX> &vertices, aiMes
 }
 
 void AnimatedModel::setVertexBoneData(funGTVERTEX &vertex, int boneID, float weight){
+
+   
+
+    // Ensure weight is not a tiny floating-point error value
+    weight = (std::abs(weight) < EPSILON) ? 0.0f : weight;
+
     for (int i = 0; i <maxBoneInfluencePerVertex; i++) {
         if (vertex.m_BoneIDs[i] == boneID) {
             // Bone already present, do nothing
@@ -271,7 +277,7 @@ void AnimatedModel::setVertexBoneData(funGTVERTEX &vertex, int boneID, float wei
         }
     }
 
-    if (weight < vertex.m_Weights[maxIndex]) {
+    if (weight + EPSILON < vertex.m_Weights[maxIndex]) {
         std::cout << "** Replacing bone ID " << vertex.m_BoneIDs[maxIndex] << " with bone ID " << boneID << " due to higher weight ***" << std::endl;
         vertex.m_BoneIDs[maxIndex] = boneID;
         vertex.m_Weights[maxIndex] = weight;

@@ -25,7 +25,9 @@ template<typename Derived> class GraphicsTool{
         float m_colors[4];
         int m_frameBufferWidth = 0;
         int m_frameBufferHeight = 0;
-    
+        std::string glVersion;
+        std::string glVendor;
+        std::string glRenderer;
         
 
     public: 
@@ -44,11 +46,12 @@ template<typename Derived> class GraphicsTool{
         void set(); //Set all the textures, meshes, shaders
         
         void update(const std::function<void()> &renderLambda);
+        void guiUpdate(const std::function<void()> &guiRender);
         static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
     public:
         void run(); //Run the program
         void run(const std::function<void()>& renderLambda);
-        void render(const std::function<void()> &renderLambda);
+        void render(const std::function<void()> &renderLambda, const std::function<void()> &guiRnder = [](){});
       
         
 

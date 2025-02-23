@@ -4,6 +4,11 @@ project(FunGT)
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(UNIX)
+    # Set the build type to Release
+    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/release/linux)
+endif()
 
 # Include directories
 include_directories(
@@ -28,6 +33,9 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/../CubeMap
     ${CMAKE_SOURCE_DIR}/../Physics/ParticleSystem
     ${CMAKE_SOURCE_DIR}/../Random
+    ${CMAKE_SOURCE_DIR}/../Path_Manager
+    ${CMAKE_SOURCE_DIR}/../InfoWindow
+    ${CMAKE_SOURCE_DIR}/../GUI
 )
 
 # Source files
@@ -68,6 +76,9 @@ set(SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/../Physics/ParticleSystem/particle_sys.cpp
     ${CMAKE_SOURCE_DIR}/../Physics/ParticleSystem/particle.cpp
     ${CMAKE_SOURCE_DIR}/../Random/random.cpp
+    ${CMAKE_SOURCE_DIR}/../Path_Manager/path_manager.cpp
+    ${CMAKE_SOURCE_DIR}/../InfoWindow/infowindow.cpp
+    ${CMAKE_SOURCE_DIR}/../GUI/gui.cpp
 )
 
 # Add executable

@@ -4,25 +4,24 @@ const unsigned int SCREEN_WIDTH = 1600;
 const unsigned int SCREEN_HEIGHT = 1000;
 
 int main(){
-
+    std::string path = findProjectRoot();
+    std::cout<<path<<std::endl;
     //Path to your shaders and models:
-    ModelPaths model,cube_data;
-    cube_data.vs_path   = "../resources/skybox.vs";
-    cube_data.fs_path   = "../resources/skybox.fs";
+    ModelPaths model, cube_data;
+    cube_data.vs_path   = getAssetPath("resources/skybox.vs");
+    cube_data.fs_path   = getAssetPath("resources/skybox.fs");
     cube_data.data_path = {
-        "../img/spacebox/bkg1_right.png",
-        "../img/spacebox/bkg1_left.png",
-        "../img/spacebox/bkg1_top.png",
-        "../img/spacebox/bkg1_bot.png",
-        "../img/spacebox/bkg1_front.png",
-        "../img/spacebox/bkg1_back.png"
+        getAssetPath("img/spacebox/bkg1_right.png"),
+        getAssetPath("img/spacebox/bkg1_left.png"),
+        getAssetPath("img/spacebox/bkg1_top.png"),
+        getAssetPath("img/spacebox/bkg1_bot.png"),
+        getAssetPath("img/spacebox/bkg1_front.png"),
+        getAssetPath("img/spacebox/bkg1_back.png")
     };
-    //model.path = "../Animations/SillyDancing/SillyDancing.dae"; 
-    model.path = "../Animations/raptoid/scene.gltf"; 
-    model.vs_path = "../resources/animation_vs.glsl"; 
-    model.fs_path = "../resources/animation_fs.glsl"; 
-    std::string vs_Path = "../resources/particle.vs";
-    std::string fs_Path = "../resources/particle.fs";
+    
+    model.path   = getAssetPath("Animations/raptoid/scene.gltf");
+    model.vs_path = getAssetPath("resources/animation_vs.glsl");
+    model.fs_path = getAssetPath("resources/animation_fs.glsl");
     //Creates a FunGT Scene to display 
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH,SCREEN_HEIGHT);
 
@@ -35,10 +34,12 @@ int main(){
     //Gets an instance of the SceneManager class to render objects
     FunGTSceneManager scene_manager  = myGame->getSceneManager();
 
-    // ---- SYCL 
-    size_t numParticles = 1000;
+    //Shows infowindow:
+
+    FunGTInfoWindow infowindow = myGame->getInfoWindow();
 
     // Creates a cube map object
+    
     FunGTCubeMap cube_map = CubeMap::create(); 
 
     // Adds data to the cube map
@@ -60,6 +61,7 @@ int main(){
 
     myGame->render([&](){ // Renders the entire scene using data from the SceneManager
         scene_manager->renderScene();
+        infowindow->renderGUI();
     });
 
 

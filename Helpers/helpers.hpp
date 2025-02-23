@@ -7,6 +7,9 @@
 #include "../include/glmath.hpp"
 #include "../include/prerequisites.hpp"
 #include "../Matrix/matrix4x4f.h"
+
+const float EPSILON = 1e-6f; //For floating point comparison
+
 namespace funGL
 {
     class Helpers
