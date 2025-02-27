@@ -8,7 +8,6 @@ GraphicsTool<Derived>::GraphicsTool(int _width, int _height)
 template <typename Derived>
 GraphicsTool<Derived>::~GraphicsTool(){
     std::cout<<"GraphicsTool destructor"<<std::endl; 
-    imguiCleanUp();
     // Delete window before ending the program
     glfwDestroyWindow(m_Window);
     // Terminate GLFW before ending the program
@@ -157,7 +156,9 @@ void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, co
         /*IMGUI*/
         
         
-        this->guiUpdate(guiRender);
+        if (guiRender) {
+            this->guiUpdate(guiRender);
+        }
 
       
         /*END IMGUI*/

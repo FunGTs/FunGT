@@ -142,6 +142,12 @@ elseif (UNIX)
     else()
         message(FATAL_ERROR "Assimp library not found!")
     endif()
+    find_package(glm CONFIG REQUIRED)
+    if(glm_FOUND)
+	    message(STATUS "glm found")
+    else()
+	    message(FATAL_ERROR "glm not found!")
+    endif()
 
     target_link_libraries(FunGT
         PRIVATE
@@ -149,6 +155,7 @@ elseif (UNIX)
         glfw
         GLEW::GLEW
         assimp::assimp
+	glm::glm
         dl
     )
 endif()
