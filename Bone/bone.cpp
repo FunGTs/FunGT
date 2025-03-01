@@ -2,7 +2,7 @@
 
 Bone::Bone(const std::string &name, int id, const aiNodeAnim *channel)
 : m_bName{name}, m_bID{id}, m_bLocaleTrans{1.0f}{
-   std::cout<<"BONE CONSTRUCTOR" <<std::endl;
+   //std::cout<<"BONE CONSTRUCTOR" <<std::endl;
    setBonePos(channel);
    setBoneRot(channel); 
    setBoneScale(channel); 
