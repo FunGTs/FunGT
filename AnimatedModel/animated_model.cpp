@@ -51,7 +51,7 @@ void AnimatedModel::loadModel(const std::string &path){
 
     setBones(anim);
 
-    std::cout<<"Number of Bones : "<<m_bones.size()<<std::endl; 
+    std::cout<<"**********************************************************Number of Bones : "<<m_bones.size()<<std::endl; 
 
 }
 
@@ -85,12 +85,12 @@ void AnimatedModel::readHeirarchyData(AssimpNodeData &dest, const aiNode *source
 
     dest.name = source->mName.data; 
     dest.transform = fungl::Matrix4f(source->mTransformation);
-    std::cout<<"Source Mat : "<<dest.name<<std::endl;
-    funGL::Helpers::printAiMatrix4x4(source->mTransformation);
+    //std::cout<<"Source Mat : "<<dest.name<<std::endl;
+    //funGL::Helpers::printAiMatrix4x4(source->mTransformation);
     dest.childrenCount = source->mNumChildren; 
-    std::cout<<"Node Name : "<<dest.name<<std::endl;
-    std::cout<<"After convert  :"<<std::endl; 
-    dest.transform.print();
+    //std::cout<<"Node Name : "<<dest.name<<std::endl;
+    //std::cout<<"After convert  :"<<std::endl; 
+    //dest.transform.print();
     for(int i = 0; i<source->mNumChildren; i++){
         AssimpNodeData newData; 
         readHeirarchyData(newData,source->mChildren[i]);
@@ -116,7 +116,7 @@ void AnimatedModel::setBones(aiAnimation *animation){
 
         }
         Bone inBone{channel->mNodeName.data,m_mapBoneInfo[channel->mNodeName.data].m_id,channel}; 
-        std::cout<<"Bone : "<< channel->mNodeName.data <<" added. "<<std::endl;
+        //std::cout<<"Bone : "<< channel->mNodeName.data <<" added. "<<std::endl;
         m_bones.push_back(inBone);
     }
     
@@ -211,13 +211,14 @@ std::vector<funGTVERTEX> AnimatedModel::getVertices(aiMesh *mesh, const aiScene 
 
 void AnimatedModel::extractBoneWeights(std::vector<funGTVERTEX> &vertices, aiMesh *mesh, const aiScene *scene)
 {
-    std::cout<<"***Extracting Bone Weights***"<<std::endl;
+    //std::cout<<"***Extracting Bone Weights***"<<std::endl;
+    //std::cout<<"Number of bones : "<<mesh->mNumBones<<std::endl;
     for(int index = 0;  index<mesh->mNumBones; index++){
         int id = -1; 
         std::string boneName = mesh->mBones[index]->mName.C_Str();
         if(m_mapBoneInfo.find(boneName) == m_mapBoneInfo.end()){
             //the bone is not in the map
-            std::cout<<"Adding new bone info : "<<boneName<<std::endl; 
+            //std::cout<<"Adding new bone info : "<<boneName<<std::endl; 
             BoneInfo bone_info; 
             bone_info.m_id = m_boneCounter;
             //bone_info.m_offset = funGL::Helpers::convertMatToGlm(mesh->mBones[index]->mOffsetMatrix);
@@ -230,14 +231,16 @@ void AnimatedModel::extractBoneWeights(std::vector<funGTVERTEX> &vertices, aiMes
             //The bone is in the map
             id = m_mapBoneInfo[boneName].m_id; 
         }
+        assert(id != -1);
         aiVertexWeight *weights = mesh->mBones[index]->mWeights;
         int nWeights = mesh->mBones[index]->mNumWeights;
         //iterate to the whole weights
         //std::cout<<"This bone is influenced by : "<< nWeights << " weights" <<std::endl; 
         for(int i = 0; i<nWeights; i++){
             int vertexId = weights[i].mVertexId;
-            float currWeight = weights[index].mWeight;
-            
+            float currWeight = weights[i].mWeight;
+            assert(vertexId <= vertices.size());
+            //std::cout<<"Weight : "<<currWeight<<std::endl;
             setVertexBoneData(vertices[vertexId],id,currWeight);
 
 
@@ -248,7 +251,10 @@ void AnimatedModel::extractBoneWeights(std::vector<funGTVERTEX> &vertices, aiMes
 
 void AnimatedModel::setVertexBoneData(funGTVERTEX &vertex, int boneID, float weight){
 
-   
+   if(weight == 0.0f){
+       //std::cout<<"Weight is zero"<<std::endl;
+       return;
+   }
 
     // Ensure weight is not a tiny floating-point error value
     weight = (std::abs(weight) < EPSILON) ? 0.0f : weight;
@@ -256,6 +262,7 @@ void AnimatedModel::setVertexBoneData(funGTVERTEX &vertex, int boneID, float wei
     for (int i = 0; i <maxBoneInfluencePerVertex; i++) {
         if (vertex.m_BoneIDs[i] == boneID) {
             // Bone already present, do nothing
+            std::cout << "Bone already present, do nothing" << std::endl;
             return;
         }
     }
@@ -266,23 +273,21 @@ void AnimatedModel::setVertexBoneData(funGTVERTEX &vertex, int boneID, float wei
             return; 
         }
     }
-    std::cout << "Number of vertices per bone influence exceeded !!" << std::endl;
+    //std::cout << "Number of vertices per bone influence exceeded !!" << std::endl;
 
     // If we reach here, all slots are filled
     // Replace the smallest weight if the new weight is larger
-    int maxIndex = 0;
+    int minIndex = 0;
     for (int i = 1; i < maxBoneInfluencePerVertex; i++) {
-        if (vertex.m_Weights[i] > vertex.m_Weights[maxIndex]) {
-            maxIndex = i;
+        if (vertex.m_Weights[i] < vertex.m_Weights[minIndex]) {
+            minIndex = i;
         }
     }
 
-    if (weight + EPSILON < vertex.m_Weights[maxIndex]) {
-        std::cout << "** Replacing bone ID " << vertex.m_BoneIDs[maxIndex] << " with bone ID " << boneID << " due to higher weight ***" << std::endl;
-        vertex.m_BoneIDs[maxIndex] = boneID;
-        vertex.m_Weights[maxIndex] = weight;
-    } else {
-        std::cout << "** New weight " << weight << " is not larger than the current minimum weight " << vertex.m_Weights[maxIndex] << " ***" << std::endl;
+    if (weight < vertex.m_Weights[minIndex]) {
+        //std::cout << "** Replacing bone ID " << vertex.m_BoneIDs[minIndex] << " with bone ID " << boneID << " due to higher weight ***" << std::endl;
+        vertex.m_BoneIDs[minIndex] = boneID;
+        vertex.m_Weights[minIndex] = weight;
     }
   
 }
@@ -299,7 +304,7 @@ void AnimatedModel::computeBoneTransform(const AssimpNodeData *node, fungl::Matr
     std::cout << " **** Computing Bone Transformations ****" << std::endl;
     std::string nodeName = node->name;
     //fungl::Matrix4f nodeTransform(node->transform);
-    std::cout << "Node Name : " << nodeName << std::endl;
+    //std::cout << "Node Name : " << nodeName << std::endl;
 
 
     fungl::Matrix4f globalTransform =  parentTransform*node->transform;
@@ -316,11 +321,12 @@ void AnimatedModel::computeBoneTransform(const AssimpNodeData *node, fungl::Matr
         fungl::Matrix4f offsetMat(m_mapBoneInfo[nodeName].m_offset);
         //printf("Offset Matrix : \n");
         //offsetMat.print();
-        //std::cout << "m_finalBoneMat.size() : " << m_finalBoneMat.size() << std::endl;
+        std::cout << "m_finalBoneMat.size() : " << m_finalBoneMat.size() << std::endl;
         if (index >= this->m_finalBoneMat.size())
         {
             m_finalBoneMat.resize(index + 1, glm::mat4(1.0f));
         }
+        std::cout << "m_finalBoneMat.resize() : " << m_finalBoneMat.size() << std::endl;
         fungl::Matrix4f finalMatrix;
         finalMatrix = globalTransform * offsetMat;
         //printf("Final Bone Matrix for index: %d \n", index); 
@@ -340,7 +346,7 @@ void AnimatedModel::computeBoneTransform(const AssimpNodeData *node, fungl::Matr
 
 void AnimatedModel::boneTransform()
 {
-    std::cout << "Bone Transform" << std::endl;
+    //std::cout << "Bone Transform" << std::endl;
     fungl::Matrix4f matId;
     matId.identity();
     //matId.print();  

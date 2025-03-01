@@ -1,4 +1,4 @@
-#version 440
+#version 460
 
 
 layout (location = 0) in vec3 vertex_position;
@@ -8,7 +8,7 @@ layout (location = 3) in ivec4 bone_ids;
 layout (location = 4) in vec4 bone_weights;
 
 //Here come the uniform value form the matrices
-const int maxBonesAllowed = 300; 
+const int maxBonesAllowed = 200; 
 const int maxBoneInfluencePerVertex = 4; 
 //uniforms that main program sends
 uniform mat4 ModelMatrix; 

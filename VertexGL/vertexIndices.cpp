@@ -27,13 +27,12 @@ void VertexIndex::unbind(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
 }
-void VertexIndex::indexData(const unsigned int *data, unsigned int totIndices)
+void VertexIndex::indexData(const unsigned int *data, unsigned int sizeOfData)
 {
     if (id_rnd == 0) {
         glGenBuffers(1, &id_rnd);
     }
-    numId_rnd = totIndices;
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,numId_rnd*sizeof(unsigned int),data,GL_STATIC_DRAW);   
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeOfData,data,GL_STATIC_DRAW);   
 }
 unsigned int VertexIndex::getNumIndices() const
 {

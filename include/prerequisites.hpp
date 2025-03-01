@@ -23,6 +23,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #endif
-
+#define CHECK_GL_ERROR() { \
+  GLenum err; \
+  while ((err = glGetError()) != GL_NO_ERROR) { \
+    std::cerr << "\033[1;31mOpenGL Error: " << err << " in file " << __FILE__ << " at line " << __LINE__ << "\033[0m" << std::endl; \
+  } \
+}
 #endif // _PREREQ_H_
 

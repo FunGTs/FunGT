@@ -22,19 +22,20 @@ Mesh::~Mesh()
 }
 //Methods
 void Mesh::initMesh() {
+
    //  //This method initialize a Mesh
+
     m_vao.genVAO(); //Generates a Vertex array object
-    m_vb.genVB(); //Generates the Vertex Buffer
-    m_vi.genVI(); //Generates the Vertex Buffer
-
-
     m_vao.bind();
 
+    m_vb.genVB(); //Generates the Vertex Buffer
     m_vb.bind();
     m_vb.bufferData(&m_vertex[0],m_vertex.size()*sizeof(Vertex));
 
+    m_vi.genVI(); //Generates the Vertex Buffer
     m_vi.bind(); 
-    m_vi.indexData(&m_index[0],static_cast<unsigned int>(m_index.size()));
+    m_vi.indexData(&m_index[0],sizeof(&m_index[0])*m_index.size());
+    
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     //glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index.size() * sizeof(unsigned int), &m_index[0], GL_STATIC_DRAW);
 
@@ -43,25 +44,28 @@ void Mesh::initMesh() {
         //  offsetof(s,m) takes as its first argument a struct and as its second argument a 
         // variable name of the struct. 
         // The macro returns the byte offset of that variable from the start of the struct.
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
+       
         //Normals
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
         glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
+        
         //TEXTURE COORDS
         //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
         glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+        
 
         // ids
 		glEnableVertexAttribArray(3);
-		glVertexAttribIPointer(3, maxBoneInfluencePerVertex, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
-
+		glVertexAttribIPointer(3, maxBoneInfluencePerVertex, GL_INT, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_BoneIDs));
+        
 		// weights
 		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, maxBoneInfluencePerVertex, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
-    //All binded above must be released
-      m_vao.unbind();
+		glVertexAttribPointer(4, maxBoneInfluencePerVertex, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_Weights));
+        
+    m_vao.unbind();
   
 }
 void Mesh::draw(Shader &shader){
@@ -99,9 +103,11 @@ void Mesh::draw(Shader &shader){
        //Draw your mesh!
         m_vao.bind();
         //glBindVertexArray(VAO);
-
-        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_index.size()), GL_UNSIGNED_INT, 0);
+        //std::cout<<"Drawing Mesh with: "<< m_index.size() << " indices "<<std::endl;
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_index.size() / 3) * 3, GL_UNSIGNED_INT, (void*)0); 
         //glBindVertexArray(0);
         m_vao.unbind();
-        //glActiveTexture(GL_TEXTURE0); 
+        //glActiveTexture(GL_TEXTURE0);
+        // OpenGL Error Checking
+
 }

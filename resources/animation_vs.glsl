@@ -21,23 +21,16 @@ uniform mat4 finalBonesMatrix[maxBonesAllowed];
 //Outputs ti the fragment shader: 
 out vec2 textureCoords;
 
-
+float weightSum = 0.0f;
 void main(){
 
     vec4 totalPos = vec4(0.0f);
 
-    // Normalize bone weights (prevent extreme values)
-    float weightSum = bone_weights[0] + bone_weights[1] + bone_weights[2] + bone_weights[3];
-    // if (weightSum > 0.0) {
-    //     bone_weights[0] /= weightSum;
-    // }
-
-    //totalPos = vec4(vertex_position,1.0f);
     for(int i = 0; i<maxBoneInfluencePerVertex; i++){
-     
-        if(bone_ids[i] >= 0 && bone_ids[i] < maxBonesAllowed && bone_weights[i] > 0.0){
-            vec4 localPos = finalBonesMatrix[bone_ids[i]]*vec4(vertex_position,1.0f);
-            totalPos += localPos*bone_weights[i];
+   
+        if(bone_ids[i] > 0 && bone_ids[i] < maxBonesAllowed && bone_weights[i] > 0.0 ){
+           vec4 localPos = finalBonesMatrix[bone_ids[i]]*vec4(vertex_position,1.0f);
+           totalPos += localPos*bone_weights[i];
         }
     }
     //totalPos = vec4(vertex_position,1.0f);

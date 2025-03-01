@@ -5,6 +5,7 @@
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
 #else
+#include<iostream>
 #include <GL/glew.h>
 #endif
 

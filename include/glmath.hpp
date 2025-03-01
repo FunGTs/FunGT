@@ -17,14 +17,14 @@
     #include <glm/ext/quaternion_float.hpp>
 #else
     // Linux uses system-installed GLM (older version)
-    #include <glm/gtc/matrix_transform.hpp>
-    #include <glm/gtc/matrix_projection.hpp>
-    #include <glm/gtc/constants.hpp>
+    #include <glm/ext/matrix_transform.hpp>
+    #include <glm/ext/matrix_projection.hpp>
+    #include <glm/ext/scalar_constants.hpp>
     #include <glm/vec2.hpp>
     #include <glm/vec3.hpp>
     #include <glm/vec4.hpp>
     #include <glm/mat4x4.hpp>
-    #include <glm/gtc/quaternion.hpp>
+    #include <glm/ext/quaternion_float.hpp>
 #endif
 
 #endif // _GLMMATH_H_

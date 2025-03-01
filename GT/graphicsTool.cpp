@@ -159,7 +159,10 @@ void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, co
         if (guiRender) {
             this->guiUpdate(guiRender);
         }
-
+        GLenum err;
+            while ((err = glGetError()) != GL_NO_ERROR) {
+            std::cerr << "OpenGL error in RenderScene: " << err << std::endl;
+        }
       
         /*END IMGUI*/
         

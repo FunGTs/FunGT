@@ -20,10 +20,10 @@ Animation::~Animation()
 
 void Animation::boneTransform()
 {
-    std::cout << "Bone Transform" << std::endl;
+    //std::cout << "Bone Transform" << std::endl;
     fungl::Matrix4f matId;
     matId.identity();
-    matId.print();
+    //matId.print();
     performBoneTransform(&m_aModel->m_rootNode, matId); 
 }
 
@@ -69,10 +69,10 @@ void Animation::computeBoneTransform(const AssimpNodeData *node, glm::mat4 paren
 
 void Animation::performBoneTransform(const AssimpNodeData *node, fungl::Matrix4f parentTransform)
 {
-    std::cout << " **** Computing Bone Transformations :  performBoneTransform ****" << std::endl;
+    //std::cout << " **** Computing Bone Transformations :  performBoneTransform ****" << std::endl;
     std::string nodeName = node->name;
     //fungl::Matrix4f nodeTransform(node->transform);
-    std::cout << "Node Name : " << nodeName << std::endl;
+    //std::cout << "Node Name : " << nodeName << std::endl;
 
     fungl::Matrix4f NodeTransform(node->transform);
     
@@ -86,7 +86,7 @@ void Animation::performBoneTransform(const AssimpNodeData *node, fungl::Matrix4f
     std::unique_ptr<Bone> bone = m_aModel->findBone(nodeName);
     if (bone)
     {
-        std::cout << "Bone found : " << nodeName << std::endl;
+        //std::cout << "Bone found : " << nodeName << std::endl;
         bone->computeLocalTransforms(m_currentTime);
         NodeTransform = bone->getBoneLocalTransformMat();
     }
