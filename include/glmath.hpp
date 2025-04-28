@@ -17,6 +17,7 @@
     #include <glm/ext/quaternion_float.hpp>
 #else
     // Linux uses system-installed GLM (older version)
+    #define GLM_ENABLE_EXPERIMENTAL
     #include <glm/ext/matrix_transform.hpp>
     #include <glm/ext/matrix_projection.hpp>
     #include <glm/ext/scalar_constants.hpp>

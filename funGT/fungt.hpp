@@ -3,7 +3,8 @@
 #include "../GT/graphicsTool.hpp"
 #include "../SceneManager/scene_manager.hpp"
 #include "../CubeMap/cube_map.hpp"
-#include "../Physics/ParticleSystem/noise_particle.hpp"
+//#include "../Physics/ParticleSystem/noise_particle.hpp"
+#include "../ParticleSimulation/particle_simulation.hpp"
 #include "../Path_Manager/path_manager.hpp"
 #include "../InfoWindow/infowindow.hpp"
 #include <memory> 
