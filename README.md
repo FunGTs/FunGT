@@ -99,3 +99,6 @@ https://youtu.be/hpsQ7xQkosA
 
 ### Demo of an animated model in Windows:
 ![Demo Animation](demos/dancing_alien.gif)
+
+### Demo of an 10000 particles using SYCL and funlib:
+![Demo Animation](demos/particles.gif)
