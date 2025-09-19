@@ -2,7 +2,7 @@
 
 
 layout (location = 0) in vec3 vertex_position;
-layout (location = 1) in vec3 color_position;
+layout (location = 1) in vec3 normal_position;
 layout (location = 2) in vec2 texture_position;
 
 //Here come the uniform value form the matrices
