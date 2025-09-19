@@ -10,7 +10,7 @@
 #include "../Mesh/mesh.hpp"
 #include "../Renderable/renderable.hpp"
 #include "../DataPaths/datapaths.hpp"
-class Model : public Renderable {
+class Model  {
 
     public:
         Model(); 
@@ -28,13 +28,10 @@ class Model : public Renderable {
         void processAssimpScene(aiNode * node, const aiScene *scene);
         void createShader(std::string vertex_shader, std::string fragment_shader); 
         
-    //Implementations for the Rendetable class: 
-        void draw() override;
-        glm::mat4 getViewMatrix() override;
-        glm::mat4 getProjectionMatrix() override;
-        Shader &getShader() override;
-        void setViewMatrix(const glm::mat4 &viewMatrix) override;  
-
+   
+        void draw();
+        Shader &getShader();
+        
     protected:
     //Members
         std::vector<std::unique_ptr<Mesh>> m_vMesh; 

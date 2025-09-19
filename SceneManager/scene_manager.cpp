@@ -18,7 +18,7 @@ Shader& SceneManager::getShader(){
 }
 std::vector<std::shared_ptr<Renderable>> SceneManager::getRenderable()
 {
-    return m_render_node;
+    return m_VectorOfRenderNodes;
 }
 void SceneManager::updateViewMatrix(const glm::mat4 &viewMatrix)
 {
@@ -30,27 +30,26 @@ void SceneManager::updateProjectionMatrix(const glm::mat4 &projectionMatrix)
 }
 void SceneManager::updateModelMatrix(const glm::mat4 &modelMatrix)
 {
-    m_ModelMAtrix = modelMatrix;
+    m_ModelMatrix = modelMatrix;
 }
 void SceneManager::renderScene()
 {
-    for(auto & node : m_render_node){
+    for(auto & node : m_VectorOfRenderNodes){
         node->getShader().Bind();
         node->enableDepthFunc(); //For Cubemap purposes
         node->setViewMatrix(m_ViewMatrix);
+        node->updateModelMatrix();
         node->updateTime(m_deltaTime);
         node->getShader().setUniformMat4fv("ViewMatrix",node->getViewMatrix());
         node->getShader().setUniformMat4fv("ProjectionMatrix",m_ProjectionMatrix);
-        node->getShader().setUniformMat4fv("ModelMatrix",m_ModelMAtrix);
+        node->getShader().setUniformMat4fv("ModelMatrix",node->getModelMatrix());
         node->draw();
         node->disableDepthFunc(); //For CubeMap purposes
-
-
     }
 }
 void SceneManager::addRenderableObj(std::shared_ptr<Renderable> node)
 {
-    m_render_node.push_back(node);
+    m_VectorOfRenderNodes.push_back(node);
 }
 
 void SceneManager::setDeltaTime(float deltaT)

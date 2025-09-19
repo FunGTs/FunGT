@@ -37,10 +37,19 @@ int GraphicsTool<Derived>::initGL(){
     #endif
      GLint maxVertexUniforms;
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &maxVertexUniforms);
-   
+   // Add DPI awareness hints BEFORE creating the window
+    /*glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+
+
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    float xscale, yscale;
+    glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+
+    // Adjust window dimensions based on content scale
+    int scaledWidth = (int)(m_width * xscale);
+    int scaledHeight = (int)(m_height * yscale);*/
 
     //FOR MAC USERS:
-
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,GL_TRUE);
     m_Window = glfwCreateWindow(m_width,m_height,m_Windowname.c_str(), NULL, NULL);
     if (!m_Window)
@@ -161,7 +170,7 @@ void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, co
         }
         GLenum err;
             while ((err = glGetError()) != GL_NO_ERROR) {
-            std::cerr << "OpenGL error in RenderScene: " << err << std::endl;
+            //std::cerr << "OpenGL error in RenderScene: " << err << std::endl;
         }
       
         /*END IMGUI*/

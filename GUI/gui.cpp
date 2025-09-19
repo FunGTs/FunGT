@@ -21,7 +21,18 @@ void GUI::setup(GLFWwindow &window)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-
+     // Get DPI scale
+    float xscale, yscale;
+    glfwGetWindowContentScale(m_window, &xscale, &yscale);
+    float scale = std::max(xscale, yscale);
+    scale = scale*0.8f;
+    
+    // Scale the default font
+    io.FontGlobalScale = scale;
+    
+    // Scale UI elements
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(scale);
     // Setup Dear ImGui style
     //ImGui::StyleColorsDark();
     ImGui::StyleColorsClassic();  

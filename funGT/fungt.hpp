@@ -81,7 +81,8 @@ typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
 typedef std::shared_ptr<Animation> FunGTAnimation;
 typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
-typedef std::shared_ptr<GUI> FunGTInfoWindow; 
+typedef std::shared_ptr<GUI> FunGTInfoWindow;
+typedef std::shared_ptr<SimpleModel> FunGTSModel;
 
 
 #endif // _FUNGT_H_

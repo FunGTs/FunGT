@@ -34,7 +34,8 @@ void Mesh::initMesh() {
 
     m_vi.genVI(); //Generates the Vertex Buffer
     m_vi.bind(); 
-    m_vi.indexData(&m_index[0],sizeof(&m_index[0])*m_index.size());
+    //m_vi.indexData(&m_index[0],sizeof(&m_index[0])*m_index.size()); //Changed to a possible bug : segmentation fault
+    m_vi.indexData(m_index.data(), m_index.size() * sizeof(m_index[0]));
     
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     //glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index.size() * sizeof(unsigned int), &m_index[0], GL_STATIC_DRAW);

@@ -192,24 +192,15 @@ std::shared_ptr<GUI> FunGT::getInfoWindow()
 }
 
 void FunGT::set(const std::function<void()>& renderLambda){
-    std::cout << "Starting FunGT rendering process..." << std::endl;
+    std::cout << "Starting FunGT Setting process..." << std::endl;
 
     renderLambda();
 
 
     ProjectionMatrix = glm::perspective(glm::radians(fov),
                                         static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
-    //Model Matrix
-    //rotation.y = -50.f; 
-    //position.z = -300;   
-    ModelMatrix = glm::translate(ModelMatrix, position);
-    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
-    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
-    ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
-    ModelMatrix = glm::scale(ModelMatrix, scale);
 
-
-     for(const auto& node : m_sceneManager->getRenderable()){
+   for(const auto& node : m_sceneManager->getRenderable()){
 
         node->getShader().Bind();
        
@@ -218,7 +209,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
 
     m_infoWindow->setup(*m_Window);
 
-    std::cout << "Finished rendering process..." << std::endl;
+    std::cout << "Finished Setting process..." << std::endl;
 
 }
 
@@ -305,12 +296,12 @@ void FunGT::update(const std::function<void()> &renderLambda)
     //rotation.y = (float)glfwGetTime()*10.0;
     //rotation.x = (float)glfwGetTime()*10.0;
     // rotation.z = (float)glfwGetTime()*10.0;
-    ModelMatrix = glm::mat4(1.f);
+    /*ModelMatrix = glm::mat4(1.f);
     ModelMatrix = glm::translate(ModelMatrix, position);
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f)); 
     ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
-    ModelMatrix = glm::scale(ModelMatrix, scale);
+    ModelMatrix = glm::scale(ModelMatrix, scale);*/
      
 
     processKeyBoardInput();
@@ -321,7 +312,7 @@ void FunGT::update(const std::function<void()> &renderLambda)
 
     m_sceneManager->updateViewMatrix(m_camera.getViewMatrix());
     m_sceneManager->updateProjectionMatrix(ProjectionMatrix);
-    m_sceneManager->updateModelMatrix(ModelMatrix);
+    //m_sceneManager->updateModelMatrix(ModelMatrix);
     
     renderLambda();
 

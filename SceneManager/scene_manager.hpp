@@ -5,15 +5,16 @@
 #include "../Animation/animation.hpp"
 #include "../CubeMap/cube_map.hpp"
 #include "../Camera/camera.hpp"
+#include "../SimpleModel/simple_model.hpp"
 
 class SceneManager{
 
     private:
         Shader m_shader;
-        std::vector<std::shared_ptr<Renderable>> m_render_node;
+        std::vector<std::shared_ptr<Renderable>> m_VectorOfRenderNodes;
         glm::mat4 m_ViewMatrix = glm::mat4(1.f);
         glm::mat4 m_ProjectionMatrix = glm::mat4(1.f);
-        glm::mat4 m_ModelMAtrix = glm::mat4(1.f);
+        glm::mat4 m_ModelMatrix = glm::mat4(1.f);
         float m_deltaTime; 
     public:
         SceneManager();

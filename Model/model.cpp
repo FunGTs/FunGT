@@ -183,9 +183,6 @@ void Model::processAssimpScene(aiNode *node, const aiScene *scene)
         }
     }
     
-
-
-
 }
 
 void Model::createShader(std::string vertex_shader, std::string fragment_shader)
@@ -199,26 +196,6 @@ void Model::draw()
     for(unsigned int i=0; i<m_vMesh.size(); i++){
         m_vMesh[i]->draw(m_shader);
     }   
-}
-
-glm::mat4 Model::getViewMatrix()
-{
-    return m_viewMatrix; 
-}
-
-glm::mat4 Model::getProjectionMatrix()
-{
-    return m_projectionMatrix;
-}
-
-Shader &Model::getShader()
-{
-   return m_shader; 
-}
-
-void Model::setViewMatrix(const glm::mat4 &viewMatrix)
-{
-    m_viewMatrix = viewMatrix; 
 }
 
 std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
@@ -338,7 +315,10 @@ void Model::setDirPath(const std::string &dirPath)
 {
     m_dirPath = dirPath;   
 }
-
+Shader &Model::getShader()
+{
+    return m_shader;
+}
 const std::string &Model::getDirPath() const
 {
     // TODO: insert return statement here
