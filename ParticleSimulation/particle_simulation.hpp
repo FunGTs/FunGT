@@ -5,8 +5,7 @@
 #include "../../VertexGL/vertexBuffers.hpp"
 #include "../../VertexGL/vertexIndices.hpp"
 #include "../../Shaders/shader.hpp"
-#include "../flib/funlib.hpp"
-
+#include <funlib/funlib.hpp>
 class ParticleSimulation : public Renderable {
     
     VertexArrayObject m_vao; 
@@ -16,10 +15,13 @@ class ParticleSimulation : public Renderable {
     float m_deltaTime = 2.0;
     float x_pos = 0.0;
     float y_pos = 0.0;
-
+    glm::vec3 m_position = glm::vec3(0.f);
+    glm::vec3 m_rotation = glm::vec3(0.f);
+    glm::vec3 m_scale = glm::vec3(1.0);
     
     glm::mat4 m_viewMatrix = glm::mat4(1.f); 
     glm::mat4 m_projectionMatrix  = glm::mat4(1.f);
+    glm::mat4 m_ModelMatrix = glm::mat4(1.f);
 
     
 
@@ -38,6 +40,8 @@ class ParticleSimulation : public Renderable {
         void updateTime(float deltaTime) override;  
         void setViewMatrix(const glm::mat4 &viewMatrix) override;
         glm::mat4 getViewMatrix() override;
+        void updateModelMatrix() override;
+        glm::mat4 getModelMatrix() override;
         
 
 

@@ -6,18 +6,7 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
     m_pSet.SetNumParticles(m_NumParticles);
     std::cout<<"Particle system constructor"<<std::endl;
     std::cout<<"Num particles: "<<m_pSet._particles.size()<<std::endl;
-    /*for (auto& p : m_pSet._particles) {
-        // Start somewhere above ground level
-        p.position[0] = random_between(-10.0f, 10.0f);  // X
-        p.position[1] = random_between(5.0f, 15.0f);    // Y (start high up)
-        p.position[2] = random_between(-10.0f, 10.0f);  // Z
-    
-        // Initial velocity (maybe zero or small random motion)
-        p.velocity[0] = random_between(-1.0f, 1.0f);  // X
-        p.velocity[1] = 0.0f;                         // Y (no vertical motion yet)
-        p.velocity[2] = random_between(-1.0f, 1.0f);  // Z
-    }*/
-    //float orbit_speed = 2.0f; // Try values between 1.0 and 5.0
+   
     float radius = 0.5f;  // Radius from the origin
     float spread = 0.1f;   // Variability of the particle positions
     std::size_t num_particles = m_pSet._particles.size();
@@ -40,8 +29,15 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
         m_pSet._particles[i].velocity[2] = 0.0f;  // No initial velocity in Z direction
     }
     
-
-    m_pSet.print();
+    //Print just the position of the firs 2 particles
+    std::cout << "Particle positions:" << std::endl;
+    for (std::size_t i = 0; i < 2; ++i) {
+        std::cout << "Particle "<< i << ": ("
+                  << m_pSet._particles[i].position[0] << ", "
+                  << m_pSet._particles[i].position[1] << ", "
+                  << m_pSet._particles[i].position[2] << ")" << std::endl;
+    }
+    //m_pSet.print();
     this->init();
     m_shader.create(vertex_shader,fragment_shader);
 }
@@ -56,6 +52,7 @@ void ParticleSimulation::init()
     m_vao.bind();
 
     m_vbo.bind();
+    //m_vbo.bufferData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(flib::Particle<float>),GL_DYNAMIC_DRAW);
     m_vbo.bufferData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(flib::Particle<float>),GL_DYNAMIC_DRAW); 
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(flib::Particle<float>), (void*)offsetof(flib::Particle<float>, position));
@@ -90,6 +87,19 @@ void ParticleSimulation::setViewMatrix(const glm::mat4 &viewMatrix)
 glm::mat4 ParticleSimulation::getViewMatrix()
 {
     return m_viewMatrix;
+}
+void ParticleSimulation::updateModelMatrix()
+{
+    m_ModelMatrix = glm::mat4(1.f);
+    m_ModelMatrix = glm::translate(m_ModelMatrix, m_position);
+    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(m_rotation.x), glm::vec3(1.f, 0.f, 0.f));
+    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(m_rotation.y), glm::vec3(0.f, 1.f, 0.f));
+    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(m_rotation.z), glm::vec3(0.f, 0.f, 1.f));
+    m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
+}
+glm::mat4 ParticleSimulation::getModelMatrix()
+{
+    return m_ModelMatrix;
 }
 void ParticleSimulation::simulation()
 {
@@ -199,10 +209,20 @@ void ParticleSimulation::simulation()
     };
 
     //SYCL update
-
-    flib::ParticleSystem<float, decltype(spiralExplosionSim)>::update(m_pSet, spiralExplosionSim,0.005f);
+    //std::cout<<"Update particles"<<std::endl;
+    //std::cout<<"VBO ID: "<<m_vbo.getId()<<std::endl;
+    int numParticles = m_pSet._particles.size();
+    flib::ParticleSystem<float, decltype(spiralExplosionSim)>::update_ocl(numParticles, m_vbo.getId(),spiralExplosionSim,0.005f);
+  
+    /*for (std::size_t i = 0; i < 2; ++i) {
+        std::cout << "Particle "<< i << ": ("
+                  << m_pSet._particles[i].position[0] << ", "
+                  << m_pSet._particles[i].position[1] << ", "
+                  << m_pSet._particles[i].position[2] << ")" << std::endl;
+    }*/
+    
     //std::cout<<"uopdate particles"<<std::endl;
     //m_pSet.print();
-    m_vbo.bind();
-    m_vbo.bufferSubData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(flib::Particle<float>));
+    //m_vbo.bind();
+    //m_vbo.bufferSubData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(flib::Particle<float>));
 }
