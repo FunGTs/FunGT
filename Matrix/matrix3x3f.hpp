@@ -2,7 +2,7 @@
 #define _MATRIX3X3F_HPP_
 #include "../Vector/vector3.hpp"
 
-namespace fungl {
+namespace fungt {
 
     class Matrix3f {
     public:
