@@ -7,6 +7,7 @@
 #include "../ParticleSimulation/particle_simulation.hpp"
 #include "../Path_Manager/path_manager.hpp"
 #include "../InfoWindow/infowindow.hpp"
+#include "../Physics/Clothing/clothing.hpp"
 #include <memory> 
 #include <unordered_map>
 
