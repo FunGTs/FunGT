@@ -1,7 +1,7 @@
 #if !defined(_VECTOR3_HPP_)
 #define _VECTOR3_HPP_
 #include <cmath>
-namespace fungl{
+namespace fungt{
 
 
     class  Vec3 {

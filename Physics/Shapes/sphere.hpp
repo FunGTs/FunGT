@@ -10,8 +10,8 @@ public:
     : Shape(ShapeType::SPHERE), m_radius{_radius}{
     }
 
-    fungl::Matrix3f getInertiaMatrix(float mass) const override {
-        fungl::Matrix3f inertia;
+    fungt::Matrix3f getInertiaMatrix(float mass) const override {
+        fungt::Matrix3f inertia;
         float I = 0.4f * mass * m_radius * m_radius; // (2/5) * m * r²
         
         inertia.m[0][0] = I;

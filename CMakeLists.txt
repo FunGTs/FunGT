@@ -63,11 +63,12 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/../Physics/Integrators
     ${CMAKE_SOURCE_DIR}/../Physics/ContactHelpers
     ${CMAKE_SOURCE_DIR}/../Physics/PhysicsWorld
+    ${CMAKE_SOURCE_DIR}/../Physics/Clothing
     ${CMAKE_SOURCE_DIR}/../Quaternion
     ${CMAKE_SOURCE_DIR}/../Vector
+    
 
 )
-
 # Source files
 set(SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/main.cpp
@@ -114,6 +115,7 @@ set(SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/../SimpleModel/simple_model.cpp
     ${CMAKE_SOURCE_DIR}/../Physics/Collisions/simple_collision.cpp
     ${CMAKE_SOURCE_DIR}/../Physics/Collider/collider.cpp
+    ${CMAKE_SOURCE_DIR}/../Physics/Clothing/clothing.cpp
 )
 
 # Add executable
@@ -138,7 +140,7 @@ if (WIN32)
 elseif (UNIX)
     # Linux-specific settings
     message(STATUS "Configuring for Linux")
-
+    message(STATUS "CMakeLists.txt location: ${CMAKE_SOURCE_DIR}")
     find_package(OpenCL REQUIRED)
     if (OpenCL_FOUND)
         message(STATUS "OpenCL found")

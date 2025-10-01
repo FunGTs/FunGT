@@ -46,5 +46,5 @@ void Collider::resolveCollisions(Contact &contact)
     // Check if bodies are still valid
     if (!bodyA || !bodyB) return;
     
-    fungl::Vec3 normal = contact.colissionNormal;
+    fungt::Vec3 normal = contact.colissionNormal;
 }

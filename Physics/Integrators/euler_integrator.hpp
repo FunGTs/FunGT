@@ -14,7 +14,7 @@ public:
        if (body->m_invMass == 0) return; // Static body doesn't move
         
         // Linear motion
-        fungl::Vec3 acceleration = body->m_force * body->m_invMass;
+        fungt::Vec3 acceleration = body->m_force * body->m_invMass;
         // Debug prints
         //inverse mass and force
         //printf("Inv Mass: %.4f\n", body->m_invMass);
@@ -29,7 +29,7 @@ public:
        // printf("Position: (%.2f, %.2f, %.2f)\n", body->m_pos.x, body->m_pos.y, body->m_pos.z);
        // printf("Velocity: (%.2f, %.2f, %.2f)\n", body->m_vel.x, body->m_vel.y, body->m_vel.z);
         // Angular motion
-        fungl::Vec3 angularAcceleration = body->m_invInertiaTensor * body->m_torque;
+        fungt::Vec3 angularAcceleration = body->m_invInertiaTensor * body->m_torque;
         //std::cout<<"Ang Acc : " <<angularAcceleration.x <<std::endl;
         body->m_angularVel += angularAcceleration * dt;
         
@@ -37,7 +37,7 @@ public:
         // For small rotations, this approximation works
         if (body->m_angularVel.length() > 0) {
             float angularSpeed = body->m_angularVel.length();
-            fungl::Vec3 axis = body->m_angularVel*(1.0f / angularSpeed);
+            fungt::Vec3 axis = body->m_angularVel*(1.0f / angularSpeed);
             float angle = angularSpeed * dt;
             Quaternion deltaRotation = Quaternion::fromAxisAngle(axis, angle);
 
@@ -50,8 +50,8 @@ public:
         }
         
         // Clear forces and torques for next frame
-        body->m_force = fungl::Vec3(0, 0, 0);
-        body->m_torque = fungl::Vec3(0, 0, 0);
+        body->m_force = fungt::Vec3(0, 0, 0);
+        body->m_torque = fungt::Vec3(0, 0, 0);
     }
     
     std::string getName() const override { return "Euler"; }

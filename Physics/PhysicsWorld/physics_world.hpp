@@ -15,10 +15,10 @@ class PhysicsWorld {
 private:
     std::shared_ptr<CollisionManager> m_collisionManager;
     std::unique_ptr<Integrator> m_integrator;
-    fungl::Vec3 gravity;
+    fungt::Vec3 gravity;
     
 public:
-    PhysicsWorld(fungl::Vec3 g = fungl::Vec3(0, -9.81f, 0)) : gravity(g) {
+    PhysicsWorld(fungt::Vec3 g = fungt::Vec3(0, -9.81f, 0)) : gravity(g) {
         SimpleCollision::Init();
         //std::unique_ptr<Integrator> m_integrator = std::make_unique<EulerIntegrator>(); //Default Integrator
         m_integrator = std::make_unique<EulerIntegrator>(); //Default Integrator
@@ -62,8 +62,8 @@ public:
                 body->m_angularVel = body->m_angularVel*angularDamping;
 
                 // Stop very small velocities to avoid jitter
-                if (body->m_vel.length() < 0.05f) body->m_vel = fungl::Vec3(0, 0, 0);
-                if (body->m_angularVel.length() < 0.05f) body->m_angularVel = fungl::Vec3(0, 0, 0);
+                if (body->m_vel.length() < 0.05f) body->m_vel = fungt::Vec3(0, 0, 0);
+                if (body->m_angularVel.length() < 0.05f) body->m_angularVel = fungt::Vec3(0, 0, 0);
             }
 
             // Detect collisions

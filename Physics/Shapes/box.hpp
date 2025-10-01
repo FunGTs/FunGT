@@ -4,13 +4,13 @@
 // Box shape
 class Box : public Shape {
 public:
-    fungl::Vec3 size; // width, height, depth
+    fungt::Vec3 size; // width, height, depth
     
     Box(float width, float height, float depth) 
         : Shape(ShapeType::BOX), size(width, height, depth) {}
     
-     fungl::Matrix3f getInertiaMatrix(float mass) const override {
-        fungl::Matrix3f inertia;
+     fungt::Matrix3f getInertiaMatrix(float mass) const override {
+        fungt::Matrix3f inertia;
         float w2 = size.x * size.x;
         float h2 = size.y * size.y;
         float d2 = size.z * size.z;

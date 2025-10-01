@@ -1,4 +1,4 @@
-#if !defined(_SIMPLE_MODEL_HPP)
+#if !defined(_SIMPLE_MODEL_HPP_)
 #define _SIMPLE_MODEL_HPP_
 #include "../Model/model.hpp"
 #include "../Renderable/renderable.hpp"
@@ -53,4 +53,4 @@ public:
 
 
 
-#endif // _SIMPLE_MODEL_HPP_) 
+#endif // _SIMPLE_MODEL_HPP_ 

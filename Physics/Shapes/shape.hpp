@@ -17,7 +17,7 @@ class Shape {
         virtual ~Shape(){
 
         }
-        virtual fungl::Matrix3f getInertiaMatrix(float mass) const = 0;
+        virtual fungt::Matrix3f getInertiaMatrix(float mass) const = 0;
         virtual float getVolume() const = 0 ;
         virtual ShapeType GetType() const { return m_shapeType; }
 };

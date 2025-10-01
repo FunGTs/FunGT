@@ -7,20 +7,20 @@
 class RigidBody{
 
 public:
-    fungl::Vec3 m_pos;
-    fungl::Vec3 m_vel;
-    fungl::Vec3 m_force;
+    fungt::Vec3 m_pos;
+    fungt::Vec3 m_vel;
+    fungt::Vec3 m_force;
 
     float m_mass; 
     float m_invMass;
 
     // Angular properties
-    fungl::Vec3     m_angularVel;
-    fungl::Vec3     m_torque;
-    fungl::Matrix3f m_inertiaTensor;
-    fungl::Matrix3f m_invInertiaTensor;
-    fungl::Matrix3f m_inertiaTensorWorld;        // Inertia tensor in world space (updated each frame)
-    fungl::Matrix3f m_invInertiaTensorWorld;     // Inverse inertia tensor in world space (updated each frame)
+    fungt::Vec3     m_angularVel;
+    fungt::Vec3     m_torque;
+    fungt::Matrix3f m_inertiaTensor;
+    fungt::Matrix3f m_invInertiaTensor;
+    fungt::Matrix3f m_inertiaTensorWorld;        // Inertia tensor in world space (updated each frame)
+    fungt::Matrix3f m_invInertiaTensorWorld;     // Inverse inertia tensor in world space (updated each frame)
     Quaternion m_orientation;
 
      // Shape and material properties
@@ -65,29 +65,29 @@ public:
 
 
      // Apply force at center of mass
-    void applyForce(const fungl::Vec3& f) {
+    void applyForce(const fungt::Vec3& f) {
         m_force += f;
     }
     
     // Apply force at a specific point (creates torque)
-    void applyForceAtPoint(const fungl::Vec3& f, const fungl::Vec3& point) {
+    void applyForceAtPoint(const fungt::Vec3& f, const fungt::Vec3& point) {
         m_force += f;
-        fungl::Vec3 r = point - m_pos;
+        fungt::Vec3 r = point - m_pos;
         m_torque += r.cross(f);
     }
     
     // Apply impulse (instant velocity change)
-    void applyImpulse(const fungl::Vec3& impulse) {
+    void applyImpulse(const fungt::Vec3& impulse) {
         m_vel += impulse * m_invMass;
     }
     
     // Apply angular impulse
-    void applyAngularImpulse(const fungl::Vec3& angularImpulse) {
+    void applyAngularImpulse(const fungt::Vec3& angularImpulse) {
         m_angularVel += m_invInertiaTensor * angularImpulse;
     }
      void updateInertiaTensors() {
-        fungl::Matrix3f rotMatrix = m_orientation.toMatrix();
-        fungl::Matrix3f rotMatrixT = rotMatrix.transpose();
+        fungt::Matrix3f rotMatrix = m_orientation.toMatrix();
+        fungt::Matrix3f rotMatrixT = rotMatrix.transpose();
         
         // I_world = R * I_local * R^T
         m_inertiaTensorWorld = rotMatrix * m_inertiaTensor * rotMatrixT;
@@ -105,15 +105,15 @@ public:
         return linear + angular;
     }
      // Get current orientation as Euler angles (for debugging/display)
-    fungl::Vec3 getEulerAngles() const {
-        fungl::Matrix3f rot = m_orientation.toMatrix();
+    fungt::Vec3 getEulerAngles() const {
+        fungt::Matrix3f rot = m_orientation.toMatrix();
         
         // Extract Euler angles (YXZ order)
         float y = std::atan2(rot.m[0][2], rot.m[2][2]);
         float x = std::atan2(-rot.m[1][2], std::sqrt(rot.m[1][0]*rot.m[1][0] + rot.m[1][1]*rot.m[1][1]));
         float z = std::atan2(rot.m[1][0], rot.m[1][1]);
         
-        return fungl::Vec3(x, y, z);
+        return fungt::Vec3(x, y, z);
     }
 
 };

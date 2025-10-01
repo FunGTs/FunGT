@@ -10,42 +10,42 @@ std::optional<Contact> SimpleCollision::SphereBox(const std::shared_ptr<RigidBod
     Box    *box_shape    = static_cast<Box *>(box->m_shape.get());
     
     // Find closest point on box to sphere center
-    fungl::Vec3 relativePos = sphere->m_pos - box->m_pos;
+    fungt::Vec3 relativePos = sphere->m_pos - box->m_pos;
 
     // Clamp to box bounds
-    fungl::Vec3 halfSize = box_shape->size * 0.5f;
-    fungl::Vec3 closestPoint;
+    fungt::Vec3 halfSize = box_shape->size * 0.5f;
+    fungt::Vec3 closestPoint;
     closestPoint.x = std::max(-halfSize.x, std::min(halfSize.x, relativePos.x));
     closestPoint.y = std::max(-halfSize.y, std::min(halfSize.y, relativePos.y));
     closestPoint.z = std::max(-halfSize.z, std::min(halfSize.z, relativePos.z));
      // Convert back to world space
-    fungl::Vec3 worldClosestPoint = box->m_pos + closestPoint;
+    fungt::Vec3 worldClosestPoint = box->m_pos + closestPoint;
 
-    fungl::Vec3 direction = sphere->m_pos - worldClosestPoint;
+    fungt::Vec3 direction = sphere->m_pos - worldClosestPoint;
     float distance = direction.length();
     
    if (distance < sphere_shape->m_radius) {
-        fungl::Vec3 normal;
+        fungt::Vec3 normal;
         if (distance > 1e-6f) {
             normal = direction.normalize();
         } else {
             // Sphere is exactly at closestPoint (center inside box)
             // Pick axis of deepest penetration
-            fungl::Vec3 diff = relativePos;
+            fungt::Vec3 diff = relativePos;
             float dx = halfSize.x - std::abs(diff.x);
             float dy = halfSize.y - std::abs(diff.y);
             float dz = halfSize.z - std::abs(diff.z);
 
             if (dx < dy && dx < dz)
-                normal = fungl::Vec3((diff.x > 0) ? 1 : -1, 0, 0);
+                normal = fungt::Vec3((diff.x > 0) ? 1 : -1, 0, 0);
             else if (dy < dz)
-                normal = fungl::Vec3(0, (diff.y > 0) ? 1 : -1, 0);
+                normal = fungt::Vec3(0, (diff.y > 0) ? 1 : -1, 0);
             else
-                normal = fungl::Vec3(0, 0, (diff.z > 0) ? 1 : -1);
+                normal = fungt::Vec3(0, 0, (diff.z > 0) ? 1 : -1);
         }
 
         float penetration = sphere_shape->m_radius - distance;
-        fungl::Vec3 contactPoint = worldClosestPoint;
+        fungt::Vec3 contactPoint = worldClosestPoint;
 
         return Contact(sphere, box, contactPoint, normal, penetration);
     }
@@ -68,14 +68,14 @@ std::optional<Contact> SimpleCollision::SphereSphere(const std::shared_ptr<Rigid
     Sphere* shapeA = static_cast<Sphere*>(sphereA->m_shape.get());
     Sphere* shapeB = static_cast<Sphere*>(sphereB->m_shape.get());
     
-    fungl::Vec3 direction = sphereB->m_pos - sphereA->m_pos;
+    fungt::Vec3 direction = sphereB->m_pos - sphereA->m_pos;
     float distance = direction.length();
     float combinedRadius = shapeA->m_radius + shapeB->m_radius;
     
     if (distance < combinedRadius && distance > 0) {
-        fungl::Vec3 normal = direction.normalize();
+        fungt::Vec3 normal = direction.normalize();
         float penetration = combinedRadius - distance;
-        fungl::Vec3 contactPoint = sphereA->m_pos + normal * (shapeA->m_radius - penetration * 0.5f);
+        fungt::Vec3 contactPoint = sphereA->m_pos + normal * (shapeA->m_radius - penetration * 0.5f);
         
         Contact contact(sphereA, sphereB, contactPoint, normal, penetration);
         return contact; // automatically wrapped into std::optional
@@ -88,12 +88,12 @@ std::optional<Contact> SimpleCollision::BoxBox(const std::shared_ptr<RigidBody> 
     Box* shapeA = static_cast<Box*>(boxA->m_shape.get());
     Box* shapeB = static_cast<Box*>(boxB->m_shape.get());
     
-    fungl::Vec3 halfSizeA = shapeA->size * 0.5f;
-    fungl::Vec3 halfSizeB = shapeB->size * 0.5f;
+    fungt::Vec3 halfSizeA = shapeA->size * 0.5f;
+    fungt::Vec3 halfSizeB = shapeB->size * 0.5f;
     
-    fungl::Vec3 distance = boxB->m_pos - boxA->m_pos;
-    fungl::Vec3 absDistance = fungl::Vec3(std::abs(distance.x), std::abs(distance.y), std::abs(distance.z));
-    fungl::Vec3 combinedHalfSizes = halfSizeA + halfSizeB;
+    fungt::Vec3 distance = boxB->m_pos - boxA->m_pos;
+    fungt::Vec3 absDistance = fungt::Vec3(std::abs(distance.x), std::abs(distance.y), std::abs(distance.z));
+    fungt::Vec3 combinedHalfSizes = halfSizeA + halfSizeB;
     
     // Check overlap on all axes
     if (absDistance.x < combinedHalfSizes.x && 
@@ -101,23 +101,23 @@ std::optional<Contact> SimpleCollision::BoxBox(const std::shared_ptr<RigidBody> 
         absDistance.z < combinedHalfSizes.z) {
         
         // Find axis of minimum penetration
-        fungl::Vec3 penetrations = combinedHalfSizes - absDistance;
+        fungt::Vec3 penetrations = combinedHalfSizes - absDistance;
         
-        fungl::Vec3 normal;
+        fungt::Vec3 normal;
         float minPenetration;
         
         if (penetrations.x <= penetrations.y && penetrations.x <= penetrations.z) {
             minPenetration = penetrations.x;
-            normal = fungl::Vec3(distance.x > 0 ? 1.0f : -1.0f, 0, 0);
+            normal = fungt::Vec3(distance.x > 0 ? 1.0f : -1.0f, 0, 0);
         } else if (penetrations.y <= penetrations.z) {
             minPenetration = penetrations.y;
-            normal = fungl::Vec3(0, distance.y > 0 ? 1.0f : -1.0f, 0);
+            normal = fungt::Vec3(0, distance.y > 0 ? 1.0f : -1.0f, 0);
         } else {
             minPenetration = penetrations.z;
-            normal = fungl::Vec3(0, 0, distance.z > 0 ? 1.0f : -1.0f);
+            normal = fungt::Vec3(0, 0, distance.z > 0 ? 1.0f : -1.0f);
         }
         
-        fungl::Vec3 contactPoint = boxA->m_pos + distance * 0.5f;
+        fungt::Vec3 contactPoint = boxA->m_pos + distance * 0.5f;
         Contact contact(boxA, boxB, contactPoint, normal, minPenetration);
         return contact;
     }

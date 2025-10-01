@@ -9,8 +9,8 @@ static void resolveContactEx2(Contact& contact) {
     auto bodyB = contact.getBodyB();
     if (!bodyA || !bodyB) return;
 
-    fungl::Vec3 normal = contact.colissionNormal;
-    fungl::Vec3 contactPoint = contact.colissionPoint;
+    fungt::Vec3 normal = contact.colissionNormal;
+    fungt::Vec3 contactPoint = contact.colissionPoint;
 
     // ----------------------------
     // 1️⃣ Separate overlapping bodies
@@ -19,7 +19,7 @@ static void resolveContactEx2(Contact& contact) {
     const float slop = 0.01f;   // Small tolerance
     float penetration = contact.penetrationDepth - slop;
     if (penetration > 0.0f) {
-        fungl::Vec3 correction = normal * (penetration * percent);
+        fungt::Vec3 correction = normal * (penetration * percent);
         bodyA->m_pos += correction;
         bodyB->m_pos -= correction;
     }
@@ -27,11 +27,11 @@ static void resolveContactEx2(Contact& contact) {
     // ----------------------------
     // 2️⃣ Relative velocity at contact
     // ----------------------------
-    fungl::Vec3 rA = contact.colissionPoint - bodyA->m_pos;
-    fungl::Vec3 rB = contact.colissionPoint - bodyB->m_pos;
-    fungl::Vec3 velA = bodyA->m_vel + bodyA->m_angularVel.cross(rA);
-    fungl::Vec3 velB = bodyB->m_vel + bodyB->m_angularVel.cross(rB);
-    fungl::Vec3 relVel = velA - velB;
+    fungt::Vec3 rA = contact.colissionPoint - bodyA->m_pos;
+    fungt::Vec3 rB = contact.colissionPoint - bodyB->m_pos;
+    fungt::Vec3 velA = bodyA->m_vel + bodyA->m_angularVel.cross(rA);
+    fungt::Vec3 velB = bodyB->m_vel + bodyB->m_angularVel.cross(rB);
+    fungt::Vec3 relVel = velA - velB;
     float velAlongNormal = relVel.dot(normal);
 
     // ----------------------------
@@ -55,7 +55,7 @@ static void resolveContactEx2(Contact& contact) {
 
     float j = -(1 + restitution) * velAlongNormal / invMassSum;
 
-    fungl::Vec3 impulse = normal * j;
+    fungt::Vec3 impulse = normal * j;
 
     // Apply linear velocity
     if (!bodyA->isStatic()) bodyA->m_vel += impulse * bodyA->m_invMass;
@@ -85,8 +85,8 @@ static void resolveContactEx2(Contact& contact) {
     auto bodyB = contact.getBodyB();
     if (!bodyA || !bodyB) return;
 
-    fungl::Vec3 normal = contact.colissionNormal;
-    const fungl::Vec3 contactPoint = contact.colissionPoint;
+    fungt::Vec3 normal = contact.colissionNormal;
+    const fungt::Vec3 contactPoint = contact.colissionPoint;
     // ----------------------------
     // 1️⃣ Separate overlapping bodies
     // ----------------------------
@@ -94,7 +94,7 @@ static void resolveContactEx2(Contact& contact) {
     const float slop = 0.01f;     // Small tolerance to avoid jitter
     float penetration = contact.penetrationDepth - slop;
     if (penetration > 0.0f) {
-        fungl::Vec3 correction = normal * (penetration * percent);
+        fungt::Vec3 correction = normal * (penetration * percent);
         bodyA->m_pos += correction;
         bodyB->m_pos -= correction;
     }
@@ -102,13 +102,13 @@ static void resolveContactEx2(Contact& contact) {
     // ----------------------------
     // 2️⃣ Compute relative velocity
     // ----------------------------
-    //fungl::Vec3 relVel = bodyA->m_vel - bodyB->m_vel;
-    fungl::Vec3 rA = contactPoint - bodyA->m_pos;
-    fungl::Vec3 rB = contactPoint - bodyB->m_pos;
-    fungl::Vec3 relVel = (bodyA->m_vel + bodyA->m_angularVel.cross(rA)) - 
+    //fungt::Vec3 relVel = bodyA->m_vel - bodyB->m_vel;
+    fungt::Vec3 rA = contactPoint - bodyA->m_pos;
+    fungt::Vec3 rB = contactPoint - bodyB->m_pos;
+    fungt::Vec3 relVel = (bodyA->m_vel + bodyA->m_angularVel.cross(rA)) - 
                          (bodyB->m_vel + bodyB->m_angularVel.cross(rB));
     float velAlongNormal = relVel.dot(normal);
-    //fungl::Vec3 relVel = getRelativeVelocity(bodyA.get(), bodyB.get(), contact.colissionPoint);
+    //fungt::Vec3 relVel = getRelativeVelocity(bodyA.get(), bodyB.get(), contact.colissionPoint);
     //float velAlongNormal = relVel.dot(normal);
 
     // ----------------------------
@@ -130,7 +130,7 @@ static void resolveContactEx2(Contact& contact) {
     j /= invMassSum;
 
     // Apply impulse
-    fungl::Vec3 impulse = normal * j;
+    fungt::Vec3 impulse = normal * j;
     bodyA->m_vel += impulse * bodyA->m_invMass;
     bodyB->m_vel -= impulse * bodyB->m_invMass;
 
@@ -161,10 +161,10 @@ static void resolveContactEx2(Contact& contact) {
         if (!bodyA || !bodyB) return;
         // Separate overlapping bodies
         separateBodies(contact);
-        fungl::Vec3 normal = contact.colissionNormal;
+        fungt::Vec3 normal = contact.colissionNormal;
 
         // Calculate relative m_vel at contact point
-        fungl::Vec3 relativeVelocity = getRelativeVelocity(bodyA.get(), bodyB.get(), contact.colissionPoint);
+        fungt::Vec3 relativeVelocity = getRelativeVelocity(bodyA.get(), bodyB.get(), contact.colissionPoint);
 
         // Check if objects are separating (don't resolve if they're already moving apart)
         float m_velAlongNormal = relativeVelocity.dot(normal);
@@ -182,7 +182,7 @@ static void resolveContactEx2(Contact& contact) {
         impulseMagnitude /= bodyA->m_invMass + bodyB->m_invMass +
                            calculateAngularFactor(bodyA.get(), bodyB.get(), contact.colissionPoint, normal);
 
-        fungl::Vec3 impulse = normal * impulseMagnitude;
+        fungt::Vec3 impulse = normal * impulseMagnitude;
 
         // Apply linear impulse
         if (bodyA->m_invMass > 0) {
@@ -218,7 +218,7 @@ private:
         float correctionAmount = std::max(0.0f, contact.penetrationDepth - slop);
         if (correctionAmount <= 0.0f) return; // No correction needed
         
-        fungl::Vec3 correction = contact.colissionNormal * (correctionAmount / totalinvMass) * percent;
+        fungt::Vec3 correction = contact.colissionNormal * (correctionAmount / totalinvMass) * percent;
 
         if (bodyA->m_invMass > 0) {
             bodyA->m_pos += correction * (-bodyA->m_invMass);
@@ -228,13 +228,13 @@ private:
         }
     }
 
-    static fungl::Vec3 getRelativeVelocity(RigidBody* bodyA, RigidBody* bodyB, fungl::Vec3 contactPoint) {
-        fungl::Vec3 velA = bodyA->m_vel;
-        fungl::Vec3 velB = bodyB->m_vel;
+    static fungt::Vec3 getRelativeVelocity(RigidBody* bodyA, RigidBody* bodyB, fungt::Vec3 contactPoint) {
+        fungt::Vec3 velA = bodyA->m_vel;
+        fungt::Vec3 velB = bodyB->m_vel;
 
         // Add rotational m_vel contribution
-        fungl::Vec3 rA = contactPoint - bodyA->m_pos;
-        fungl::Vec3 rB = contactPoint - bodyB->m_pos;
+        fungt::Vec3 rA = contactPoint - bodyA->m_pos;
+        fungt::Vec3 rB = contactPoint - bodyB->m_pos;
 
         velA += bodyA->m_angularVel.cross(rA);
         velB += bodyB->m_angularVel.cross(rB);
@@ -242,40 +242,40 @@ private:
         return velB - velA;
     }
 
-    static float calculateAngularFactor(RigidBody* bodyA, RigidBody* bodyB, fungl::Vec3 contactPoint, fungl::Vec3 normal) {
-        fungl::Vec3 rA = contactPoint - bodyA->m_pos;
-        fungl::Vec3 rB = contactPoint - bodyB->m_pos;
+    static float calculateAngularFactor(RigidBody* bodyA, RigidBody* bodyB, fungt::Vec3 contactPoint, fungt::Vec3 normal) {
+        fungt::Vec3 rA = contactPoint - bodyA->m_pos;
+        fungt::Vec3 rB = contactPoint - bodyB->m_pos;
 
-        fungl::Vec3 rACrossN = rA.cross(normal);
-        fungl::Vec3 rBCrossN = rB.cross(normal);
+        fungt::Vec3 rACrossN = rA.cross(normal);
+        fungt::Vec3 rBCrossN = rB.cross(normal);
 
         float angularFactorA = 0;
         float angularFactorB = 0;
 
         if (bodyA->m_invMass > 0) {
-            fungl::Vec3 temp = bodyA->m_invInertiaTensor * rACrossN;
+            fungt::Vec3 temp = bodyA->m_invInertiaTensor * rACrossN;
             angularFactorA = rACrossN.dot(temp);
         }
 
         if (bodyB->m_invMass > 0) {
-            fungl::Vec3 temp = bodyB->m_invInertiaTensor * rBCrossN;
+            fungt::Vec3 temp = bodyB->m_invInertiaTensor * rBCrossN;
             angularFactorB = rBCrossN.dot(temp);
         }
 
         return angularFactorA + angularFactorB;
     }
 
-    static void applyAngularImpulse(RigidBody* bodyA, RigidBody* bodyB, fungl::Vec3 contactPoint, fungl::Vec3 impulse) {
-        fungl::Vec3 rA = contactPoint - bodyA->m_pos;
-        fungl::Vec3 rB = contactPoint - bodyB->m_pos;
+    static void applyAngularImpulse(RigidBody* bodyA, RigidBody* bodyB, fungt::Vec3 contactPoint, fungt::Vec3 impulse) {
+        fungt::Vec3 rA = contactPoint - bodyA->m_pos;
+        fungt::Vec3 rB = contactPoint - bodyB->m_pos;
 
         if (bodyA->m_invMass > 0) {
-            fungl::Vec3 angularImpulseA = rA.cross(impulse * -1.0f);
+            fungt::Vec3 angularImpulseA = rA.cross(impulse * -1.0f);
             bodyA->m_angularVel += bodyA->m_invInertiaTensor * angularImpulseA;
         }
 
         if (bodyB->m_invMass > 0) {
-            fungl::Vec3 angularImpulseB = rB.cross(impulse);
+            fungt::Vec3 angularImpulseB = rB.cross(impulse);
             bodyB->m_angularVel += bodyB->m_invInertiaTensor * angularImpulseB;
         }
     }
@@ -286,9 +286,9 @@ private:
 
         if (!bodyA || !bodyB) return;
 
-        fungl::Vec3 normal = contact.colissionNormal;
-        fungl::Vec3 relativeVelocity = getRelativeVelocity(bodyA.get(), bodyB.get(), contact.colissionPoint);
-        fungl::Vec3 tangent = relativeVelocity - normal * relativeVelocity.dot(normal);
+        fungt::Vec3 normal = contact.colissionNormal;
+        fungt::Vec3 relativeVelocity = getRelativeVelocity(bodyA.get(), bodyB.get(), contact.colissionPoint);
+        fungt::Vec3 tangent = relativeVelocity - normal * relativeVelocity.dot(normal);
 
         if (tangent.length() < 0.001f) return;
         tangent = tangent.normalize();
@@ -304,7 +304,7 @@ private:
             tangentImpulseMagnitude = tangentImpulseMagnitude > 0 ? maxFrictionImpulse : -maxFrictionImpulse;
         }
 
-        fungl::Vec3 frictionImpulse = tangent * tangentImpulseMagnitude;
+        fungt::Vec3 frictionImpulse = tangent * tangentImpulseMagnitude;
 
         // Apply m_friction impulse
         if (bodyA->m_invMass > 0) {

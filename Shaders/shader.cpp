@@ -150,6 +150,7 @@ void Shader::create(std::string pathVert, std::string pathFrag){
     glDeleteShader(vShader);
     glDeleteShader(geomShader);
     glDeleteShader(fShader);
+    std::cout << "SUCESS : Compilation of Shaders  " << std::endl;
 }
 void Shader::create(std::string pathVert, std::string pathFrag, std::string pathgeom){
     bool error; 
