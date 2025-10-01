@@ -1,16 +1,41 @@
 cmake_minimum_required(VERSION 3.15)
 project(FunGT)
 
+# Allow FUNGT_BASE_DIR to be set externally (command line, environment, or cache)
+# Priority: 1. Cache variable, 2. Environment variable, 3. Default fallback
+if(NOT DEFINED FUNGT_BASE_DIR)
+    # Check if it's set as an environment variable
+    if(DEFINED ENV{FUNGT_BASE_DIR})
+        set(FUNGT_BASE_DIR $ENV{FUNGT_BASE_DIR} CACHE PATH "FunGT base directory")
+        message(STATUS "Using FUNGT_BASE_DIR from environment: ${FUNGT_BASE_DIR}")
+    else()
+        # Use a default fallback (you must specify this via -DFUNGT_BASE_DIR or environment)
+        message(FATAL_ERROR "FUNGT_BASE_DIR not specified. Please set it via:\n"
+                "  cmake -DFUNGT_BASE_DIR=/path/to/FunGT ..\n"
+                "  or export FUNGT_BASE_DIR=/path/to/FunGT")
+    endif()
+else()
+    message(STATUS "Using pre-defined FUNGT_BASE_DIR: ${FUNGT_BASE_DIR}")
+endif()
+
+# Validate that the base directory exists and contains expected subdirectories
+if(NOT EXISTS "${FUNGT_BASE_DIR}")
+    message(FATAL_ERROR "FUNGT_BASE_DIR does not exist: ${FUNGT_BASE_DIR}")
+endif()
+
+if(NOT EXISTS "${FUNGT_BASE_DIR}/VertexGL" OR NOT EXISTS "${FUNGT_BASE_DIR}/Shaders")
+    message(FATAL_ERROR "FUNGT_BASE_DIR does not appear to be a valid FunGT directory: ${FUNGT_BASE_DIR}")
+endif()
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(UNIX)
     # Set the build type to Release
     set(CMAKE_BUILD_TYPE Release)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/release/linux)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
     set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++)
       # Add funlib
-    set(FUNLIB_DIR ${CMAKE_SOURCE_DIR}/../vendor/funlib)
+    set(FUNLIB_DIR ${FUNGT_BASE_DIR}/vendor/funlib)
     add_library(funlib STATIC IMPORTED GLOBAL)
     set_target_properties(funlib PROPERTIES
         IMPORTED_LOCATION ${FUNLIB_DIR}/lib/libfunlib.a
@@ -26,96 +51,96 @@ if (WIN32)
     set(CMAKE_PREFIX_PATH "C:/Users/juang/Documents/Development/vcpkg/installed/x64-windows")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGL_VENDOR_NVIDIA")
     set(GLFW_BUILD_STATIC ON)
-    #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-    message(STATUS "Working Dir: " ${CMAKE_SOURCE_DIR})
+    #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    message(STATUS "Working Dir: " ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 # Include directories
 include_directories(
-    ${CMAKE_SOURCE_DIR}/../VertexGL
-    ${CMAKE_SOURCE_DIR}/../Shaders
-    ${CMAKE_SOURCE_DIR}/../funGT
-    ${CMAKE_SOURCE_DIR}/../AnimatedModel
-    ${CMAKE_SOURCE_DIR}/../Textures
-    ${CMAKE_SOURCE_DIR}/../vendor/stb_image
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui
-    ${CMAKE_SOURCE_DIR}/../Imgui_Setup
-    ${CMAKE_SOURCE_DIR}/../Material
-    ${CMAKE_SOURCE_DIR}/../Mesh
-    ${CMAKE_SOURCE_DIR}/../Camera
-    ${CMAKE_SOURCE_DIR}/../Geometries
-    ${CMAKE_SOURCE_DIR}/../Model
-    ${CMAKE_SOURCE_DIR}/../Helpers
-    ${CMAKE_SOURCE_DIR}/../Animation
-    ${CMAKE_SOURCE_DIR}/../Bone
-    ${CMAKE_SOURCE_DIR}/../Matrix
-    ${CMAKE_SOURCE_DIR}/../SceneManager
-    ${CMAKE_SOURCE_DIR}/../CubeMap
-    ${CMAKE_SOURCE_DIR}/../ParticleSimulation
-    ${CMAKE_SOURCE_DIR}/../Random
-    ${CMAKE_SOURCE_DIR}/../Path_Manager
-    ${CMAKE_SOURCE_DIR}/../InfoWindow
-    ${CMAKE_SOURCE_DIR}/../GUI
-    ${CMAKE_SOURCE_DIR}/../SimpleModel
-    ${CMAKE_SOURCE_DIR}/../Physics/CollisionManager
-    ${CMAKE_SOURCE_DIR}/../Physics/Contact
-    ${CMAKE_SOURCE_DIR}/../Physics/RigidBody
-    ${CMAKE_SOURCE_DIR}/../Physics/Shapes
-    ${CMAKE_SOURCE_DIR}/../Physics/Integrators
-    ${CMAKE_SOURCE_DIR}/../Physics/ContactHelpers
-    ${CMAKE_SOURCE_DIR}/../Physics/PhysicsWorld
-    ${CMAKE_SOURCE_DIR}/../Physics/Clothing
-    ${CMAKE_SOURCE_DIR}/../Quaternion
-    ${CMAKE_SOURCE_DIR}/../Vector
+    ${FUNGT_BASE_DIR}/VertexGL
+    ${FUNGT_BASE_DIR}/Shaders
+    ${FUNGT_BASE_DIR}/funGT
+    ${FUNGT_BASE_DIR}/AnimatedModel
+    ${FUNGT_BASE_DIR}/Textures
+    ${FUNGT_BASE_DIR}/vendor/stb_image
+    ${FUNGT_BASE_DIR}/vendor/imgui
+    ${FUNGT_BASE_DIR}/Imgui_Setup
+    ${FUNGT_BASE_DIR}/Material
+    ${FUNGT_BASE_DIR}/Mesh
+    ${FUNGT_BASE_DIR}/Camera
+    ${FUNGT_BASE_DIR}/Geometries
+    ${FUNGT_BASE_DIR}/Model
+    ${FUNGT_BASE_DIR}/Helpers
+    ${FUNGT_BASE_DIR}/Animation
+    ${FUNGT_BASE_DIR}/Bone
+    ${FUNGT_BASE_DIR}/Matrix
+    ${FUNGT_BASE_DIR}/SceneManager
+    ${FUNGT_BASE_DIR}/CubeMap
+    ${FUNGT_BASE_DIR}/ParticleSimulation
+    ${FUNGT_BASE_DIR}/Random
+    ${FUNGT_BASE_DIR}/Path_Manager
+    ${FUNGT_BASE_DIR}/InfoWindow
+    ${FUNGT_BASE_DIR}/GUI
+    ${FUNGT_BASE_DIR}/SimpleModel
+    ${FUNGT_BASE_DIR}/Physics/CollisionManager
+    ${FUNGT_BASE_DIR}/Physics/Contact
+    ${FUNGT_BASE_DIR}/Physics/RigidBody
+    ${FUNGT_BASE_DIR}/Physics/Shapes
+    ${FUNGT_BASE_DIR}/Physics/Integrators
+    ${FUNGT_BASE_DIR}/Physics/ContactHelpers
+    ${FUNGT_BASE_DIR}/Physics/PhysicsWorld
+    ${FUNGT_BASE_DIR}/Physics/Clothing
+    ${FUNGT_BASE_DIR}/Quaternion
+    ${FUNGT_BASE_DIR}/Vector
     
 
 )
 # Source files
 set(SOURCE_FILES
-    ${CMAKE_SOURCE_DIR}/main.cpp
-    ${CMAKE_SOURCE_DIR}/../VertexGL/vertexArrayObjects.cpp
-    ${CMAKE_SOURCE_DIR}/../VertexGL/vertexBuffers.cpp
-    ${CMAKE_SOURCE_DIR}/../VertexGL/vertexIndices.cpp
-    ${CMAKE_SOURCE_DIR}/../Shaders/shader.cpp
-    ${CMAKE_SOURCE_DIR}/../funGT/fungt.cpp
-    ${CMAKE_SOURCE_DIR}/../AnimatedModel/animated_model.cpp
-    ${CMAKE_SOURCE_DIR}/../Textures/textures.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/stb_image/stb_image.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui/imgui.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui/imgui_demo.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui/imgui_draw.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui/imgui_tables.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui/imgui_widgets.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui/imgui_impl_glfw.cpp
-    ${CMAKE_SOURCE_DIR}/../vendor/imgui/imgui_impl_opengl3.cpp
-    ${CMAKE_SOURCE_DIR}/../Imgui_Setup/imgui_setup.cpp
-    ${CMAKE_SOURCE_DIR}/../Material/material.cpp
-    ${CMAKE_SOURCE_DIR}/../Mesh/mesh.cpp
-    ${CMAKE_SOURCE_DIR}/../Camera/camera.cpp
-    ${CMAKE_SOURCE_DIR}/../Geometries/cube.cpp
-    ${CMAKE_SOURCE_DIR}/../Geometries/plane.cpp
-    ${CMAKE_SOURCE_DIR}/../Geometries/primitives.cpp
-    ${CMAKE_SOURCE_DIR}/../Geometries/pyramid.cpp
-    ${CMAKE_SOURCE_DIR}/../Geometries/shape.cpp
-    ${CMAKE_SOURCE_DIR}/../Geometries/square.cpp
-    ${CMAKE_SOURCE_DIR}/../Model/model.cpp
-    ${CMAKE_SOURCE_DIR}/../Helpers/helpers.cpp
-    ${CMAKE_SOURCE_DIR}/../Animation/animation.cpp
-    ${CMAKE_SOURCE_DIR}/../Bone/bone.cpp
-    ${CMAKE_SOURCE_DIR}/../Matrix/matrix4x4f.cpp
-    ${CMAKE_SOURCE_DIR}/../Matrix/matrix3x3f.cpp
-    ${CMAKE_SOURCE_DIR}/../SceneManager/scene_manager.cpp
-    ${CMAKE_SOURCE_DIR}/../CubeMap/cube_map.cpp
-    #${CMAKE_SOURCE_DIR}/../Physics/ParticleSystem/particle_sys.cpp
-    #${CMAKE_SOURCE_DIR}/../Physics/ParticleSystem/particle.cpp
-    ${CMAKE_SOURCE_DIR}/../ParticleSimulation/particle_simulation.cpp
-    ${CMAKE_SOURCE_DIR}/../Random/random.cpp
-    ${CMAKE_SOURCE_DIR}/../Path_Manager/path_manager.cpp
-    ${CMAKE_SOURCE_DIR}/../InfoWindow/infowindow.cpp
-    ${CMAKE_SOURCE_DIR}/../GUI/gui.cpp
-    ${CMAKE_SOURCE_DIR}/../SimpleModel/simple_model.cpp
-    ${CMAKE_SOURCE_DIR}/../Physics/Collisions/simple_collision.cpp
-    ${CMAKE_SOURCE_DIR}/../Physics/Collider/collider.cpp
-    ${CMAKE_SOURCE_DIR}/../Physics/Clothing/clothing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/vertexArrayObjects.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
+    ${FUNGT_BASE_DIR}/Shaders/shader.cpp
+    ${FUNGT_BASE_DIR}/funGT/fungt.cpp
+    ${FUNGT_BASE_DIR}/AnimatedModel/animated_model.cpp
+    ${FUNGT_BASE_DIR}/Textures/textures.cpp
+    ${FUNGT_BASE_DIR}/vendor/stb_image/stb_image.cpp
+    ${FUNGT_BASE_DIR}/vendor/imgui/imgui.cpp
+    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_demo.cpp
+    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_draw.cpp
+    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_tables.cpp
+    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_widgets.cpp
+    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_impl_glfw.cpp
+    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_impl_opengl3.cpp
+    ${FUNGT_BASE_DIR}/Imgui_Setup/imgui_setup.cpp
+    ${FUNGT_BASE_DIR}/Material/material.cpp
+    ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
+    ${FUNGT_BASE_DIR}/Camera/camera.cpp
+    ${FUNGT_BASE_DIR}/Geometries/cube.cpp
+    ${FUNGT_BASE_DIR}/Geometries/plane.cpp
+    ${FUNGT_BASE_DIR}/Geometries/primitives.cpp
+    ${FUNGT_BASE_DIR}/Geometries/pyramid.cpp
+    ${FUNGT_BASE_DIR}/Geometries/shape.cpp
+    ${FUNGT_BASE_DIR}/Geometries/square.cpp
+    ${FUNGT_BASE_DIR}/Model/model.cpp
+    ${FUNGT_BASE_DIR}/Helpers/helpers.cpp
+    ${FUNGT_BASE_DIR}/Animation/animation.cpp
+    ${FUNGT_BASE_DIR}/Bone/bone.cpp
+    ${FUNGT_BASE_DIR}/Matrix/matrix4x4f.cpp
+    ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
+    ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
+    ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
+    #${FUNGT_BASE_DIR}/Physics/ParticleSystem/particle_sys.cpp
+    #${FUNGT_BASE_DIR}/Physics/ParticleSystem/particle.cpp
+    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
+    ${FUNGT_BASE_DIR}/Random/random.cpp
+    ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
+    ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
+    ${FUNGT_BASE_DIR}/GUI/gui.cpp
+    ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
+    ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
+    ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
+    ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
 )
 
 # Add executable
@@ -140,7 +165,7 @@ if (WIN32)
 elseif (UNIX)
     # Linux-specific settings
     message(STATUS "Configuring for Linux")
-    message(STATUS "CMakeLists.txt location: ${CMAKE_SOURCE_DIR}")
+    message(STATUS "CMakeLists.txt location: ${FUNGT_BASE_DIR}")
     find_package(OpenCL REQUIRED)
     if (OpenCL_FOUND)
         message(STATUS "OpenCL found")
