@@ -4,18 +4,19 @@ Just a funny repo with OpenGL
 ![image](https://github.com/juanchuletas/FunGL/blob/main/fungt_logo.png?raw=true)
 
 ## Overview
+FunGT is a modern C++ framework for graphics and physics experimentation. It’s designed to be modular, educational, and performant, with support for both real-time rendering and GPU-accelerated compute.
 
-My Game Engine is a high-performance, real-time 3D rendering engine designed for flexibility and ease of use. It supports modern OpenGL features and provides tools for creating stunning visuals and immersive experiences.
 
 ## Features
 
-- Real-time 3D rendering
-- Support for modern OpenGL
+- Rendering Backends: OpenGL, Vulkan (planned), and an experimental path tracer.
+- GPU compute with SYCL for physics, particles, and numerical experiments.
 - Shader management
 - Texture handling
 - Model loading with Assimp
 - Lighting and material system
 - Basic animation system
+- Physics Experiments: Clothing
 
 ## Getting Started
 
