@@ -4,7 +4,7 @@ Just a funny repo with OpenGL
 ![image](https://github.com/juanchuletas/FunGL/blob/main/fungt_logo.png?raw=true)
 
 ## Overview
-FunGT is a modern C++ framework for graphics and physics experimentation. It’s designed to be modular, educational, and performant, with support for both real-time rendering and GPU-accelerated compute.
+FunGT is a modern C++ framework for graphics and physics experimentation. It’s designed to be modular and performant, with support for both real-time rendering and GPU-accelerated compute.
 
 
 ## Features
