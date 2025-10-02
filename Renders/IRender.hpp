@@ -1,6 +1,16 @@
 #if !defined(_IRENDER_H_)
 #define _IRENDER_H_
 
+enum class RenderAPI{
+
+    None   = 0,
+    OpenGL = 1,
+    Vulkan = 2
+
+};
+
+
+
 class IRender{
     public:
         virtual void render() = 0; //pure virtual function
