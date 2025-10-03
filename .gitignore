@@ -2,7 +2,6 @@
 # Build directories
 build/
 release/
-.vscode/
 # Build directories (recursive)
 **/build/
 **/release/
