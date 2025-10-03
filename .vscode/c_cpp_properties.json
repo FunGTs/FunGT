@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                 "${workspaceFolder}",
+                "${workspaceFolder}/**",
+                "/home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/include",
+                "/home/juanchuletas/Documents/Development/FunGT/vendor/funlib/include"
+            ],
+            "defines": [],
+            "compilerPath": "/home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++",
+            "cStandard": "gnu17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
