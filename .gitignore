@@ -1,1 +1,8 @@
-Display/*.exe
+# Ignore build artifacts
+# Build directories
+build/
+release/
+
+# Build directories (recursive)
+**/build/
+**/release/
