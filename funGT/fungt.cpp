@@ -155,7 +155,7 @@ void FunGT::processMouseInput(double xpos, double ypos)
 void FunGT::mouse_callback(GLFWwindow *window, double xpos, double ypos){
     //std::cout<<" fungT: mouse callback "<<std::endl; 
     FunGT * fungtInstance =  static_cast<FunGT*>(glfwGetWindowUserPointer(window));
-    if(fungtInstance!=nullptr){
+    if (fungtInstance != nullptr && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
         fungtInstance->processMouseInput(xpos,ypos); 
         //std::cout<< "not nullptr "<<std::endl;
     }

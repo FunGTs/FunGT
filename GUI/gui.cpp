@@ -21,28 +21,38 @@ void GUI::setup(GLFWwindow &window)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-     // Get DPI scale
-    float xscale, yscale;
+    //Docking and viewport:
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    //  // Get DPI scale
+     float xscale, yscale;
     glfwGetWindowContentScale(m_window, &xscale, &yscale);
     float scale = std::max(xscale, yscale);
     scale = scale*0.8f;
     
-    // Scale the default font
+    // // Scale the default font
     io.FontGlobalScale = scale;
     
     // Scale UI elements
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(scale);
+    
+
+   
+
     // Setup Dear ImGui style
     //ImGui::StyleColorsDark();
-    ImGui::StyleColorsClassic();  
-    
+    ImGui::StyleColorsClassic();
+   if(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable){
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     #if defined(__APPLE__)
         ImGui_ImplOpenGL3_Init("#version 150");
     #else
-         ImGui_ImplOpenGL3_Init("#version 330");
+         ImGui_ImplOpenGL3_Init("#version 410");
     #endif
 }
 
@@ -55,8 +65,18 @@ void GUI::newFrame()
 
 void GUI::render()
 {
+    ImGuiIO &io =  ImGui::GetIO();
+   // io.DisplaySize = ImVec2();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+       GLFWwindow* backup_curr_ctx = glfwGetCurrentContext();
+       ImGui::UpdatePlatformWindows();
+       ImGui::RenderPlatformWindowsDefault();
+       glfwMakeContextCurrent(backup_curr_ctx);
+    }
+
 }
 
 void GUI::cleanUp()
