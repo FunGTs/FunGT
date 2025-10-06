@@ -10,6 +10,7 @@
 #include "../Physics/Clothing/clothing.hpp"
 #include "../ViewPort/viewport.hpp"
 #include "../Layer/layer_stack.hpp"
+#include "../GUI/imgui_layer.hpp"
 #include <memory> 
 #include <unordered_map>
 
@@ -56,7 +57,9 @@ class FunGT : public GraphicsTool<FunGT>{
 
     //ViewPort
     std::unique_ptr<ViewPort> m_ViewPortLayer;
-   
+
+    //ImGUI
+    std::unique_ptr<ImGuiLayer> m_imguiLayer;
     //Layer Stacks:
     LayerStack m_layerStack;
         

@@ -13,8 +13,9 @@ FunGT::FunGT(int _width, int _height)
     m_sceneManager  = std::make_shared<SceneManager>();
     m_infoWindow    = std::make_shared<InfoWindow>();
     m_ViewPortLayer = std::make_unique<ViewPort>();
+    m_imguiLayer    = std::make_unique<ImGuiLayer>();
 
-    m_layerStack.PushLayer(std::move(m_ViewPortLayer)); //Owns now to the stack Layer;
+    //m_layerStack.PushLayer(std::move(m_ViewPortLayer)); //Owns now to the stack Layer;
 
 }
 FunGT::~FunGT(){
