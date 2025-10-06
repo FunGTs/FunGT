@@ -1,6 +1,7 @@
 #if !defined(_LAYER_H_)
 #define _LAYER_H_
 #include<string>
+
 class Layer{
     protected:
         std::string m_debugName;

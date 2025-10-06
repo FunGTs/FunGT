@@ -10,8 +10,11 @@ FunGT::FunGT(int _width, int _height)
     m_lastYmouse = _height/2;
     m_firstMouse = true;
 
-    m_sceneManager = std::make_shared<SceneManager>();
-    m_infoWindow = std::make_shared<InfoWindow>(); 
+    m_sceneManager  = std::make_shared<SceneManager>();
+    m_infoWindow    = std::make_shared<InfoWindow>();
+    m_ViewPortLayer = std::make_unique<ViewPort>();
+
+    m_layerStack.PushLayer(std::move(m_ViewPortLayer)); //Owns now to the stack Layer;
 
 }
 FunGT::~FunGT(){

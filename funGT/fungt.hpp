@@ -8,6 +8,8 @@
 #include "../Path_Manager/path_manager.hpp"
 #include "../InfoWindow/infowindow.hpp"
 #include "../Physics/Clothing/clothing.hpp"
+#include "../ViewPort/viewport.hpp"
+#include "../Layer/layer_stack.hpp"
 #include <memory> 
 #include <unordered_map>
 
@@ -52,8 +54,11 @@ class FunGT : public GraphicsTool<FunGT>{
     std::shared_ptr<SceneManager> m_sceneManager;
     std::shared_ptr<GUI> m_infoWindow;
 
-
-  
+    //ViewPort
+    std::unique_ptr<ViewPort> m_ViewPortLayer;
+   
+    //Layer Stacks:
+    LayerStack m_layerStack;
         
 
     public: 
@@ -75,7 +80,8 @@ class FunGT : public GraphicsTool<FunGT>{
         std::shared_ptr<SceneManager> getSceneManager();
         std::shared_ptr<GUI> getInfoWindow();
         void set(const std::function<void()>& renderLambda);
-        static std::unique_ptr<FunGT> createScene(int _width, int _height); 
+        static std::unique_ptr<FunGT> createScene(int _width, int _height);
+
 };
 
 typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
