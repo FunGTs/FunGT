@@ -8,13 +8,16 @@ class ImGuiLayer : public Layer{
 private:
     GLFWwindow* m_window;
     int m_width, m_height;
-
+public:
     ImGuiLayer()
     :Layer("IMGUI LAYER"){
        
     }
-    ~ImGuiLayer() override = default;
-
+    ~ImGuiLayer() override{
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+    }
     void setNativeWindow(GLFWwindow& window, int _width, int _height) {
 
         m_window = &window;
@@ -49,13 +52,13 @@ private:
         ImGui::DestroyContext();
     }
 
-    void begin() {
+    void begin() override {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
     }
 
-    void end() {
+    void end() override {
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2(
             (float)m_width,

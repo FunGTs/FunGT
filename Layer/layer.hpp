@@ -13,7 +13,8 @@ class Layer{
         virtual void onDetach() {}
         virtual void onUpdate() {}
         virtual void onImGuiRender() {}
-
+        virtual void begin(){}
+        virtual void end(){}
         inline const std::string& getName() const { return m_debugName; }
 
 };

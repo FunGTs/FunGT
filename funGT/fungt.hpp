@@ -68,16 +68,13 @@ class FunGT : public GraphicsTool<FunGT>{
         FunGT(int _width, int _height); 
         ~FunGT();
 
-        virtual void update(); 
         virtual void update(const std::function<void()> &renderLambda);
         virtual void guiUpdate(const std::function<void()>&guiRender);
-        void set(); 
         void processKeyBoardInput();
         void processMouseInput(double xpos, double ypos);
         static void mouse_callback(GLFWwindow *window, double xpos, double ypos); 
         void setBackgroundColor(float red, float green, float blue, float alfa);
         void setBackgroundColor(float color = 0.f);
-        void addShader();
         Camera getCamera(); 
       
         std::shared_ptr<SceneManager> getSceneManager();
