@@ -34,13 +34,19 @@ if(UNIX)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
     set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++)
-      # Add funlib
+    # Add the prebuilt ImGui library
+    add_library(imgui STATIC IMPORTED)
+    set_target_properties(imgui PROPERTIES
+        IMPORTED_LOCATION "${FUNGT_BASE_DIR}/vendor/imgui/lib/libimgui.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${FUNGT_BASE_DIR}/vendor/imgui"
+    )
+    # Add funlib
     set(FUNLIB_DIR ${FUNGT_BASE_DIR}/vendor/funlib)
     add_library(funlib STATIC IMPORTED GLOBAL)
     set_target_properties(funlib PROPERTIES
         IMPORTED_LOCATION ${FUNLIB_DIR}/lib/libfunlib.a
         INTERFACE_INCLUDE_DIRECTORIES ${FUNLIB_DIR}/include
-)
+    )
 endif()
 if (WIN32)
     # Add the macro definition
@@ -62,7 +68,6 @@ include_directories(
     ${FUNGT_BASE_DIR}/AnimatedModel
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/vendor/stb_image
-    ${FUNGT_BASE_DIR}/vendor/imgui
     ${FUNGT_BASE_DIR}/Imgui_Setup
     ${FUNGT_BASE_DIR}/Material
     ${FUNGT_BASE_DIR}/Mesh
@@ -105,13 +110,6 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/AnimatedModel/animated_model.cpp
     ${FUNGT_BASE_DIR}/Textures/textures.cpp
     ${FUNGT_BASE_DIR}/vendor/stb_image/stb_image.cpp
-    ${FUNGT_BASE_DIR}/vendor/imgui/imgui.cpp
-    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_demo.cpp
-    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_draw.cpp
-    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_tables.cpp
-    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_widgets.cpp
-    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_impl_glfw.cpp
-    ${FUNGT_BASE_DIR}/vendor/imgui/imgui_impl_opengl3.cpp
     ${FUNGT_BASE_DIR}/Imgui_Setup/imgui_setup.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
@@ -216,6 +214,7 @@ elseif (UNIX)
 	    glm::glm
         dl
         funlib
+        imgui
         ${OpenCL_LIBRARIES}
     )
     target_compile_options(FunGT PRIVATE -fsycl)
