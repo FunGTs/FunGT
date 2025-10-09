@@ -98,7 +98,7 @@ public:
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-        io.FontGlobalScale = 1.5f; // 1.0 = default, 1.5 = 50% bigger
+        io.FontGlobalScale = 1.8f; // 1.0 = default, 1.5 = 50% bigger
         // Apply style
         //ImGui::StyleColorsDark();
         ImGui::StyleColorsClassic();
@@ -180,17 +180,37 @@ public:
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-        // Example menu bar
-        // if (ImGui::BeginMenuBar()) {
-        //     if (ImGui::BeginMenu("File")) {
-        //         if (ImGui::MenuItem("Exit")) {
-        //             // Handle exit if needed
-        //         }
-        //         ImGui::EndMenu();
-        //     }
-        //     ImGui::EndMenuBar();
-        // }
-
+        //Example menu bar
+        if (ImGui::BeginMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Open")) {
+                    // Handle exit if needed
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
+        if (ImGui::BeginMenuBar()) {
+            if (ImGui::BeginMenu("Edit")) {
+                if (ImGui::MenuItem("Undo")) {
+                    // Handle exit if needed
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
+        if (ImGui::BeginMenuBar()) {
+            if (ImGui::BeginMenu("Select GPU")) {
+                if (ImGui::MenuItem("NVIDIA GeForce")) {
+                    // Handle exit if needed
+                }
+                if (ImGui::MenuItem("Intel Arc")) {
+                    // Handle exit if needed
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
         ImGui::End();
     }
 

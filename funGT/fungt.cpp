@@ -114,7 +114,10 @@ void FunGT::set(const std::function<void()>& renderLambda){
         m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
         m_layerStack.PushLayer(std::move(m_imguiLayer));
     }
-    
+    m_ViewPortLayer->setRenderFunction([this]() {
+        // Render all models managed by the SceneManager
+        m_sceneManager->renderScene();
+    });
     m_layerStack.PushLayer(std::move(m_ViewPortLayer)); //Owns now to the stack Layer;
     std::cout << "Finished Setting process..." << std::endl;
 
