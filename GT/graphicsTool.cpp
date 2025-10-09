@@ -165,9 +165,10 @@ void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, co
         /*IMGUI*/
         
         
-        if (guiRender) {
-            this->guiUpdate(guiRender);
-        }
+        // if (guiRender) {
+        //     this->guiUpdate(guiRender);
+        // }
+        this->guiUpdate();
         GLenum err;
             while ((err = glGetError()) != GL_NO_ERROR) {
             //std::cerr << "OpenGL error in RenderScene: " << err << std::endl;
@@ -197,6 +198,12 @@ template <typename Derived>
 void GraphicsTool<Derived>::guiUpdate(const std::function<void()> &guiRender)
 {
     static_cast<Derived *> (this)->guiUpdate(guiRender);
+}
+
+template<typename Derived>
+void GraphicsTool<Derived>::guiUpdate()
+{
+    static_cast<Derived *> (this)->guiUpdate();
 }
 
 template <typename Derived>

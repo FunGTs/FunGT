@@ -19,6 +19,7 @@ class FrameBuffer{
         virtual const FrameBuffSpec& getFrameBuffSpec() const = 0;
         virtual void bind() = 0;
         virtual void unbind() = 0; 
+        virtual void resize(unsigned int width, unsigned int height) = 0;
         virtual unsigned int GetColorAttachmentRendererID(unsigned int index = 0) const = 0;
         static std::shared_ptr<FrameBuffer> create(const FrameBuffSpec& fbSpec);
 

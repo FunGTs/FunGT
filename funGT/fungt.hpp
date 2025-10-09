@@ -6,7 +6,7 @@
 //#include "../Physics/ParticleSystem/noise_particle.hpp"
 #include "../ParticleSimulation/particle_simulation.hpp"
 #include "../Path_Manager/path_manager.hpp"
-#include "../InfoWindow/infowindow.hpp"
+//#include "../InfoWindow/infowindow.hpp"
 #include "../Physics/Clothing/clothing.hpp"
 #include "../ViewPort/viewport.hpp"
 #include "../Layer/layer_stack.hpp"
@@ -53,7 +53,6 @@ class FunGT : public GraphicsTool<FunGT>{
     //Creates an animation:
     
     std::shared_ptr<SceneManager> m_sceneManager;
-    std::shared_ptr<GUI> m_infoWindow;
 
     //ViewPort
     std::unique_ptr<ViewPort> m_ViewPortLayer;
@@ -70,6 +69,7 @@ class FunGT : public GraphicsTool<FunGT>{
 
         virtual void update(const std::function<void()> &renderLambda);
         virtual void guiUpdate(const std::function<void()>&guiRender);
+        virtual void guiUpdate();
         void processKeyBoardInput();
         void processMouseInput(double xpos, double ypos);
         static void mouse_callback(GLFWwindow *window, double xpos, double ypos); 
@@ -78,7 +78,7 @@ class FunGT : public GraphicsTool<FunGT>{
         Camera getCamera(); 
       
         std::shared_ptr<SceneManager> getSceneManager();
-        std::shared_ptr<GUI> getInfoWindow();
+        //std::shared_ptr<GUI> getInfoWindow();
         void set(const std::function<void()>& renderLambda);
         static std::unique_ptr<FunGT> createScene(int _width, int _height);
 
@@ -88,7 +88,7 @@ typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
 typedef std::shared_ptr<Animation> FunGTAnimation;
 typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
-typedef std::shared_ptr<GUI> FunGTInfoWindow;
+//typedef std::shared_ptr<GUI> FunGTInfoWindow;
 typedef std::shared_ptr<SimpleModel> FunGTSModel;
 
 

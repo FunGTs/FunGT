@@ -48,6 +48,7 @@ template<typename Derived> class GraphicsTool{
         
         void update(const std::function<void()> &renderLambda);
         void guiUpdate(const std::function<void()> &guiRender);
+        void guiUpdate();
         static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
     public:
         void run(); //Run the program

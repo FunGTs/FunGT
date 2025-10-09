@@ -19,7 +19,7 @@ class OpenGLFrameBuffer : public FrameBuffer{
 
         void bind() override;
         void unbind() override;
-
+        void resize(unsigned int width, unsigned int height) override;
 
         FrameBuffSpec& getFrameBuffSpec() override {
             return m_Specification;
