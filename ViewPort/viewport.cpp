@@ -23,13 +23,24 @@ void ViewPort::onUpdate(){
 
     // Draw Pixar ball scene here...
     // e.g. m_Scene->Render();
-
+     // Render scene if set
+    if (m_RenderFunc){
+        m_RenderFunc();
+    }
+      
     m_frameBuffer->unbind();
 
 
 
 }
 void ViewPort::onImGuiRender()   {
+
+    // ImGui::Begin("Pixar Ball Stats");
+    // ImGui::Text("Renderer 3D Stats:");
+    // ImGui::Text("Vertices: %d", 1000);
+    // ImGui::Text("Indices: %d", 238);
+    // ImGui::End();
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); // no padding around the image
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.10f, 1.0f)); // Blender dark gray
     ImGui::Begin("Viewport");
@@ -63,7 +74,7 @@ void ViewPort::onImGuiRender()   {
         pendingResize = false;
     }
 
-
+   
 
     uint32_t texID = m_frameBuffer->GetColorAttachmentRendererID();
     ImGui::Image((void*)(intptr_t)texID,
