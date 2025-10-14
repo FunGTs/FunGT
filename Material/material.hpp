@@ -9,7 +9,8 @@ class Material
         float m_shininess; 
 
     public:
-        std::string m_name; 
+        std::string m_name;
+        Material(); 
         Material(glm::vec3 ambientLight, glm::vec3 diffLigth, glm::vec3 specLight,float inShin,std::string name);
         ~Material();
         void sendToShader(Shader& program);

@@ -1,5 +1,7 @@
 #include "material.hpp"
-
+Material::Material(){
+    
+}
 Material::Material(glm::vec3 _ambientLight, glm::vec3 _diffLigth, glm::vec3 _specLight,float inShin,std::string name)
 : m_ambientLight{_ambientLight}, m_diffLigth{_diffLigth}, m_specLight{_specLight},m_shininess{inShin},m_name{name}{
     

@@ -29,7 +29,8 @@ class Model  {
         // Getter declaration for m_dirPath
         const std::string& getDirPath() const;
         void processAssimpScene(aiNode * node, const aiScene *scene);
-        void createShader(std::string vertex_shader, std::string fragment_shader); 
+        void createShader(std::string vertex_shader, std::string fragment_shader);  
+        const std::vector<std::unique_ptr<Mesh>> &getMeshes();
         
    
         void draw();
@@ -60,6 +61,7 @@ class Model  {
         std::vector<GLuint> getIndices(aiMesh *mesh, const aiScene *scene);
         std::vector<Texture > getTextures(aiMesh *mesh, const aiScene *scene);
         std::vector<Material> getMaterials(aiMesh *mesh, const aiScene *scene);
+
         
         
       
