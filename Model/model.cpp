@@ -53,6 +53,51 @@ void Model::loadModel(const std::string &path)
     
 }
 
+void Model::loadModelData(const std::string& path)
+{
+    std::cout<<"Loading Model Data "<<std::endl;
+    std::cout << "Assimp Version: "
+        << aiGetVersionMajor() << "."
+        << aiGetVersionMinor() << "."
+        << aiGetVersionRevision() << std::endl;
+    std::cout << "Model Loading" << std::endl;
+    Assimp::Importer import;
+    const aiScene* pScene = import.ReadFile(path, ASSIMP_LOAD_FLAGS);
+    if (!pScene || pScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !pScene->mRootNode) {
+
+        std::cout << "ERROR in ASSIMP :" << import.GetErrorString() << std::endl;
+        exit(0);
+    }
+    m_dirPath = path.substr(0, path.find_last_of('/'));
+
+    //Process the Nodes: 
+
+    //std::cout<< " Dir : "<< m_dirPath << std::endl; 
+    //processNodes(pScene->mRootNode, pScene);
+
+    processAssimpScene(pScene->mRootNode, pScene);
+}
+
+void Model::InitGraphics()
+{
+    switch (DisplayGraphics::GetBackend()) {
+    case Backend::OpenGL:
+        {
+            for (auto& mesh : m_vMesh) {
+                mesh->InitOGLBuffers();
+            }
+            break;
+        }
+        
+    case Backend::Vulkan:
+        {
+            break;
+        }
+    default:
+        throw std::runtime_error("Unknown Graphics API!");
+    }
+}
+
 std::vector<funGTVERTEX> Model::getVertices(aiMesh *mesh, const aiScene *scene)
 {
     std::vector<funGTVERTEX> vertices; 

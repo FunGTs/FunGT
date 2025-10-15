@@ -10,6 +10,7 @@
 #include "../Mesh/mesh.hpp"
 #include "../Renderable/renderable.hpp"
 #include "../DataPaths/datapaths.hpp"
+#include "../Renders/display_graphics.hpp"
 class Model  {
 
     public:
@@ -19,7 +20,9 @@ class Model  {
     
     //Methods
         void draw(Shader &shader);
-        virtual void loadModel(const std::string &fullPath); 
+        virtual void loadModel(const std::string &fullPath);
+        void loadModelData(const std::string& fullPath);
+        void InitGraphics();
         void Info();  
          // Setter declaration for m_dirPath
         void setDirPath(const std::string& dirPath);
