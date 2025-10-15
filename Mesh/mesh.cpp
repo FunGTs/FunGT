@@ -69,6 +69,53 @@ void Mesh::initMesh() {
     m_vao.unbind();
   
 }
+void Mesh::InitOGLBuffers()
+{
+    //  //This method initialize a Mesh
+
+    m_vao.genVAO(); //Generates a Vertex array object
+    m_vao.bind();
+
+    m_vb.genVB(); //Generates the Vertex Buffer
+    m_vb.bind();
+    m_vb.bufferData(&m_vertex[0], m_vertex.size() * sizeof(Vertex));
+
+    m_vi.genVI(); //Generates the Vertex Buffer
+    m_vi.bind();
+    //m_vi.indexData(&m_index[0],sizeof(&m_index[0])*m_index.size()); //Changed to a possible bug : segmentation fault
+    m_vi.indexData(m_index.data(), m_index.size() * sizeof(m_index[0]));
+
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index.size() * sizeof(unsigned int), &m_index[0], GL_STATIC_DRAW);
+
+    //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
+        //POSITION 
+        //  offsetof(s,m) takes as its first argument a struct and as its second argument a 
+        // variable name of the struct. 
+        // The macro returns the byte offset of that variable from the start of the struct.
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
+
+    //Normals
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
+
+    //TEXTURE COORDS
+    //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, texcoord));
+
+
+    // ids
+    glEnableVertexAttribArray(3);
+    glVertexAttribIPointer(3, maxBoneInfluencePerVertex, GL_INT, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_BoneIDs));
+
+    // weights
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, maxBoneInfluencePerVertex, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_Weights));
+
+    m_vao.unbind();
+}
 void Mesh::draw(Shader &shader){
 
    int numOfTextures = m_texture.size(); //How many textures do we have? 

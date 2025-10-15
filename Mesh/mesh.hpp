@@ -47,6 +47,7 @@ class Mesh{
         Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inmaterial);
         ~Mesh();
         void initMesh();
+        void InitOGLBuffers();
         void draw(Shader &shader); 
 }; 
 
