@@ -12,6 +12,11 @@ class Material
         std::string m_name;
         Material(); 
         Material(glm::vec3 ambientLight, glm::vec3 diffLigth, glm::vec3 specLight,float inShin,std::string name);
+        Material(const Material& other);
+        Material(Material&& other) noexcept;
+        Material& operator=(const Material& other);
+        Material& operator=(Material&& other) noexcept;
+
         ~Material();
         void sendToShader(Shader& program);
 

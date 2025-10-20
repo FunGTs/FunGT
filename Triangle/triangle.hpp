@@ -9,7 +9,7 @@ class Triangle{
     public: 
         fungt::Vec3 v0, v1, v2; 
         fungt::Vec3 normal;
-        Material matrial;
+        Material material;
         
         Triangle(){
             

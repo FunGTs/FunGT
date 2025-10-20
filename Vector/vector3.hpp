@@ -1,6 +1,7 @@
 #if !defined(_VECTOR3_HPP_)
 #define _VECTOR3_HPP_
 #include <cmath>
+#include "../include/glmath.hpp"
 namespace fungt{
 
 
@@ -55,8 +56,14 @@ namespace fungt{
                 return Vec3(0, 0, 0);
             }
     };
-}
+    inline fungt::Vec3 operator*(float scalar, const fungt::Vec3& v) {
+        return fungt::Vec3(v.x * scalar, v.y * scalar, v.z * scalar);
+    }
+    inline Vec3 toFungtVec3(const glm::vec3& v) {
+        return Vec3(v.x, v.y, v.z);
+    }
 
+}
 
 
 

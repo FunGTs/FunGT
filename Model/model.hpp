@@ -11,6 +11,7 @@
 #include "../Renderable/renderable.hpp"
 #include "../DataPaths/datapaths.hpp"
 #include "../Renders/display_graphics.hpp"
+
 class Model  {
 
     public:
@@ -31,7 +32,7 @@ class Model  {
         void processAssimpScene(aiNode * node, const aiScene *scene);
         void createShader(std::string vertex_shader, std::string fragment_shader);  
         const std::vector<std::unique_ptr<Mesh>> &getMeshes();
-        
+        std::vector<Triangle> ToTriangles();
    
         void draw();
         Shader &getShader();

@@ -159,3 +159,39 @@ void Mesh::draw(Shader &shader){
         // OpenGL Error Checking
 
 }
+
+std::vector<Triangle> Mesh::ToTriangle() const
+{
+    {
+        std::vector<Triangle> triangle_vec;
+        triangle_vec.reserve(m_index.size() / 3);
+
+        for (size_t i = 0; i < m_index.size(); i += 3) {
+            const funGTVERTEX& v0 = m_vertex[m_index[i + 0]];
+            const funGTVERTEX& v1 = m_vertex[m_index[i + 1]];
+            const funGTVERTEX& v2 = m_vertex[m_index[i + 2]];
+
+            Triangle tri;
+            tri.v0 = fungt::toFungtVec3(v0.position);
+            tri.v1 = fungt::toFungtVec3(v1.position);
+            tri.v2 = fungt::toFungtVec3(v2.position);
+
+            // Flat face normal (correct for path tracing)
+            fungt::Vec3 e1 = tri.v1 - tri.v0;
+            fungt::Vec3 e2 = tri.v2 - tri.v0;
+            tri.normal = e1.cross(e2).normalize();
+
+            // Include material if present
+            if (!m_material.empty()) {
+                tri.material = m_material[0]; // Most meshes only have one
+            }
+
+            // Optional: handle texture-only meshes later when you add albedo maps
+            // if (!m_textures.empty()) tri.albedoMap = m_textures[0].id;
+
+            triangle_vec.push_back(std::move(tri));
+        }
+
+        return triangle_vec;
+}
+
