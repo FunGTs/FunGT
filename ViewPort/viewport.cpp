@@ -86,3 +86,8 @@ void ViewPort::onImGuiRender()   {
     ImGui::PopStyleColor();
     ImGui::PopStyleVar();
 }
+
+ImVec2 ViewPort::getViewPortSize()
+{
+    return m_viewportSize;
+}

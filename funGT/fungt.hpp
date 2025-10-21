@@ -11,6 +11,7 @@
 #include "../ViewPort/viewport.hpp"
 #include "../Layer/layer_stack.hpp"
 #include "../GUI/imgui_layer.hpp"
+#include "../GUI/render_info_window.hpp"
 #include <memory> 
 #include <unordered_map>
 
@@ -53,6 +54,8 @@ class FunGT : public GraphicsTool<FunGT>{
     //Creates an animation:
     
     std::shared_ptr<SceneManager> m_sceneManager;
+    //UI support
+    bool m_useGUI = false; 
 
     //ViewPort
     std::unique_ptr<ViewPort> m_ViewPortLayer;
@@ -75,6 +78,7 @@ class FunGT : public GraphicsTool<FunGT>{
         static void mouse_callback(GLFWwindow *window, double xpos, double ypos); 
         void setBackgroundColor(float red, float green, float blue, float alfa);
         void setBackgroundColor(float color = 0.f);
+        void useGraphicUserInterface(bool _usingUI);
         Camera getCamera(); 
       
         std::shared_ptr<SceneManager> getSceneManager();

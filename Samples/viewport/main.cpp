@@ -19,7 +19,7 @@ int main (){
     myGame->setBackgroundColor();
     //Initializes the Graphics Stuff
     myGame->initGL();
-
+    myGame->useGraphicUserInterface(true);
     //Gets an instance of the SceneManager class to render objects
     FunGTSceneManager scene_manager = myGame->getSceneManager();
     // Creates an animation object

@@ -71,5 +71,9 @@ void OpenGLFrameBuffer::resize(unsigned int width, unsigned int height)
 {
     m_Specification.m_height = height;
     m_Specification.m_width  = width;
-    this->invalidate(); 
+    this->invalidate();
+    // Update OpenGL viewport to match the new framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+    glViewport(0, 0, width, height);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -13,6 +13,11 @@ FunGT::FunGT(int _width, int _height)
     m_sceneManager  = std::make_shared<SceneManager>();
     m_ViewPortLayer = std::make_unique<ViewPort>();
     m_imguiLayer    = std::make_unique<ImGuiLayer>();
+
+    //creates an info window:
+
+   
+
     //m_infoWindow    = std::make_shared<InfoWindow>();
    
 
@@ -78,6 +83,11 @@ void FunGT::setBackgroundColor(float color){
      m_colors[0] = color/255.f; m_colors[1] = color/255.f; m_colors[2] = color/255.f; m_colors[3] = 1.0; 
 }
 
+void FunGT::useGraphicUserInterface(bool _usingUI)
+{
+    m_useGUI = _usingUI;
+}
+
 Camera FunGT::getCamera()
 {
     return m_camera;
@@ -109,16 +119,30 @@ void FunGT::set(const std::function<void()>& renderLambda){
 
     }
 
-    //m_infoWindow->setup(*m_Window);
-    if (m_imguiLayer) {
-        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
-        m_layerStack.PushLayer(std::move(m_imguiLayer));
+    if(m_useGUI){
+        if (m_imguiLayer){
+
+            m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
+            m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
+            m_layerStack.PushLayer(std::move(m_imguiLayer));
+        }
+        if (m_ViewPortLayer){
+            m_ViewPortLayer->setRenderFunction([this](){
+            // Render all models managed by the SceneManager
+                m_sceneManager->renderScene(); 
+            });
+            m_layerStack.PushLayer(std::move(m_ViewPortLayer)); // Owns now to the stack Layer;
+        }
+        auto *view_port = m_layerStack.get<ViewPort>();
+        if (view_port)
+        {
+            auto view_port_size = view_port->getViewPortSize();
+            ProjectionMatrix = glm::perspective(glm::radians(fov),
+                                                view_port_size.x / view_port_size.y, nearPlane, farPlane);
+        }
+
     }
-    m_ViewPortLayer->setRenderFunction([this]() {
-        // Render all models managed by the SceneManager
-        m_sceneManager->renderScene();
-    });
-    m_layerStack.PushLayer(std::move(m_ViewPortLayer)); //Owns now to the stack Layer;
+   
     std::cout << "Finished Setting process..." << std::endl;
 
 }
@@ -140,9 +164,22 @@ void FunGT::update(const std::function<void()> &renderLambda)
      
     processKeyBoardInput();
     glm::mat4 ViewMatrix = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
-
-    ProjectionMatrix = glm::perspective(glm::radians(fov),
-                                        static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
+    
+    
+    if(m_useGUI){
+        
+        auto *view_port = m_layerStack.get<ViewPort>();
+        if (view_port) {
+            auto view_port_size = view_port->getViewPortSize();
+            ProjectionMatrix = glm::perspective(glm::radians(fov),
+                                                view_port_size.x / view_port_size.y, nearPlane, farPlane);
+        }
+        
+    }
+    else{
+        ProjectionMatrix = glm::perspective(glm::radians(fov),
+                                            static_cast<float>(m_frameBufferWidth) / m_frameBufferHeight, nearPlane, farPlane);
+    }
 
     m_sceneManager->updateViewMatrix(m_camera.getViewMatrix());
     m_sceneManager->updateProjectionMatrix(ProjectionMatrix);

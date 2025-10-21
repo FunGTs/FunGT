@@ -34,7 +34,17 @@ class LayerStack {
                 m_LayerInsertIndex--;
             }
         }
-
+        //Generic getter — returns pointer to the first layer of type T (if exists)
+        template <typename T>
+        T *get()
+        {
+            for (auto &layer : m_Layers)
+            {
+                if (auto casted = dynamic_cast<T *>(layer.get()))
+                    return casted;
+            }
+            return nullptr;
+        }
         std::vector<std::unique_ptr<Layer>>::iterator begin() { return m_Layers.begin(); }
         std::vector<std::unique_ptr<Layer>>::iterator end() { return m_Layers.end(); }
 

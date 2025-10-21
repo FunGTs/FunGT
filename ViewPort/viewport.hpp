@@ -24,9 +24,7 @@ class ViewPort : public Layer {
         void setRenderFunction(const std::function<void()>& func){
             m_RenderFunc = func; 
         }
-
-
-
+        ImVec2 getViewPortSize(); //Returns a Imgui vec
 };
 
 
