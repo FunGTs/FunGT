@@ -9,9 +9,9 @@ int main (){
     //Path to your shaders and models:
     ModelPaths model_ball;
     //model.path   = getAssetPath("Animations/monster_dancing/monster_dancing.dae");
-    model_ball.path = getAssetPath("Obj/LuxoBall/luxoball.obj");
-    model_ball.vs_path = getAssetPath("resources/luxoball_vs.glsl");
-    model_ball.fs_path = getAssetPath("resources/luxoball_fs.glsl");
+    model_ball.path = getAssetPath("Obj/monkey/monkeyobj.obj");
+    model_ball.vs_path = getAssetPath("resources/luxolamp_vs.glsl");
+    model_ball.fs_path = getAssetPath("resources/luxolamp_fs.glsl");
 
     //Creates a FunGT Scene to display 
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -27,8 +27,8 @@ int main (){
 
     // Loads Pixar ball data
     pixarBall->load(model_ball);
-    pixarBall->position(0.f, 1.f, -5.f);
-    pixarBall->rotation(-30.f, 0.f, 0.f);
+    pixarBall->position(0.f, 0.f, -5.f);
+    pixarBall->rotation(0.f, 0.f, 0.f);
     myGame->set([&]() { // Sets up all the scenes in your game
         // Adds the renderable objects to the SceneManager
                 // Adds the renderable objects to the SceneManager
