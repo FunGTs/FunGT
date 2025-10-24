@@ -4,7 +4,7 @@
 namespace fungt{
 
     class Ray{
-        private:
+        public:
             fungt::Vec3      m_origin;
             fungt::Vec3      m_dir;
 
@@ -19,7 +19,7 @@ namespace fungt{
 
             }
 
-            fungt::Vec3 at(float t)  {
+            fungt::Vec3 at(float t) const {
                 fungt::Vec3 res;
                 return m_origin + m_dir*t;
                 return res;

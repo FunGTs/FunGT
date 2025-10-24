@@ -6,38 +6,23 @@
 class PBRCamera{
 
         fungt::Vec3 origin;
-        fungt::Vec3 pixel00_loc;
-        fungt::Vec3 delta_u, delta_v;
+        fungt::Vec3 lowerLeftCorner;
+        fungt::Vec3 horizontal;
+        fungt::Vec3 vertical;
 
     public:
-        PBRCamera() {
-            origin = fungt::Vec3(0, 0, 0);
-            float aspect_ratio = 16.0 / 9.0;
-            int image_width = 400;
-            int image_height = int(image_width / aspect_ratio);
-            float viewport_height = 2.0;
-            float viewport_width = viewport_height * aspect_ratio;
-            float focal_length = 1.0;
-
-            fungt::Vec3 viewport_u(viewport_width, 0, 0);
-            fungt::Vec3 viewport_v(0, -viewport_height, 0);
-
-            delta_u = viewport_u / float(image_width);
-            delta_v = viewport_v / float(image_height);
-
-            pixel00_loc = origin - fungt::Vec3(0, 0, focal_length) - viewport_u / 2 - viewport_v / 2 + 0.5f * (delta_u + delta_v);
+        PBRCamera(float aspectRatio = 16.0 / 9.0, float viewportHeight = 2.0f, float focalLength = 1.0f) {
+            float viewportWidth = aspectRatio * viewportHeight;
+            origin = fungt::Vec3(-5, 5, 12);
+            horizontal = fungt::Vec3(viewportWidth, 0, 0);
+            vertical = fungt::Vec3(0, viewportHeight, 0);
+            lowerLeftCorner = origin - horizontal / 2 - vertical / 2 - fungt::Vec3(0, 0, focalLength);
         }
-
-        fungt::Vec3 getRayDir(int i, int j) const {
-
-            float fi = static_cast<float>(i);
-            float fj = static_cast<float>(j);
-            fungt::Vec3 res;
-            res = (pixel00_loc + float(i) * delta_u + float(j) * delta_v - origin).normalize();
-            return res; 
+        fungt::Ray getRay(float u, float v) const {
+            
+            fungt::Vec3 dir = lowerLeftCorner + u * horizontal + v * vertical - origin;
+            return fungt::Ray(origin, dir.normalize());
         }
-
-
 
 };
 

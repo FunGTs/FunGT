@@ -62,6 +62,10 @@ namespace fungt{
     inline Vec3 toFungtVec3(const glm::vec3& v) {
         return Vec3(v.x, v.y, v.z);
     }
+    inline glm::vec3 toGlmVec3(const fungt::Vec3& vec){
+
+        return glm::vec3(vec.x, vec.y, vec.z);
+    }
 
 }
 
