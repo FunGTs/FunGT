@@ -42,7 +42,13 @@ include_directories(
     ${FUNGT_BASE_DIR}/Vector
     ${FUNGT_BASE_DIR}/Triangle
     ${FUNGT_BASE_DIR}/Material
+    ${FUNGT_BASE_DIR}/VertexGL
     ${FUNGT_BASE_DIR}/Shader
+    ${FUNGT_BASE_DIR}/Random
+    ${FUNGT_BASE_DIR}/SimpleModel/
+    ${FUNGT_BASE_DIR}/Model/
+    ${FUNGT_BASE_DIR}/Mesh/
+    ${FUNGT_BASE_DIR}/Path_Manager
     ${FUNGT_BASE_DIR}/PBR/PBRCamera
     ${FUNGT_BASE_DIR}/PBR/Ray
     ${FUNGT_BASE_DIR}/PBR/HitData
@@ -50,7 +56,9 @@ include_directories(
     ${FUNGT_BASE_DIR}/PBR/Light
     ${FUNGT_BASE_DIR}/PBR/Space
     ${FUNGT_BASE_DIR}/vendor/stb_image
-
+    ${FUNGT_BASE_DIR}/Textures
+    ${FUNGT_BASE_DIR}/Renders
+    ${FUNGT_BASE_DIR}/Matrix
 )
 set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
@@ -58,6 +66,19 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
+    ${FUNGT_BASE_DIR}/Random/random.cpp
+    ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
+    ${FUNGT_BASE_DIR}/Model/model.cpp
+    ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
+    ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
+    ${FUNGT_BASE_DIR}/Textures/textures.cpp
+    ${FUNGT_BASE_DIR}/vendor/stb_image/stb_image.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/vertexArrayObjects.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
+    ${FUNGT_BASE_DIR}/Matrix/matrix4x4f.cpp
+    ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
+    ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
 )
 # Add executable
 add_executable(pbr_render ${SOURCE_FILES})

@@ -3,7 +3,10 @@
 #include<vector>
 #include "../../Triangle/triangle.hpp"
 #include "../Intersection/intersection.hpp"
+#include "../../SimpleModel/simple_model.hpp"
+#include "../../Path_Manager/path_manager.hpp"
 #include "../PBRCamera/pbr_camera.hpp"
+#include "../../Random/random.hpp"
 #include "defualt_geometries.hpp"
 #include "../Light/light.hpp"
 #include <algorithm>

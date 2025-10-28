@@ -23,35 +23,35 @@ struct Texture_struct {
     std::string path;
 };
 
-class Mesh{
-    
-    public: 
-        std::vector<funGTVERTEX> m_vertex; //An array of vertices
-        std::vector<unsigned int> m_index;// an array of indices 
-        std::vector<Texture> m_texture; //An array of texturesç
-        std::vector<Material> m_material; 
-        //unsigned int VAO;
-        VertexArrayObject m_vao; 
+class Mesh {
 
-    private: 
-        //Render data: 
-       
-        VertexBuffer m_vb;
-        VertexIndex m_vi; 
-       
-         //unsigned int VBO, EBO; 
-    
-    public:
-        Mesh();
-        Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Texture> &inTexture);
-        Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inmaterial);
-        ~Mesh();
-        void initMesh();
-        void InitOGLBuffers();
-        void draw(Shader &shader); 
+public:
+    std::vector<funGTVERTEX> m_vertex; //An array of vertices
+    std::vector<unsigned int> m_index;// an array of indices 
+    std::vector<Texture> m_texture; //An array of texturesç
+    std::vector<Material> m_material;
+    //unsigned int VAO;
+    VertexArrayObject m_vao;
 
-        std::vector<Triangle> ToTriangle() const ;
+private:
+    //Render data: 
 
-}; 
+    VertexBuffer m_vb;
+    VertexIndex m_vi;
+
+    //unsigned int VBO, EBO; 
+
+public:
+    Mesh();
+    Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Texture>& inTexture);
+    Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Material>& inmaterial);
+    ~Mesh();
+    void initMesh();
+    void InitOGLBuffers();
+    void draw(Shader& shader);
+
+    std::vector<Triangle> ToTriangle() const;
+
+};
 
 #endif // _MESH_H_

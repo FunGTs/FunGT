@@ -16,13 +16,15 @@ class SimpleModel : public Renderable {
     glm::mat4 m_ProjectionMatrix;
     glm::vec3 m_position = glm::vec3(0.f);
     glm::vec3 m_rotation = glm::vec3(0.f);
-    glm::vec3 m_scale    = glm::vec3(1.0);   
+    glm::vec3 m_scale    = glm::vec3(1.0); 
+    std::vector<Triangle> m_triangles; 
     SimpleModel();
 public:
   
     ~SimpleModel();
     // Method to set the model
     void load(const ModelPaths &data);
+    void LoadModel(const ModelPaths& data);
     void position(float x = 0.f, float y = 0.f, float z = 0.f);
     void rotation(float x = 0.f, float y = 0.f, float z = 0.f);
     void scale(float s = 1.f);
@@ -35,7 +37,7 @@ public:
     void updateModelMatrix() override;
     glm::mat4 getProjectionMatrix() override;
     glm::mat4 getModelMatrix() override;
-    
+    std::vector<Triangle> getTriangleList(); 
     static std::shared_ptr<SimpleModel> create() {
         // This works because create() is a MEMBER of SimpleModel
         // and can access private members

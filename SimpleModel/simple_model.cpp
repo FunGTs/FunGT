@@ -14,7 +14,14 @@ void SimpleModel::load(const ModelPaths &data) {
     m_model->loadModelData(data.path);
     //m_model->loadModel(data.path);
     m_model->InitGraphics();
-    m_model->setDirPath(data.path);
+    
+}
+
+void SimpleModel::LoadModel(const ModelPaths& data)
+{
+   m_model->loadModelData(data.path);
+   m_model->setDirPath(data.path);
+   std::cout<<"SUCCESS: " << std::endl;
 }
 
 void SimpleModel::draw()
@@ -78,6 +85,18 @@ glm::mat4 SimpleModel::getProjectionMatrix()
 glm::mat4 SimpleModel::getModelMatrix()
 {
     return m_ModelMatrix;
+}
+
+std::vector<Triangle> SimpleModel::getTriangleList()
+{
+    size_t totalTriangles = 0;
+    for (const auto& meshPtr : m_model->getMeshes()) {
+        totalTriangles += meshPtr->m_index.size() / 3;
+    }
+    m_triangles.reserve(totalTriangles);
+
+
+    return m_triangles;
 }
 
 void SimpleModel::position(float x, float y, float z)

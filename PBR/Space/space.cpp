@@ -23,33 +23,45 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
 
     PBRCamera cam(aspectRatio);
 
-
+    const int samplesPerPixel = 64; 
     for(int i = 0; i<height; i++){
         for(int j = 0; j<width; j++){
 
-            float u = float(j)/(width-1);
-            float v = float(i)/(height-1);
-            fungt::Ray ray = cam.getRay(u, v);
+            fungt::Vec3 pixelColor(0.0f,0.0f,0.0f);
 
-            HitData hit_data;
-            bool isHit = false;
-            float closest = FLT_MAX;
+           
+            for (int s = 0; s < samplesPerPixel; s++) {
+                float u = (j + randomFloat()) / (width - 1);
+                float v = (i + randomFloat()) / (height - 1);
 
-            for (const auto& tri : m_triangles) {
-                HitData tempData;
-                if (Intersection::MollerTrumbore(ray, tri, 0.001f, closest, tempData)) {
-                    isHit = true;
-                    closest = tempData.dis;
-                    hit_data = tempData;
+                fungt::Ray ray = cam.getRay(u, v);
+
+                HitData hit_data;
+                bool isHit = false;
+                float closest = FLT_MAX;
+
+                for (const auto& tri : m_triangles) {
+                    HitData tempData;
+                    if (Intersection::MollerTrumbore(ray, tri, 0.001f, closest, tempData)) {
+                        isHit = true;
+                        closest = tempData.dis;
+                        hit_data = tempData;
+                    }
                 }
-            }
-            fungt::Vec3 color;
-            if (isHit)
-                color = shadeNormal(hit_data.normal);
-            else
-                color = fungt::Vec3(0.5f, 0.5f, 0.5f); // background
 
-            framebuffer[i* width + j] = color;
+                if (isHit)
+                    pixelColor += shadeNormal(hit_data.normal);
+                else
+                    pixelColor += fungt::Vec3(0.5f, 0.5f, 0.5f); // background
+            }
+
+            // Average and gamma correct
+            pixelColor = pixelColor/float(samplesPerPixel);
+            pixelColor = fungt::Vec3(std::sqrt(pixelColor.x),
+                std::sqrt(pixelColor.y),
+                std::sqrt(pixelColor.z)); // gamma 2.0
+
+            framebuffer[i * width + j] = pixelColor;
 
         }
 

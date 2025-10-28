@@ -162,7 +162,7 @@ void Mesh::draw(Shader &shader){
 
 std::vector<Triangle> Mesh::ToTriangle() const
 {
-    {
+    
         std::vector<Triangle> triangle_vec;
         triangle_vec.reserve(m_index.size() / 3);
 
