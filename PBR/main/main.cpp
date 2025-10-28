@@ -14,14 +14,15 @@ int main(){
 
     std::shared_ptr<SimpleModel> monkey_model = SimpleModel::create();
     monkey_model->LoadModel(monkey);
-    std::vector<Triangle> triangleList = monkey_model->getTriangleList();
+    
+    //std::vector<Triangle> triangleList = monkey_model->getTriangleList();
 
-    std::cout<<"total triangles : "<<triangleList.size()<<std::endl;
+   //std::cout<<"total triangles : "<<triangleList.size()<<std::endl;
     
 
-    Space space;
-    auto framebuffer = space.Render(IMAGE_WIDTH, IMAGE_HEIGHT);
-    Space::SaveFrameBufferAsPNG(framebuffer, IMAGE_WIDTH, IMAGE_HEIGHT);
+    // Space space;
+    // auto framebuffer = space.Render(IMAGE_WIDTH, IMAGE_HEIGHT);
+    // Space::SaveFrameBufferAsPNG(framebuffer, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     return 0;
 }

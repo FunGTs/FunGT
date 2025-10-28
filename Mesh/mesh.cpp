@@ -8,17 +8,17 @@ Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &i
 : m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_texture{inTexture}{
      
      //Calls the init mesh to populate the VAO, VBO and EBO
-     this->initMesh();
+     //this->initMesh();
      
 }
 Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inMaterial)
 : m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_material{inMaterial}{
       //Calls the init mesh to populate the VAO, VBO and EBO
-     this->initMesh();
+     //this->initMesh();
 }
 Mesh::~Mesh()
 {
-    // std::cout<<"Mesh Destructor"<<std::endl;
+    std::cout<<"Mesh Destructor"<<std::endl;
 }
 //Methods
 void Mesh::initMesh() {
