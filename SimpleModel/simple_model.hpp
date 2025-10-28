@@ -5,6 +5,7 @@
 #include "../DataPaths/datapaths.hpp"
 #include "../Physics/RigidBody/rigid_body.hpp"
 #include "../Physics/CollisionManager/collision_manager.hpp"
+#include "../Loader/loader.hpp"
 #include <optional>
 class SimpleModel : public Renderable {
 
@@ -49,7 +50,6 @@ public:
     
 
 };
-
 
 
 
