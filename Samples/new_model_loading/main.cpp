@@ -8,7 +8,7 @@ int main(){
     std::cout<<path<<std::endl;
     //Path to your shaders and models:
     ModelPaths model_ball, model_lamp, model_ground;
-    
+    DisplayGraphics::SetBackend(Backend::OpenGL);
     //model.path   = getAssetPath("Animations/monster_dancing/monster_dancing.dae");
     model_ball.path   = getAssetPath("Obj/LuxoBall/luxoball.obj");
     model_ball.vs_path = getAssetPath("resources/luxoball_vs.glsl");
@@ -41,7 +41,8 @@ int main(){
     FunGTSModel pixarBall = SimpleModel::create();
    
     // Loads Pixar ball data
-    pixarBall->load(model_ball);
+    pixarBall->LoadModel(model_ball);
+    pixarBall->InitGraphics();
     pixarBall->position(10.f, 1.f, -10.f);
     pixarBall->rotation(-30.f, 0.f, 0.f);
   
