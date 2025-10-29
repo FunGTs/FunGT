@@ -83,6 +83,7 @@ void Model::InitGraphics()
     switch (DisplayGraphics::GetBackend()) {
     case Backend::OpenGL:
         {
+            std::cout<<"Number of meshes: "<<m_vMesh.size()<<std::endl;
             for (auto& mesh : m_vMesh) {
                 mesh->InitOGLBuffers();
             }
