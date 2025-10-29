@@ -10,9 +10,11 @@ SimpleModel::~SimpleModel() {
 }
 
 void SimpleModel::load(const ModelPaths &data) {
-    m_model->createShader(data.vs_path, data.fs_path);
+
+    
     m_model->loadModelData(data.path);
-    //m_model->loadModel(data.path);
+    // m_model->loadModel(data.path);
+    m_model->createShader(data.vs_path, data.fs_path);
     m_model->InitGraphics();
     
 }
@@ -22,6 +24,20 @@ void SimpleModel::LoadModel(const ModelPaths& data)
    m_model->loadModelData(data.path);
    m_model->setDirPath(data.path);
    std::cout<<"SUCCESS: " << std::endl;
+}
+
+void SimpleModel::LoadModel(const ModelPaths &data)
+{
+    m_model->loadModelData(data.path);
+    m_path_vs = data.vs_path;
+    m_path_fs = data.fs_path;
+    m_model->setDirPath(data.path);
+}
+
+void SimpleModel::InitGraphics()
+{
+    m_model->createShader(m_path_vs, m_path_fs);
+    m_model->InitGraphics();
 }
 
 void SimpleModel::draw()

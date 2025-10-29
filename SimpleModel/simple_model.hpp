@@ -11,7 +11,9 @@ class SimpleModel : public Renderable {
 
     std::shared_ptr<Model> m_model; // Pointer to the Model object
     std::optional<std::shared_ptr<CollisionManager>> m_collisionM; // Optional RigidBody for physics
-    glm::mat4 m_ModelMatrix; 
+    std::string m_path_fs;
+    std::string m_path_vs;
+    glm::mat4 m_ModelMatrix;
     glm::mat4 m_ViewMatrix;
     glm::mat4 m_ProjectionMatrix;
     glm::vec3 m_position = glm::vec3(0.f);
@@ -24,7 +26,8 @@ public:
     ~SimpleModel();
     // Method to set the model
     void load(const ModelPaths &data);
-    void LoadModel(const ModelPaths& data);
+    void LoadModel(const ModelPaths &data);
+    void InitGraphics();
     void position(float x = 0.f, float y = 0.f, float z = 0.f);
     void rotation(float x = 0.f, float y = 0.f, float z = 0.f);
     void scale(float s = 1.f);

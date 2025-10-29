@@ -8,6 +8,8 @@ Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &i
 : m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_texture{inTexture}{
      
      //Calls the init mesh to populate the VAO, VBO and EBO
+     
+     
      //this->initMesh();
      
 }
@@ -76,7 +78,7 @@ void Mesh::InitOGLBuffers()
     m_vao.genVAO(); //Generates a Vertex array object
     m_vao.bind();
 
-    m_vb.genVB(); //Generates the Vertex Buffer
+    m_vb.genVB(); //Generates the Vertex Buffer 
     m_vb.bind();
     m_vb.bufferData(&m_vertex[0], m_vertex.size() * sizeof(Vertex));
 
