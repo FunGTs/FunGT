@@ -84,7 +84,7 @@ Texture::Texture(const std::string & path, GLenum _type)
 
 }
 Texture::~Texture(){
-    
+    std::cout << "Texture Destructor" << std::endl;
 }
 void Texture::genTexture(const std::string  &path ){
     txt_Path = path;
