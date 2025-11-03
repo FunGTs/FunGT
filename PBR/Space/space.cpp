@@ -5,7 +5,7 @@ Space::Space(){
     
     Material gray(glm::vec3(0.2f), glm::vec3(0.8f), glm::vec3(0.8f), 32.0f, "DefaultGray");
     m_triangles = create_unit_cube(gray);
-
+    
     m_lights.push_back(Light(
         fungt::Vec3(2.0f, 2.0f, 2.0f),    // position
         fungt::Vec3(10.0f, 10.0f, 10.0f)  // strong white intensity
@@ -13,67 +13,53 @@ Space::Space(){
 
 }
 
+Space::Space(std::vector<Triangle>& triangleList)
+{
+    Material gray(glm::vec3(0.2f), glm::vec3(0.8f), glm::vec3(0.8f), 32.0f, "DefaultGray");
+    m_triangles = std::move(triangleList);
+    m_lights.push_back(Light(
+        fungt::Vec3(2.0f, 2.0f, 2.0f),    // position
+        fungt::Vec3(10.0f, 10.0f, 10.0f)  // strong white intensity
+    ));
+}
+
+
 Space::~Space(){
 }
 
 std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
-    std::vector<fungt::Vec3> framebuffer;
-    framebuffer.resize(width*height);
-    float aspectRatio = float(width) / float(height);
-
-    PBRCamera cam(aspectRatio);
-
-    const int samplesPerPixel = 64; 
-    for(int i = 0; i<height; i++){
-        for(int j = 0; j<width; j++){
-
-            fungt::Vec3 pixelColor(0.0f,0.0f,0.0f);
-
-           
-            for (int s = 0; s < samplesPerPixel; s++) {
-                float u = (j + randomFloat()) / (width - 1);
-                float v = (i + randomFloat()) / (height - 1);
-
-                fungt::Ray ray = cam.getRay(u, v);
-
-                HitData hit_data;
-                bool isHit = false;
-                float closest = FLT_MAX;
-
-                for (const auto& tri : m_triangles) {
-                    HitData tempData;
-                    if (Intersection::MollerTrumbore(ray, tri, 0.001f, closest, tempData)) {
-                        isHit = true;
-                        closest = tempData.dis;
-                        hit_data = tempData;
-                    }
-                }
-
-                if (isHit)
-                    pixelColor += shadeNormal(hit_data.normal);
-                else
-                    pixelColor += fungt::Vec3(0.5f, 0.5f, 0.5f); // background
-            }
-
-            // Average and gamma correct
-            pixelColor = pixelColor/float(samplesPerPixel);
-            pixelColor = fungt::Vec3(std::sqrt(pixelColor.x),
-                std::sqrt(pixelColor.y),
-                std::sqrt(pixelColor.z)); // gamma 2.0
-
-            framebuffer[i * width + j] = pixelColor;
-
-        }
-
+    switch (ComputeRender::GetBackend())
+  {
+    case Compute::Backend::CPU:
+    {
+        /* code */
+        std::cout << "Using CPU to render scene" << std::endl;
+        m_computeRenderer = std::make_unique<CPU_Renderer>();
+        break;
     }
-    return framebuffer;
+#ifdef FUNGT_USE_CUDA
+    case Compute::Backend::CUDA:
+    {
+        /* code */
+        std::cout << "Using CUDA to render scene" << std::endl;
+        m_computeRenderer = std::make_unique<CUDA_Renderer>();
+        break;
+    }
+#endif
+  default:
+      throw std::runtime_error("Unknown Compute API!");
+  }
+  //Starting render:
+    std::cout << "Starting render" << std::endl;
+    std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(width, height,m_triangles,m_camera,m_samplesPerPixel);
 
+    return frameBuffer;
 }
 
 void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height)
 {
     std::vector<unsigned char> pixels(width * height * 3);
-
+    
     for (int i = 0; i < width * height; i++) {
         fungt::Vec3 color = framebuffer[i];
         // Clamp and gamma correct
@@ -85,8 +71,13 @@ void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, in
         pixels[i * 3 + 1] = static_cast<unsigned char>(255.99f * color.y);
         pixels[i * 3 + 2] = static_cast<unsigned char>(255.99f * color.z);
     }
+    std::string file_name = ComputeRender::GetBackendName() + "_output.png";
+    stbi_write_png(file_name.c_str(), width, height, 3, pixels.data(), width * 3);
+}
 
-    stbi_write_png("output.png", width, height, 3, pixels.data(), width * 3);
+void Space::setSamples(int numOfSamples)
+{
+    m_samplesPerPixel = numOfSamples;
 }
 
 

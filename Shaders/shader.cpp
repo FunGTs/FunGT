@@ -1,7 +1,8 @@
 #include "shader.hpp"
 
 Shader::Shader(){
-    std::cout<<"Shader default constructor"<<std::endl; 
+    std::cout<<"Shader default constructor"<<std::endl;
+    idP = 0; 
 }
 
 Shader::Shader(std::string pathVert, std::string pathFrag, std::string pathgeom)
@@ -41,7 +42,9 @@ Shader::Shader(std::string pathVert, std::string pathFrag){
 Shader::~Shader(){
     std::cout<<"Shader destructor"<<std::endl;
 
-    glDeleteProgram(idP);
+        if(idP){
+            glDeleteProgram(idP);
+        }
 }
 // ********* METHODS *************
 

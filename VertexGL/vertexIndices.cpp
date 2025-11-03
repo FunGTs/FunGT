@@ -1,20 +1,26 @@
 #include "vertexIndices.hpp"
 VertexIndex::VertexIndex(){
-
+    id_rnd = 0;
 }
 VertexIndex::VertexIndex(const unsigned int *data, unsigned int totIndices)
-: numId_rnd{totIndices}{
-
+    : m_numOfIndices{ totIndices } {
+    
     glGenBuffers(1,&id_rnd);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,id_rnd);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,numId_rnd*sizeof(GLuint),data,GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_numOfIndices * sizeof(GLuint), data, GL_STATIC_DRAW);
 
 }
 VertexIndex::~VertexIndex(){
-    glDeleteBuffers(1,&id_rnd);
+    std::cout << "VIO Destructor, id_rnd=" << id_rnd << std::endl;
+    if (id_rnd) {
+        glDeleteBuffers(1, &id_rnd);
+    }
+    else if (id_rnd) {
+        std::cerr << "[Warning] VIO::~VIO(): GL context not active, skipping glDeleteBuffers\n";
+    }
 }
 void VertexIndex::genVI(){
- 
+    
     glGenBuffers(1,&id_rnd);
     
 
@@ -36,5 +42,5 @@ void VertexIndex::indexData(const unsigned int *data, unsigned int sizeOfData)
 }
 unsigned int VertexIndex::getNumIndices() const
 {
-    return numId_rnd;
+    return m_numOfIndices;
 }

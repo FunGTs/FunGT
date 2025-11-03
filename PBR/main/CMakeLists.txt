@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(pbr_render)
 
+option(FUNGT_USE_CUDA "Enable CUDA backend" OFF)
+option(FUNGT_USE_SYCL "Enable SYCL backend" OFF)
 # Allow FUNGT_BASE_DIR to be set externally (command line, environment, or cache)
 # Priority: 1. Cache variable, 2. Environment variable, 3. Default fallback
 if(NOT DEFINED FUNGT_BASE_DIR)
@@ -55,10 +57,13 @@ include_directories(
     ${FUNGT_BASE_DIR}/PBR/Intersection
     ${FUNGT_BASE_DIR}/PBR/Light
     ${FUNGT_BASE_DIR}/PBR/Space
+    ${FUNGT_BASE_DIR}/PBR/Render/include
     ${FUNGT_BASE_DIR}/vendor/stb_image
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/Renders
     ${FUNGT_BASE_DIR}/Matrix
+    ${FUNGT_BASE_DIR}/gpu/data
+    ${FUNGT_BASE_DIR}/gpu/include
 )
 set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
@@ -79,9 +84,35 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix4x4f.cpp
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
+    ${FUNGT_BASE_DIR}/PBR/Render/src/compute_backends.cpp
 )
+# ────────────────────────────────
+# Conditional CUDA setup
+# ────────────────────────────────
+if(FUNGT_USE_CUDA)
+    message(STATUS "CUDA backend enabled")
+    
+    enable_language(CUDA)
+    list(APPEND SOURCE_FILES ${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu)
+
+    set_source_files_properties(${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu PROPERTIES LANGUAGE CUDA)
+      # Add CUDA-specific compile options
+      
+else()
+    message(STATUS "CUDA backend disabled")
+endif()
 # Add executable
 add_executable(pbr_render ${SOURCE_FILES})
+# ────────────────────────────────
+# CUDA target settings (only after the target exists)
+# ────────────────────────────────
+if(FUNGT_USE_CUDA)
+   target_compile_definitions(pbr_render PRIVATE FUNGT_USE_CUDA)
+    set_target_properties(pbr_render PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_ARCHITECTURES "native"
+    )
+endif()
 # Linux-specific settings
 message(STATUS "Configuring for Linux")
 message(STATUS "CMakeLists.txt location: ${FUNGT_BASE_DIR}")
@@ -137,5 +168,10 @@ target_link_libraries(pbr_render
     funlib
     ${OpenCL_LIBRARIES}
 )
-target_compile_options(pbr_render PRIVATE -fsycl)
-target_link_options(pbr_render PRIVATE -fsycl)
+# For SYCL build path
+if(FUNGT_USE_SYCL AND NOT FUNGT_USE_CUDA)
+    target_compile_options(pbr_render PRIVATE -fsycl)
+    target_link_options(pbr_render PRIVATE -fsycl)
+else()
+    #target_compile_options(pbr_render PRIVATE --diag-suppress=20012)
+endif()

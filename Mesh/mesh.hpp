@@ -50,8 +50,6 @@ public:
     void InitOGLBuffers();
     void draw(Shader& shader);
 
-    std::vector<Triangle> ToTriangle() const;
-
 };
 
 #endif // _MESH_H_

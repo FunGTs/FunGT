@@ -7,6 +7,7 @@
 #else
 #include <GL/glew.h>
 #endif
+#include <iostream>
 class VertexBuffer{
 
     private: 

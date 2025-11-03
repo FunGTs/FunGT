@@ -241,35 +241,6 @@ const std::vector<std::unique_ptr<Mesh>>& Model::getMeshes()
     return m_vMesh;
 }
 
-std::vector<Triangle> Model::ToTriangles()
-{
-
-    std::vector<Triangle> allTriangles;
-
-    // Estimate total triangle count to reserve memory upfront
-    size_t totalTriangles = 0;
-    for (const auto& meshPtr : m_vMesh) {
-        totalTriangles += meshPtr->m_index.size()/ 3;
-    }
-    allTriangles.reserve(totalTriangles);
-
-    // Collect triangles from all meshes
-    for (const auto& meshPtr : m_vMesh) {
-        if (!meshPtr) continue;  // safety check
-
-        std::vector<Triangle> meshTriangles = meshPtr->ToTriangle();
-
-        // Move triangles efficiently into the final vector
-        allTriangles.insert(
-            allTriangles.end(),
-            std::make_move_iterator(meshTriangles.begin()),
-            std::make_move_iterator(meshTriangles.end())
-        );
-    }
-
-    return allTriangles;
-}
-
 void Model::draw()
 {
       //std::cout<<"Drawing a Model "<<std::endl; 

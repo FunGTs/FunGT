@@ -7,10 +7,11 @@
 #else
 #include <GL/glew.h>
 #endif
+#include <iostream>
 class VertexIndex{
 
     unsigned int id_rnd;
-    unsigned int numId_rnd;
+    unsigned int m_numOfIndices;
 
     public:
         VertexIndex();

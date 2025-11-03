@@ -2,7 +2,7 @@
 #define _MATERIAL_FUNGT_H_
 #include "../Shaders/shader.hpp"
 class Material
-{   private:
+{   public:
         glm::vec3 m_ambientLight; 
         glm::vec3 m_diffLigth; 
         glm::vec3 m_specLight;

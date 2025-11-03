@@ -1,28 +1,14 @@
 #if !defined(_TRIANGLE_H_)
 #define _TRIANGLE_H_
 #include "../../Vector/vector3.hpp"
-#include "../../Material/material.hpp"
-
-class Triangle{
-
-
-    public: 
-        fungt::Vec3 v0, v1, v2; 
-        fungt::Vec3 normal;
-        Material material;
-        
-        Triangle(){
-            
-        }
-        ~Triangle(){
-
-        }
-
-
-
-
-
+#include "../gpu/data/device_pod.hpp"
+struct Triangle {
+    fungt::Vec3 v0, v1, v2;
+    fungt::Vec3 normal;
+    MaterialData material;
 };
+
+
 
 
 

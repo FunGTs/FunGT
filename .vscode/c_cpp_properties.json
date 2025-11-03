@@ -6,7 +6,8 @@
                  "${workspaceFolder}",
                 "${workspaceFolder}/**",
                 "/home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/include",
-                "/home/juanchuletas/Documents/Development/FunGT/vendor/funlib/include"
+                "/home/juanchuletas/Documents/Development/FunGT/vendor/funlib/include",
+                "/usr/local/cuda-12.4/include"
             ],
             "defines": [],
             "compilerPath": "/home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++",
