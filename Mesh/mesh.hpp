@@ -14,7 +14,7 @@
 #include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
 #include "../Material/material.hpp"
-
+#include "../Triangle/triangle.hpp"
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 #define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices)
 struct Texture_struct {
@@ -23,32 +23,33 @@ struct Texture_struct {
     std::string path;
 };
 
-class Mesh{
-    
-    public: 
-        std::vector<funGTVERTEX> m_vertex; //An array of vertices
-        std::vector<unsigned int> m_index;// an array of indices 
-        std::vector<Texture> m_texture; //An array of texturesç
-        std::vector<Material> m_material; 
-        //unsigned int VAO;
-        VertexArrayObject m_vao; 
+class Mesh {
 
-    private: 
-        //Render data: 
-       
-        VertexBuffer m_vb;
-        VertexIndex m_vi; 
-       
-         //unsigned int VBO, EBO; 
-    
-    public:
-        Mesh();
-        Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Texture> &inTexture);
-        Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inmaterial);
-        ~Mesh();
-        void initMesh();
-        void InitOGLBuffers();
-        void draw(Shader &shader); 
-}; 
+public:
+    std::vector<funGTVERTEX> m_vertex; //An array of vertices
+    std::vector<unsigned int> m_index;// an array of indices 
+    std::vector<Texture> m_texture; //An array of texturesç
+    std::vector<Material> m_material;
+    //unsigned int VAO;
+    VertexArrayObject m_vao;
+
+private:
+    //Render data: 
+
+    VertexBuffer m_vb;
+    VertexIndex m_vi;
+
+    //unsigned int VBO, EBO; 
+
+public:
+    Mesh();
+    Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Texture>& inTexture);
+    Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Material>& inmaterial);
+    ~Mesh();
+    void initMesh();
+    void InitOGLBuffers();
+    void draw(Shader& shader);
+
+};
 
 #endif // _MESH_H_

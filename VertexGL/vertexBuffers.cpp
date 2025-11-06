@@ -13,7 +13,10 @@ VertexBuffer::VertexBuffer(const void* data, unsigned int size){
 
 }
 VertexBuffer::~VertexBuffer(){
-    glDeleteBuffers(1,&id_Render);//CHECK_GL_ERROR();
+    std::cout << "VBO Destructor" << std::endl;
+    if(id_Render){
+       glDeleteBuffers(1, &id_Render);//CHECK_GL_ERROR();
+    }
 }
 void VertexBuffer::genVB(){
     glGenBuffers(1,&id_Render);//CHECK_GL_ERROR();

@@ -8,3 +8,8 @@ float randomFloat(int seed) {
 float random(float min, float max) {
     return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
 }
+float randomFloat() {
+    static thread_local std::mt19937 generator(std::random_device{}());
+    static thread_local std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+    return distribution(generator);
+}

@@ -8,7 +8,11 @@ VertexArrayObject::VertexArrayObject(int index){
     glBindVertexArray(id_vao);
 }
 VertexArrayObject::~VertexArrayObject(){
-    glDeleteVertexArrays(1, &id_vao);
+    std::cout<<"VAO Destructor"<<std::endl;
+    if(id_vao){
+        glDeleteVertexArrays(1, &id_vao);
+    }
+    
 }
 void VertexArrayObject::genVAO(){
     glGenVertexArrays(1,&id_vao);

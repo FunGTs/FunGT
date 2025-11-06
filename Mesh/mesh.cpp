@@ -20,7 +20,7 @@ Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &i
 }
 Mesh::~Mesh()
 {
-    // std::cout<<"Mesh Destructor"<<std::endl;
+    std::cout<<"Mesh Destructor"<<std::endl;
 }
 //Methods
 void Mesh::initMesh() {
@@ -161,3 +161,4 @@ void Mesh::draw(Shader &shader){
         // OpenGL Error Checking
 
 }
+

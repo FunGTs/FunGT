@@ -68,8 +68,14 @@
         "charconv": "cpp",
         "chrono": "cpp",
         "shared_mutex": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "future": "cpp",
+        "set": "cpp",
+        "__nullptr": "cpp",
+        "locale": "cpp",
+        "__bit_reference": "cpp"
     },
     "cmake.sourceDirectory": "/home/juanchuletas/Documents/Development/FunGT/main",
-    "editor.formatOnPaste": true
+    "editor.formatOnPaste": true,
+    "C_Cpp.errorSquiggles": "disabled"
 }

@@ -16,7 +16,14 @@ void SimpleModel::load(const ModelPaths &data) {
     // m_model->loadModel(data.path);
     m_model->createShader(data.vs_path, data.fs_path);
     m_model->InitGraphics();
-    m_model->setDirPath(data.path);
+    
+}
+
+void SimpleModel::LoadModelData(const ModelPaths& data)
+{
+   m_model->loadModelData(data.path);
+   m_model->setDirPath(data.path);
+   std::cout<<"SUCCESS: " << std::endl;
 }
 
 void SimpleModel::LoadModel(const ModelPaths &data)
@@ -94,6 +101,70 @@ glm::mat4 SimpleModel::getProjectionMatrix()
 glm::mat4 SimpleModel::getModelMatrix()
 {
     return m_ModelMatrix;
+}
+
+std::vector<Triangle> SimpleModel::getTriangleList()
+{
+    const std::vector<std::unique_ptr<Mesh>>& meshes = m_model->getMeshes();
+    size_t totalTriangles = 0;
+
+
+    for (const auto& meshPtr : meshes) {
+
+        totalTriangles += meshPtr->m_index.size() / 3;
+    }
+    std::cout << "Total triangles to create: " << totalTriangles << std::endl;
+    m_triangles.reserve(totalTriangles);
+
+    for (auto& meshPtr : meshes) {
+        std::cout << "Processing : " << meshPtr->m_index.size() << std::endl;
+        for (size_t i = 0; i < meshPtr->m_index.size(); i += 3) {
+            const funGTVERTEX& v0 = meshPtr->m_vertex[meshPtr->m_index[i + 0]];
+            const funGTVERTEX& v1 = meshPtr->m_vertex[meshPtr->m_index[i + 1]];
+            const funGTVERTEX& v2 = meshPtr->m_vertex[meshPtr->m_index[i + 2]];
+            Triangle tri;
+            tri.v0 = fungt::toFungtVec3(v0.position);
+            tri.v1 = fungt::toFungtVec3(v1.position);
+            tri.v2 = fungt::toFungtVec3(v2.position);
+
+            // Flat face normal (correct for path tracing)
+            fungt::Vec3 e1 = tri.v1 - tri.v0;
+            fungt::Vec3 e2 = tri.v2 - tri.v0;
+            tri.normal = e1.cross(e2).normalize();
+
+            // Include material if present
+            if (!meshPtr->m_material.empty()) {
+
+                tri.material.ambient[0] = meshPtr->m_material[0].m_ambientLight.x;
+                tri.material.ambient[1] = meshPtr->m_material[0].m_ambientLight.y;
+                tri.material.ambient[2] = meshPtr->m_material[0].m_ambientLight.z;
+
+                tri.material.diffuse[0] = meshPtr->m_material[0].m_diffLigth.x;
+                tri.material.diffuse[1] = meshPtr->m_material[0].m_diffLigth.y;
+                tri.material.diffuse[2] = meshPtr->m_material[0].m_diffLigth.z;
+
+                tri.material.specular[0] = meshPtr->m_material[0].m_specLight.x;
+                tri.material.specular[1] = meshPtr->m_material[0].m_specLight.y;
+                tri.material.specular[2] = meshPtr->m_material[0].m_specLight.z;
+
+                tri.material.shininess = meshPtr->m_material[0].m_shininess;
+                
+            }
+            else{
+                tri.material.ambient[0] = tri.material.ambient[1] = tri.material.ambient[2] = 0.1f;
+                tri.material.diffuse[0] = tri.material.diffuse[1] = tri.material.diffuse[2] = 0.7f;
+                tri.material.specular[0] = tri.material.specular[1] = tri.material.specular[2] = 0.2f;
+                tri.material.shininess = 16.0f;
+            }
+
+            // Optional: handle texture-only meshes later when you add albedo maps
+            // if (!m_textures.empty()) tri.albedoMap = m_textures[0].id;
+
+            m_triangles.push_back(std::move(tri));
+        }
+    }
+
+    return m_triangles;
 }
 
 void SimpleModel::position(float x, float y, float z)

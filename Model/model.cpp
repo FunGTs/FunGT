@@ -236,6 +236,11 @@ void Model::createShader(std::string vertex_shader, std::string fragment_shader)
     m_shader.create(vertex_shader,fragment_shader);
 }
 
+const std::vector<std::unique_ptr<Mesh>>& Model::getMeshes()
+{
+    return m_vMesh;
+}
+
 void Model::draw()
 {
       //std::cout<<"Drawing a Model "<<std::endl; 
