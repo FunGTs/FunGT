@@ -37,6 +37,9 @@ namespace fungt{
             fgt_device Vec3 operator*(float scalar) const {
                 return Vec3(x * scalar, y * scalar, z * scalar);
             }
+            fgt_device Vec3 operator*(const Vec3& other) const {
+                return Vec3(x * other.x, y * other.y, z * other.z);
+            }
             fgt_device Vec3 operator/(float scalar) const {
                 return Vec3(x / scalar, y / scalar, z / scalar);
             }
@@ -75,6 +78,9 @@ namespace fungt{
     }
     fgt_device inline Vec3 toFungtVec3(const glm::vec3& v) {
         return Vec3(v.x, v.y, v.z);
+    }
+    fgt_device inline Vec3 toFungtVec3(float vec[3]) {
+        return Vec3(vec[0], vec[1], vec[2]);
     }
     fgt_device inline glm::vec3 toGlmVec3(const fungt::Vec3& vec) {
 

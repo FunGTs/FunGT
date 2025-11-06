@@ -39,7 +39,7 @@ class Intersection{
             rec.dis = t;
             rec.point = ray.at(t);
             rec.normal = tri.normal;
-            rec.materialPtr = &tri.material;
+            //rec.materialPtr = &tri.material;
 
             return true;
         }

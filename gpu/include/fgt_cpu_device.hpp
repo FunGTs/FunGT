@@ -21,6 +21,7 @@
 // --- Backend-specific mappings ---
 #if defined(__KERNEL_CUDA__)
 #define fgt_device __host__ __device__
+#define fgt_device_gpu __device__
 #define fgt_device_forceinline __host__ __device__ __forceinline__
 #define fgt_device_constant __constant__
 #define fgt_global __global__

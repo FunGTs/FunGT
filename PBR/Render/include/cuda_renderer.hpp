@@ -24,6 +24,7 @@ class CUDA_Renderer : public IComputeRenderer{
     std::vector<fungt::Vec3> RenderScene(
         int width, int height,
         const std::vector<Triangle>& triangleList,
+        const std::vector<Light> &lightsList,
         const PBRCamera& camera,
         int samplesPerPixel
     );

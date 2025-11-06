@@ -51,7 +51,7 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
   }
   //Starting render:
     std::cout << "Starting render" << std::endl;
-    std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(width, height,m_triangles,m_camera,m_samplesPerPixel);
+    std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(width, height,m_triangles,m_lights,m_camera,m_samplesPerPixel);
 
     return frameBuffer;
 }

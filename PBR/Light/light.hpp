@@ -10,7 +10,7 @@ enum class LightType{
 
 
 class Light{
-
+    public:
         fungt::Vec3 m_pos;
         fungt::Vec3 m_intensity; 
         LightType m_type;

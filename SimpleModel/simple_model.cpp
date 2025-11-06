@@ -150,6 +150,12 @@ std::vector<Triangle> SimpleModel::getTriangleList()
                 tri.material.shininess = meshPtr->m_material[0].m_shininess;
                 
             }
+            else{
+                tri.material.ambient[0] = tri.material.ambient[1] = tri.material.ambient[2] = 0.1f;
+                tri.material.diffuse[0] = tri.material.diffuse[1] = tri.material.diffuse[2] = 0.7f;
+                tri.material.specular[0] = tri.material.specular[1] = tri.material.specular[2] = 0.2f;
+                tri.material.shininess = 16.0f;
+            }
 
             // Optional: handle texture-only meshes later when you add albedo maps
             // if (!m_textures.empty()) tri.albedoMap = m_textures[0].id;

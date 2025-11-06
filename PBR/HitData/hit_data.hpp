@@ -6,7 +6,7 @@ struct HitData {
     float dis;
     fungt::Vec3 point;
     fungt::Vec3 normal;
-    const MaterialData* materialPtr;
+    MaterialData material;
 
 };
 
