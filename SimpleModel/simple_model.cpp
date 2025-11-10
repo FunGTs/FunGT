@@ -131,34 +131,41 @@ std::vector<Triangle> SimpleModel::getTriangleList()
             fungt::Vec3 e1 = tri.v1 - tri.v0;
             fungt::Vec3 e2 = tri.v2 - tri.v0;
             tri.normal = e1.cross(e2).normalize();
+            tri.material.baseColor[0] = 0.922;
+            tri.material.baseColor[1] = 0.467;
+            tri.material.baseColor[2] = 0.882;
+            tri.material.metallic = 0.0;
+            tri.material.roughness = 0.2f;      // Smooth surface
+            tri.material.reflectance = 0.05f;   // Slightly more reflective
+            tri.material.emission = 0.0;
+            tri.material.hasTexture = 0.0f;
+            // //Include material if present
+            // if (!meshPtr->m_material.empty()) {
 
-            // Include material if present
-            if (!meshPtr->m_material.empty()) {
+            //     tri.material.ambient[0] = meshPtr->m_material[0].m_ambientLight.x;
+            //     tri.material.ambient[1] = meshPtr->m_material[0].m_ambientLight.y;
+            //     tri.material.ambient[2] = meshPtr->m_material[0].m_ambientLight.z;
 
-                tri.material.ambient[0] = meshPtr->m_material[0].m_ambientLight.x;
-                tri.material.ambient[1] = meshPtr->m_material[0].m_ambientLight.y;
-                tri.material.ambient[2] = meshPtr->m_material[0].m_ambientLight.z;
+            //     tri.material.diffuse[0] = meshPtr->m_material[0].m_diffLigth.x;
+            //     tri.material.diffuse[1] = meshPtr->m_material[0].m_diffLigth.y;
+            //     tri.material.diffuse[2] = meshPtr->m_material[0].m_diffLigth.z;
 
-                tri.material.diffuse[0] = meshPtr->m_material[0].m_diffLigth.x;
-                tri.material.diffuse[1] = meshPtr->m_material[0].m_diffLigth.y;
-                tri.material.diffuse[2] = meshPtr->m_material[0].m_diffLigth.z;
+            //     tri.material.specular[0] = meshPtr->m_material[0].m_specLight.x;
+            //     tri.material.specular[1] = meshPtr->m_material[0].m_specLight.y;
+            //     tri.material.specular[2] = meshPtr->m_material[0].m_specLight.z;
 
-                tri.material.specular[0] = meshPtr->m_material[0].m_specLight.x;
-                tri.material.specular[1] = meshPtr->m_material[0].m_specLight.y;
-                tri.material.specular[2] = meshPtr->m_material[0].m_specLight.z;
-
-                tri.material.shininess = meshPtr->m_material[0].m_shininess;
+            //     tri.material.shininess = meshPtr->m_material[0].m_shininess;
                 
-            }
-            else{
-                tri.material.ambient[0] = tri.material.ambient[1] = tri.material.ambient[2] = 0.1f;
-                tri.material.diffuse[0] = tri.material.diffuse[1] = tri.material.diffuse[2] = 0.7f;
-                tri.material.specular[0] = tri.material.specular[1] = tri.material.specular[2] = 0.2f;
-                tri.material.shininess = 16.0f;
-            }
+            // }
+            // else{
+            //     tri.material.ambient[0] = tri.material.ambient[1] = tri.material.ambient[2] = 0.1f;
+            //     tri.material.diffuse[0] = tri.material.diffuse[1] = tri.material.diffuse[2] = 0.7f;
+            //     tri.material.specular[0] = tri.material.specular[1] = tri.material.specular[2] = 0.2f;
+            //     tri.material.shininess = 16.0f;
+            // }
 
-            // Optional: handle texture-only meshes later when you add albedo maps
-            // if (!m_textures.empty()) tri.albedoMap = m_textures[0].id;
+            //Optional: handle texture-only meshes later when you add albedo maps
+            //if (!m_textures.empty()) tri.albedoMap = m_textures[0].id;
 
             m_triangles.push_back(std::move(tri));
         }

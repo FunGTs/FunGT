@@ -64,6 +64,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/Matrix
     ${FUNGT_BASE_DIR}/gpu/data
     ${FUNGT_BASE_DIR}/gpu/include
+    ${FUNGT_BASE_DIR}/PBR/Render/brdf/
 )
 set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp

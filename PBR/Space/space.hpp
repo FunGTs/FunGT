@@ -20,7 +20,7 @@ class Space {
     std::vector<Triangle> m_triangles;
     std::unique_ptr<IComputeRenderer> m_computeRenderer;
     std::vector<Light> m_lights; 
-    int m_samplesPerPixel = 1;
+    int m_samplesPerPixel = 16;
 
 
     public:

@@ -22,12 +22,25 @@ int main(){
     std::vector<Triangle> triangleList = monkey_model->getTriangleList();
 
     std::cout<<"Total triangles : "<<triangleList.size()<<std::endl;
-    
+    std::cout << "HOST first tri diffuse: "
+        << triangleList[0].material.baseColor[0] << ","
+        << triangleList[0].material.baseColor[1] << ","
+        << triangleList[0].material.baseColor[2] << std::endl;
+
 
     Space space(triangleList);
     space.setSamples(64);
+    auto totalStart = std::chrono::high_resolution_clock::now();
     auto framebuffer = space.Render(IMAGE_WIDTH, IMAGE_HEIGHT);
+    auto totalEnd = std::chrono::high_resolution_clock::now();
+   
     Space::SaveFrameBufferAsPNG(framebuffer, IMAGE_WIDTH, IMAGE_HEIGHT);
+
+    auto totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(totalEnd - totalStart).count();
+    // ============ PRINT RESULTS ============
+    std::cout << "\n========== TIMING RESULTS ==========" << std::endl;
+    std::cout << "Total time:       " << totalTime << " ms" << std::endl;
+    std::cout << "====================================\n" << std::endl;
 
     return 0;
 }

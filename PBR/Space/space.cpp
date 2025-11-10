@@ -59,18 +59,26 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
 void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height)
 {
     std::vector<unsigned char> pixels(width * height * 3);
-    
-    for (int i = 0; i < width * height; i++) {
-        fungt::Vec3 color = framebuffer[i];
-        // Clamp and gamma correct
-        color.x = std::pow(std::clamp(color.x, 0.0f, 1.0f), 1 / 2.2f);
-        color.y = std::pow(std::clamp(color.y, 0.0f, 1.0f), 1 / 2.2f);
-        color.z = std::pow(std::clamp(color.z, 0.0f, 1.0f), 1 / 2.2f);
 
-        pixels[i * 3 + 0] = static_cast<unsigned char>(255.99f * color.x);
-        pixels[i * 3 + 1] = static_cast<unsigned char>(255.99f * color.y);
-        pixels[i * 3 + 2] = static_cast<unsigned char>(255.99f * color.z);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            // Flip Y coordinate
+            int srcIdx = y * width + x;              // Original index
+            int dstIdx = (height - 1 - y) * width + x;  // Flipped index
+
+            fungt::Vec3 color = framebuffer[srcIdx];
+
+            // Clamp and gamma correct
+            color.x = std::pow(std::clamp(color.x, 0.0f, 1.0f), 1.0f / 2.2f);
+            color.y = std::pow(std::clamp(color.y, 0.0f, 1.0f), 1.0f / 2.2f);
+            color.z = std::pow(std::clamp(color.z, 0.0f, 1.0f), 1.0f / 2.2f);
+
+            pixels[dstIdx * 3 + 0] = static_cast<unsigned char>(255.99f * color.x);
+            pixels[dstIdx * 3 + 1] = static_cast<unsigned char>(255.99f * color.y);
+            pixels[dstIdx * 3 + 2] = static_cast<unsigned char>(255.99f * color.z);
+        }
     }
+
     std::string file_name = ComputeRender::GetBackendName() + "_output.png";
     stbi_write_png(file_name.c_str(), width, height, 3, pixels.data(), width * 3);
 }
