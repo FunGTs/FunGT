@@ -155,20 +155,21 @@ void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, co
         /* Render here */
          glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         //
-       
-    
-        
-        this->update(renderLambda);
-     
-            
-   
+
+         if (renderLambda)
+         {
+             this->update(renderLambda);
+         }
+
         /*IMGUI*/
         
         
-        // if (guiRender) {
-        //     this->guiUpdate(guiRender);
-        // }
-        this->guiUpdate();
+        if (guiRender) {
+            this->guiUpdate(guiRender);
+        }
+        else{
+            this->guiUpdate();
+        }
         GLenum err;
             while ((err = glGetError()) != GL_NO_ERROR) {
             //std::cerr << "OpenGL error in RenderScene: " << err << std::endl;

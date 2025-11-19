@@ -53,7 +53,7 @@ template<typename Derived> class GraphicsTool{
     public:
         void run(); //Run the program
         void run(const std::function<void()>& renderLambda);
-        void render(const std::function<void()> &renderLambda, const std::function<void()> &guiRender = nullptr);
+        void render(const std::function<void()> &renderLambda = nullptr, const std::function<void()> &guiRender = nullptr);
       
         
 
