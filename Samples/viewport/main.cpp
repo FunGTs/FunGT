@@ -12,7 +12,7 @@ int main (){
     model_ball.path = getAssetPath("Obj/monkey/monkeyobj.obj");
     model_ball.vs_path = getAssetPath("resources/luxolamp_vs.glsl");
     model_ball.fs_path = getAssetPath("resources/luxolamp_fs.glsl");
-
+   
     //Creates a FunGT Scene to display 
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
     //Background color, use 255.f for pure white, 

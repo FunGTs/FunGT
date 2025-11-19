@@ -99,7 +99,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/ViewPort
     ${FUNGT_BASE_DIR}/Renders
     ${FUNGT_BASE_DIR}/Platform/OpenGL
-    ${FUNGT_BASE_DIR}/Renders
+    
     
 
 )
@@ -143,6 +143,10 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
+    ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
+    ${FUNGT_BASE_DIR}/Renders/framebuffer.cpp
+    ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
+    ${FUNGT_BASE_DIR}/Platform/OpenGL/OGLframeBuffer.cpp
 )
 
 # Add executable

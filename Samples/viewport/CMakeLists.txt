@@ -144,6 +144,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
     ${FUNGT_BASE_DIR}/Renders/framebuffer.cpp
+    ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
     ${FUNGT_BASE_DIR}/Platform/OpenGL/OGLframeBuffer.cpp
 )
 
