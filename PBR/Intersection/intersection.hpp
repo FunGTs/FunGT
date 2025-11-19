@@ -38,9 +38,18 @@ class Intersection{
             //   Hit: fill record
             rec.dis = t;
             rec.point = ray.at(t);
-            rec.normal = tri.normal;
-            //rec.materialPtr = &tri.material;
-
+            // Store barycentric coordinates (CRITICAL for UV interpolation!)
+            rec.bary = fungt::Vec3(1.0f - u - v, u, v);
+            // Geometric normal (for safe ray offset)
+            rec.geometricNormal = edge1.cross(edge2).normalize();
+            // Shading normal (interpolated per-vertex normals for smooth shading)
+            rec.normal = (tri.n0 * rec.bary.x +
+                tri.n1 * rec.bary.y +
+                tri.n2 * rec.bary.z).normalize();
+            // Make sure shading normal faces same hemisphere as geometric normal
+            if (rec.normal.dot(rec.geometricNormal) < 0.0f) {
+                rec.normal = rec.normal * -1.0f;
+            }
             return true;
         }
 

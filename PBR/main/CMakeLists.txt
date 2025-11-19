@@ -64,7 +64,8 @@ include_directories(
     ${FUNGT_BASE_DIR}/Matrix
     ${FUNGT_BASE_DIR}/gpu/data
     ${FUNGT_BASE_DIR}/gpu/include
-    ${FUNGT_BASE_DIR}/PBR/Render/brdf/
+    ${FUNGT_BASE_DIR}/PBR/Render/brdf
+    ${FUNGT_BASE_DIR}/PBR/TextureManager
 )
 set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
@@ -94,9 +95,15 @@ if(FUNGT_USE_CUDA)
     message(STATUS "CUDA backend enabled")
     
     enable_language(CUDA)
-    list(APPEND SOURCE_FILES ${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu)
+    list(APPEND SOURCE_FILES 
+        ${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu 
+        ${FUNGT_BASE_DIR}/PBR/TextureManager/cuda_texture.cpp
+    )
 
-    set_source_files_properties(${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu PROPERTIES LANGUAGE CUDA)
+    set_source_files_properties(
+        ${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu
+        ${FUNGT_BASE_DIR}/PBR/TextureManager/cuda_texture.cu 
+        PROPERTIES LANGUAGE CUDA)
       # Add CUDA-specific compile options
       
 else()

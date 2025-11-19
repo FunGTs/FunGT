@@ -14,7 +14,7 @@ class IComputeRenderer{
             const std::vector<Triangle> &triangleList,
             const std::vector<Light> &lightsList,
             const PBRCamera& camera, 
-            int samplesPerPixel
+            int samplesPerPixel 
         ) = 0;
 
 

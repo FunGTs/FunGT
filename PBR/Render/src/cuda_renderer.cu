@@ -3,7 +3,12 @@
 fgt_device_gpu  float randomFloat(curandState* state) {
     return curand_uniform(state);
 }
-fgt_device bool traceRay(const fungt::Ray& ray, const Triangle* tris, int numOFTriangles, HitData& hit) {
+fgt_device_gpu bool traceRay(
+    const fungt::Ray& ray, 
+    const Triangle* tris, 
+    int numOFTriangles, 
+    cudaTextureObject_t* textures,
+    HitData& hit) {
 
     bool hitSomething = false;
     float closest = FLT_MAX;
@@ -13,8 +18,38 @@ fgt_device bool traceRay(const fungt::Ray& ray, const Triangle* tris, int numOFT
             hitSomething = true;
             closest = temp.dis;
             hit = temp;
+            // Calculate geometric normal (for ray offset)
+            fungt::Vec3 e1 = tris[i].v1 - tris[i].v0;
+            fungt::Vec3 e2 = tris[i].v2 - tris[i].v0;
+            hit.geometricNormal = e1.cross(e2).normalize();
+
+            // Interpolate shading normal (for lighting - SMOOTH SHADING!)
+            hit.normal = (tris[i].n0 * temp.bary.x +
+                tris[i].n1 * temp.bary.y +
+                tris[i].n2 * temp.bary.z).normalize();
+            // Make sure shading normal faces same hemisphere as geometric normal
+            if (hit.normal.dot(hit.geometricNormal) < 0.0f) {
+                hit.normal = hit.normal * -1.0f;
+            }
             hit.material = tris[i].material; // store material directly
-        }
+            if (hit.material.baseColorTexIdx >= 0 && textures != nullptr) {
+                // Interpolate UVs using barycentric coordinates
+                float u = tris[i].uvs[0][0] * temp.bary.x +
+                    tris[i].uvs[1][0] * temp.bary.y +
+                    tris[i].uvs[2][0] * temp.bary.z;
+                float v = tris[i].uvs[0][1] * temp.bary.x +
+                    tris[i].uvs[1][1] * temp.bary.y +
+                    tris[i].uvs[2][1] * temp.bary.z;
+
+                // Sample CUDA texture
+                float4 texColor = tex2D<float4>(textures[hit.material.baseColorTexIdx], u, v);
+
+                // Override base color with texture color
+                hit.material.baseColor[0] = texColor.x;
+                hit.material.baseColor[1] = texColor.y;
+                hit.material.baseColor[2] = texColor.z;
+            }
+        }   
     }
     return hitSomething;
 }
@@ -52,7 +87,7 @@ fgt_device_gpu fungt::Vec3 pathTracer(const fungt::Ray& initialRay, const Triang
     
     for(int bounce = 0; bounce<4; bounce++){
         HitData hit;
-        bool hitAny = traceRay(currRay, tris, numOfTriangles, hit);
+        bool hitAny = traceRay(currRay, tris, numOfTriangles,nullptr, hit);
 
             if (!hitAny) {
                 accumulated = accumulated + color * skyColor(currRay);
@@ -69,7 +104,7 @@ fgt_device_gpu fungt::Vec3 pathTracer(const fungt::Ray& initialRay, const Triang
             fungt::Ray shadowRay(hit.point + hit.normal * 0.001f, lightDir);
 
             HitData shadowHit;
-            bool occluded = traceRay(shadowRay, tris, numOfTriangles, shadowHit) && shadowHit.dis < lightDist;
+            bool occluded = traceRay(shadowRay, tris, numOfTriangles,nullptr, shadowHit) && shadowHit.dis < lightDist;
 
             if (!occluded) {
                 float NdotL = fmaxf(hit.normal.dot(lightDir), 0.0f);
@@ -122,6 +157,8 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
     const fungt::Ray& initialRay,
     const Triangle* tris,
     const Light* lights,
+    cudaTextureObject_t* textures,
+    int numOfTextures,  
     int numOfTriangles,
     int numOfLights,
     curandState* rng)
@@ -132,7 +169,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
     for (int bounce = 0; bounce < 6; ++bounce) {
         HitData hit;
-        bool hitAny = traceRay(currRay, tris, numOfTriangles, hit);
+        bool hitAny = traceRay(currRay, tris, numOfTriangles,textures, hit);
 
         if (!hitAny) {
             radiance += throughput * skyColor(currRay);
@@ -166,9 +203,9 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
             fungt::Vec3 L = toLight / dist;
 
             // Shadow test
-            fungt::Ray shadowRay(hit.point + N * 0.001f, L);
+            fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
             HitData temp;
-            bool occluded = traceRay(shadowRay, tris, numOfTriangles, temp) && temp.dis < dist;
+            bool occluded = traceRay(shadowRay, tris, numOfTriangles,textures, temp) && temp.dis < dist;
             if (occluded) continue;
 
             // Light intensity with inverse square falloff
@@ -182,7 +219,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
         // Prepare indirect bounce - sample diffuse hemisphere
         fungt::Vec3 newDir = sampleHemisphere(N, rng);
-        float cosTheta = fmaxf(newDir.dot(N), 0.0f);
+        //float cosTheta = fmaxf(newDir.dot(N), 0.0f);
 
         // Update throughput for next bounce
         // kD is the diffuse component (energy NOT reflected by Fresnel)
@@ -213,6 +250,8 @@ fgt_global void render_kernel(
     fungt::Vec3* framebuffer,
     const Triangle* triangles,
     const Light *lights,
+    cudaTextureObject_t* textures,
+    int numTextures,
     int numOfTriangles,
     int numOfLights,
     int width,
@@ -269,7 +308,7 @@ fgt_global void render_kernel(
         float v = (y + randomFloat(&randomState)) / (height - 1);
         fungt::Ray ray = cam.getRay(u, v);
 
-        pixel += pathTracer_CookTorrance(ray, triangles, lights, numOfTriangles, numOfLights, &randomState);
+        pixel += pathTracer_CookTorrance(ray, triangles, lights,textures,numTextures, numOfTriangles, numOfLights, &randomState);
     }
 
     pixel = pixel / float(samplesPerPixel);
@@ -314,10 +353,22 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     CUDA_CHECK(cudaMalloc(&device_buff, imageSize * sizeof(fungt::Vec3)));
     CUDA_CHECK(cudaMemset(device_buff, 0, imageSize * sizeof(fungt::Vec3))); //Fill with 0s
     int seed = 1337;
+
+    //Check for texture
+    if(m_textureObj){
+        std::cout<<"Using CUDA Textures"<<std::endl;
+    }
+    else{
+        std::cout << "WARNING: CUDA Textures ptr is NUL " << std::endl;
+    }
+    
+
     render_kernel << <grid, block >> > (
         device_buff,
         device_Tlist,
         lightsDev,
+        m_textureObj,
+        m_numTextures,
         int(triangleList.size()),
         int(lightsList.size()),
         width,

@@ -14,7 +14,6 @@
 #include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
 #include "../Material/material.hpp"
-#include "../Triangle/triangle.hpp"
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 #define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices)
 struct Texture_struct {
