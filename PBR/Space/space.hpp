@@ -35,7 +35,7 @@ class Space {
     public:
         Space();
         Space(std::vector<Triangle>& triangleList);
-        Space(const PBRCamera &camera, std::vector<Light> &lights);
+        Space(const PBRCamera &camera);
         ~Space();
 
         std::vector<fungt::Vec3> Render(const int width, const int height);

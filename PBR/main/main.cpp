@@ -29,8 +29,15 @@ int main(){
     //     << triangleList[0].material.baseColor[1] << ","
     //     << triangleList[0].material.baseColor[2] << std::endl;
 
-
-    Space space{};
+    // Nice portrait angle for Woody
+    PBRCamera camera(
+        fungt::Vec3(0, 2.5, 30),     // Position (slightly above, in front)
+        fungt::Vec3(0, 1.8, 0),     // Look at Woody's face
+        fungt::Vec3(0, 1, 0),       // Up vector
+        50.0f,                       // FOV (50° is good for portraits)
+        float(IMAGE_WIDTH) / float(IMAGE_HEIGHT)
+    );
+    Space space(camera);
     space.LoadModelToRender(*monkey_model);
     space.setSamples(256);
     space.BuildBVH();

@@ -48,6 +48,11 @@ Space::Space(std::vector<Triangle>& triangleList)
     ));
 }
 
+Space::Space(const PBRCamera& camera)
+: Space() {
+    m_camera = camera;
+}
+
 
 Space::~Space(){
 }
