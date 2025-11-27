@@ -25,6 +25,11 @@ namespace fungt{
             float x, y, z;
      
             fgt_device Vec3(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
+            fgt_device Vec3(const Vec3& other){
+                x = other.x; 
+                y = other.y; 
+                z = other.z;
+            }
             
             fgt_device Vec3 operator+(const Vec3& other) const {
                 return Vec3(x + other.x, y + other.y, z + other.z);
@@ -71,6 +76,17 @@ namespace fungt{
                 float len = length();
                 if (len > 0) return Vec3(x/len, y/len, z/len);
                 return Vec3(0, 0, 0);
+            }
+            fgt_device float operator[](int i) const {
+                if (i == 0) return x;
+                if (i == 1) return y;
+                return z;
+            }
+
+            fgt_device float& operator[](int i) {
+                if (i == 0) return x;
+                if (i == 1) return y;
+                return z;
             }
     };
     fgt_device inline fungt::Vec3 operator*(float scalar, const fungt::Vec3& v) {

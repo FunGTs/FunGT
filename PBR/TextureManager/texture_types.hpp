@@ -1,25 +1,22 @@
 // texture_types.hpp
 #pragma once
 
-#ifdef _CUDACC_
-using CUDATextureType = cudaTextureObject_t;
-#else
-    // Dummy type when CUDA not available
-//using CUDATextureType = cudaTextureObject_t;
-#endif
-// #include<vector>
-// // CPU texture is always available
-// struct CPUTexture {
-//     std::vector<unsigned char> data;
-//     int width;
-//     int height;
-//     int channels;
-//     // ... sample() method
-// };
+#if defined(__CUDACC__)
+#include <cuda_runtime.h>
+using TextureDeviceObject = cudaTextureObject_t;
+#define TEXTURE_BACKEND_CUDA
 
-#ifdef _FUNGT_USE_SYCL_
-// SYCL texture type when available
-using SYCLTextureType = /* SYCL texture type */;
+#elif defined(_FUNGT_USE_SYCL_)
+#include <sycl/sycl.hpp>
+// SYCL textures are more complex - typically need both image and sampler
+struct TextureDeviceObject {
+    sycl::image<2>* image;
+    sycl::sampler* sampler;
+    };
+#define TEXTURE_BACKEND_SYCL
+
 #else
-using SYCLTextureType = void*;
+    // Fallback for CPU or unsupported platforms
+using TextureDeviceObject = void*;
+#define TEXTURE_BACKEND_NONE
 #endif

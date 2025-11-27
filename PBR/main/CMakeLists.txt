@@ -41,6 +41,7 @@ set_target_properties(funlib PROPERTIES
 
 #include directories
 include_directories(
+    ${FUNGT_BASE_DIR}
     ${FUNGT_BASE_DIR}/Vector
     ${FUNGT_BASE_DIR}/Triangle
     ${FUNGT_BASE_DIR}/Material
@@ -65,7 +66,9 @@ include_directories(
     ${FUNGT_BASE_DIR}/gpu/data
     ${FUNGT_BASE_DIR}/gpu/include
     ${FUNGT_BASE_DIR}/PBR/Render/brdf
+    ${FUNGT_BASE_DIR}/PBR/Render/shared
     ${FUNGT_BASE_DIR}/PBR/TextureManager
+    ${FUNGT_BASE_DIR}/PBR/BVH
 )
 set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
@@ -87,6 +90,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
     ${FUNGT_BASE_DIR}/PBR/Render/src/compute_backends.cpp
+    ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
 )
 # ────────────────────────────────
 # Conditional CUDA setup

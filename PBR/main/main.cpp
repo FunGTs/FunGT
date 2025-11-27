@@ -7,7 +7,7 @@ int main(){
     //Path to your shaders and models:
     ModelPaths monkey;
     DisplayGraphics::SetBackend(Backend::OpenGL);
-    monkey.path    = getAssetPath("Obj/LuxoBall/luxoball.obj"); 
+    monkey.path    = getAssetPath("Obj/Woody/woody-head.obj"); 
     monkey.vs_path = getAssetPath("resources/luxoball_vs.glsl");
     monkey.fs_path = getAssetPath("resources/luxoball_fs.glsl");
     //ComputeRender::Init();
@@ -32,12 +32,13 @@ int main(){
 
     Space space{};
     space.LoadModelToRender(*monkey_model);
-    space.setSamples(64);
-    
+    space.setSamples(256);
+    space.BuildBVH();
     auto totalStart = std::chrono::high_resolution_clock::now();
     auto framebuffer = space.Render(IMAGE_WIDTH, IMAGE_HEIGHT);
     auto totalEnd = std::chrono::high_resolution_clock::now();
    
+    
     Space::SaveFrameBufferAsPNG(framebuffer, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     auto totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(totalEnd - totalStart).count();

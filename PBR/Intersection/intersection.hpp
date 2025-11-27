@@ -3,6 +3,7 @@
 #include "../Ray/ray.hpp"
 #include "../HitData/hit_data.hpp"
 #include "../../Triangle/triangle.hpp"
+#include "../BVH/aabb.hpp"
 
 class Intersection{
 
@@ -52,6 +53,36 @@ class Intersection{
             }
             return true;
         }
+        static fgt_device bool intersectAABB(
+            const fungt::Ray& ray,
+            const AABB& box,
+            float tMin,
+            float tMax)
+        {
+            // Test each axis (X, Y, Z)
+            for (int axis = 0; axis < 3; axis++) {
+                float invD = 1.0f / ray.m_dir[axis];  // Precompute inverse direction
+                float t0 = (box.m_min[axis] - ray.m_origin[axis]) * invD;
+                float t1 = (box.m_max[axis] - ray.m_origin[axis]) * invD;
+
+                // Swap if needed (ray direction is negative)
+                if (invD < 0.0f) {
+                    float temp = t0;
+                    t0 = t1;
+                    t1 = temp;
+                }
+
+                // Update tMin/tMax range
+                tMin = fmaxf(t0, tMin);
+                tMax = fminf(t1, tMax);
+
+                // Early exit if no overlap
+                if (tMax <= tMin)
+                    return false;
+            }
+            return true;
+        }
+
 
 };
 

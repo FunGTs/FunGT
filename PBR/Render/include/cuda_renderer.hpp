@@ -14,9 +14,11 @@ using cudaTextureObject_t = unsigned long long;
 // NOW include your headers - they'll see FUNGT_USE_CUDA
 #include <iostream>
 #include "icompute_renderer.hpp"
-#include "../../../gpu/include/fgt_cpu_device.hpp"
-#include "../../Intersection/intersection.hpp"
-#include "../../Ray/ray.hpp"
+#include "gpu/include/fgt_cpu_device.hpp"
+#include "PBR/Render/shared/core_renderer.hpp"
+#include "Random/fgt_rng.hpp"
+#include "PBR/Intersection/intersection.hpp"
+#include "PBR/Ray/ray.hpp"
 
 
 #define CUDA_CHECK(err) do { cudaError_t e = (err); if (e != cudaSuccess) { \
@@ -33,6 +35,7 @@ class CUDA_Renderer : public IComputeRenderer{
             int width, 
             int height,
             const std::vector<Triangle>& triangleList,
+            const std::vector<BVHNode> &nodes,
             const std::vector<Light> &lightsList,
             const PBRCamera& camera,
             int samplesPerPixel

@@ -15,9 +15,10 @@
 #include "../Render/include/icompute_renderer.hpp"
 #include "../Render/include/cpu_renderer.hpp"
 #include "../Render/include/cuda_renderer.hpp"
-#include "../TextureManager/texture_manager.hpp"
+#include "../TextureManager/idevice_texture.hpp"
 #include "../TextureManager/cuda_texture.hpp"
 #include "../TextureManager/cpu_texture.hpp"
+#include "PBR/BVH/bvh_builder.hpp"
 #include <algorithm>
 class Space {
 
@@ -27,17 +28,20 @@ class Space {
     std::vector<Light> m_lights; 
     int m_samplesPerPixel = 16;
     std::shared_ptr<IDeviceTexture> m_textureManager;
-
+    std::vector<BVHNode> m_bvh_nodes;
+    std::vector<int>     m_bvh_indices;
 
     
     public:
         Space();
         Space(std::vector<Triangle>& triangleList);
+        Space(const PBRCamera &camera, std::vector<Light> &lights);
         ~Space();
 
         std::vector<fungt::Vec3> Render(const int width, const int height);
         void LoadModelToRender(const SimpleModel& model);
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
+        void BuildBVH();
         void setSamples(int numOfSamples);
 
 

@@ -53,10 +53,10 @@ fgt_device_gpu bool traceRay(
     }
     return hitSomething;
 }
+
 fgt_device_gpu fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, curandState* state) {
     float u = randomFloat(state);
     float v = randomFloat(state);
-
     float theta = acosf(sqrtf(1.0f - u));
     float phi = 2.0f * M_PI * v;
 
@@ -156,12 +156,15 @@ fgt_device fungt::Vec3 shadeNormal(const fungt::Vec3& normal) {
 fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
     const fungt::Ray& initialRay,
     const Triangle* tris,
+    const BVHNode *nodes,
     const Light* lights,
     cudaTextureObject_t* textures,
     int numOfTextures,  
     int numOfTriangles,
+    int numOfNodes,
     int numOfLights,
-    curandState* rng)
+    curandState* rng,
+    fungt::RNG &fgtRng)
 {
     fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
     fungt::Vec3 radiance(0.0f, 0.0f, 0.0f);
@@ -169,7 +172,8 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
     for (int bounce = 0; bounce < 6; ++bounce) {
         HitData hit;
-        bool hitAny = traceRay(currRay, tris, numOfTriangles,textures, hit);
+        //bool hitAny = traceRay(currRay, tris, numOfTriangles,textures, hit);
+        bool hitAny = traceRayBVH(currRay,tris,nodes,numOfNodes,textures,hit);
 
         if (!hitAny) {
             radiance += throughput * skyColor(currRay);
@@ -205,7 +209,8 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
             // Shadow test
             fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
             HitData temp;
-            bool occluded = traceRay(shadowRay, tris, numOfTriangles,textures, temp) && temp.dis < dist;
+            //bool occluded = traceRay(shadowRay, tris, numOfTriangles,textures, temp) && temp.dis < dist;
+            bool occluded = traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, temp) && temp.dis < dist;
             if (occluded) continue;
 
             // Light intensity with inverse square falloff
@@ -218,7 +223,8 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
         radiance += throughput * directLight;
 
         // Prepare indirect bounce - sample diffuse hemisphere
-        fungt::Vec3 newDir = sampleHemisphere(N, rng);
+        fungt::Vec3 newDir = sampleHemisphere(N,fgtRng);
+        //fungt::Vec3 newDir = sampleHemisphere(N, rng);
         //float cosTheta = fmaxf(newDir.dot(N), 0.0f);
 
         // Update throughput for next bounce
@@ -238,7 +244,8 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
         if (bounce > 2) {
             float maxComponent = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
             float p = fminf(0.95f, maxComponent);
-            if (randomFloat(rng) > p) break;
+            //if (randomFloat(rng) > p) break;
+            if (fgtRng.nextFloat() > p) break;
             throughput = throughput / p;
         }
     }
@@ -249,10 +256,12 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 fgt_global void render_kernel(
     fungt::Vec3* framebuffer,
     const Triangle* triangles,
+    const BVHNode * nodes,
     const Light *lights,
     cudaTextureObject_t* textures,
     int numTextures,
     int numOfTriangles,
+    int numOfNodes,
     int numOfLights,
     int width,
     int height,
@@ -266,7 +275,7 @@ fgt_global void render_kernel(
     if (x >= width || y >= height) return;
     int idx = y * width + x;
 
-
+    fungt::RNG rng(idx * 1337ULL + 123ULL);
 
     curandState randomState;
     curand_init(seed + idx, 0, 0, &randomState);
@@ -304,11 +313,15 @@ fgt_global void render_kernel(
 
     fungt::Vec3 pixel(0.0f);
     for (int s = 0; s < samplesPerPixel; s++) {
-        float u = (x + randomFloat(&randomState)) / (width - 1);
-        float v = (y + randomFloat(&randomState)) / (height - 1);
+        //float u = (x + randomFloat(&randomState)) / (width - 1);
+        //float v = (y + randomFloat(&randomState)) / (height - 1);
+        float u = (x + rng.nextFloat()) / (width - 1);
+        float v = (y + rng.nextFloat()) / (height - 1);
         fungt::Ray ray = cam.getRay(u, v);
 
-        pixel += pathTracer_CookTorrance(ray, triangles, lights,textures,numTextures, numOfTriangles, numOfLights, &randomState);
+        pixel += pathTracer_CookTorrance(ray, triangles,nodes, lights,
+                                        textures,numTextures, numOfTriangles,
+                                        numOfNodes, numOfLights, &randomState,rng);
     }
 
     pixel = pixel / float(samplesPerPixel);
@@ -320,6 +333,7 @@ fgt_global void render_kernel(
 std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     int width, int height,
     const std::vector<Triangle>& triangleList,
+    const std::vector<BVHNode> &nodes,
     const std::vector<Light> &lightsList,
     const PBRCamera& camera,
     int samplesPerPixel
@@ -342,10 +356,16 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     CUDA_CHECK(cudaMalloc(&device_Tlist, TlistSize));
     CUDA_CHECK(cudaMemcpy(device_Tlist, triangleList.data(), TlistSize, cudaMemcpyHostToDevice));
 
-    Light *lightsDev = nullptr;
+    BVHNode* device_bvhNode = nullptr;
+    size_t BvhNodeSize = nodes.size()*sizeof(BVHNode);
+    CUDA_CHECK(cudaMalloc(&device_bvhNode,BvhNodeSize));
+    CUDA_CHECK(cudaMemcpy(device_bvhNode,nodes.data(),BvhNodeSize,cudaMemcpyHostToDevice));
+
+    Light *device_lights = nullptr;
     size_t LlistSize = lightsList.size()*sizeof(Light);
-    CUDA_CHECK(cudaMalloc(&lightsDev, LlistSize));
-    CUDA_CHECK(cudaMemcpy(lightsDev,lightsList.data(),LlistSize,cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMalloc(&device_lights, LlistSize));
+    CUDA_CHECK(cudaMemcpy(device_lights, lightsList.data(), LlistSize, cudaMemcpyHostToDevice));
+    
     //Final image buffer:
 
     fungt::Vec3* device_buff = nullptr;
@@ -366,10 +386,12 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     render_kernel << <grid, block >> > (
         device_buff,
         device_Tlist,
-        lightsDev,
+        device_bvhNode,
+        device_lights,
         m_textureObj,
         m_numTextures,
         int(triangleList.size()),
+        int(nodes.size()),
         int(lightsList.size()),
         width,
         height,
@@ -385,7 +407,8 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     CUDA_CHECK(cudaMemcpy(framebuffer.data(), device_buff, imageSize * sizeof(fungt::Vec3), cudaMemcpyDeviceToHost));
     CUDA_CHECK(cudaFree(device_buff));
     CUDA_CHECK(cudaFree(device_Tlist));
-    CUDA_CHECK(cudaFree(lightsDev));
+    CUDA_CHECK(cudaFree(device_bvhNode));
+    CUDA_CHECK(cudaFree(device_lights));
 
     return framebuffer;
 

@@ -3,7 +3,7 @@
 #include "../../vendor/stb_image/stb_image_write.h"
 Space::Space(){
     m_lights.push_back(Light(
-        fungt::Vec3(2.0f, 2.0f, 2.0f),    // position
+        fungt::Vec3(-5.0f, 8.0f, 4.0f),    // position
         fungt::Vec3(10.0f, 10.0f, 10.0f)  // strong white intensity
     ));  
     switch (ComputeRender::GetBackend())
@@ -83,7 +83,9 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
 
   //Starting render:
     std::cout << "Starting render" << std::endl;
-    std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(width, height,m_triangles,m_lights,m_camera,m_samplesPerPixel);
+    std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(width, height,m_triangles,
+                                                                           m_bvh_nodes,m_lights,
+                                                                           m_camera,m_samplesPerPixel);
 
     return frameBuffer;
 }
@@ -116,12 +118,12 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
 
         // ========== Setup Material ONCE per mesh ==========
         MaterialData global_material;
-        global_material.baseColor[0] = 0.8f;
-        global_material.baseColor[1] = 0.8f;
-        global_material.baseColor[2] = 0.8f;
+        global_material.baseColor[0] = 0.922;
+        global_material.baseColor[1] = 0.467;
+        global_material.baseColor[2] = 0.882f;
         global_material.metallic = 0.0f;
-        global_material.roughness = 0.15f;
-        global_material.reflectance = 0.5f;
+        global_material.roughness = 0.5f;
+        global_material.reflectance = 0.05f;
         global_material.emission = 0.0f;
         global_material.baseColorTexIdx = -1;
         if (!textures.empty() && m_textureManager != nullptr) {
@@ -218,6 +220,21 @@ void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, in
 
     std::string file_name = ComputeRender::GetBackendName() + "_output.png";
     stbi_write_png(file_name.c_str(), width, height, 3, pixels.data(), width * 3);
+}
+
+void Space::BuildBVH()
+{
+    
+    BVHBuilder builder;
+    builder.build(m_triangles);
+
+    m_bvh_nodes   = builder.moveNodes();
+    m_bvh_indices = builder.moveIndices();
+    std::vector<Triangle> reordered(m_triangles.size());
+    for (size_t i = 0; i < m_bvh_indices.size(); i++) {
+        reordered[i] = m_triangles[m_bvh_indices[i]];
+    }
+    m_triangles = std::move(reordered);
 }
 
 void Space::setSamples(int numOfSamples)

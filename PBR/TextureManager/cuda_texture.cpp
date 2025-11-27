@@ -116,3 +116,4 @@ void CUDATexture::cleanup() {
     textures.clear();
     pathToIndex.clear();
 }
+
