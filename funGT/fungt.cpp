@@ -11,15 +11,11 @@ FunGT::FunGT(int _width, int _height)
     m_firstMouse = true;
 
     m_sceneManager  = std::make_shared<SceneManager>();
-    m_ViewPortLayer = std::make_unique<ViewPort>();
-    m_imguiLayer    = std::make_unique<ImGuiLayer>();
-
-    //creates an info window:
-
-   
-
-    //m_infoWindow    = std::make_shared<InfoWindow>();
-   
+    
+    if(m_useGUI){
+        m_ViewPortLayer = std::make_unique<ViewPort>();
+        m_imguiLayer = std::make_unique<ImGuiLayer>();
+    }
 
 }
 FunGT::~FunGT(){
@@ -98,11 +94,6 @@ std::shared_ptr<SceneManager> FunGT::getSceneManager()
     return m_sceneManager;
 }
 
-// std::shared_ptr<GUI> FunGT::getInfoWindow()
-// {
-//     return m_infoWindow;
-// }
-
 void FunGT::set(const std::function<void()>& renderLambda){
     std::cout << "Starting FunGT Setting process..." << std::endl;
 
@@ -116,7 +107,6 @@ void FunGT::set(const std::function<void()>& renderLambda){
 
         node->getShader().Bind();
        
-
     }
 
     if(m_useGUI){

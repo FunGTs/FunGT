@@ -42,10 +42,7 @@ template<typename Derived> class GraphicsTool{
         void render();
         void setWindowUserPointer(void* pointer);  
     protected:
-        /* implemented in the derived class*/
-        void update(); // update scenes
-        void set(); //Set all the textures, meshes, shaders
-        
+        /* implemented in the derived class*/       
         void update(const std::function<void()> &renderLambda);
         void guiUpdate(const std::function<void()> &guiRender);
         void guiUpdate();

@@ -136,17 +136,6 @@ template <typename Derived>
 void GraphicsTool<Derived>::setWindowUserPointer(void* pointer) {
         glfwSetWindowUserPointer(m_Window, pointer);
 }
-template <typename Derived>
-void GraphicsTool<Derived>::update()
-{
-    static_cast<Derived *> (this)->update(); 
-}
-
-template <typename Derived>
-void GraphicsTool<Derived>::set()
-{
-    static_cast<Derived *> (this)->set();
-}
 
 template <typename Derived>
 void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, const std::function<void()> &guiRender)

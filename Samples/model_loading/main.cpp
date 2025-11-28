@@ -35,10 +35,6 @@ int main(){
     //Gets an instance of the SceneManager class to render objects
     FunGTSceneManager scene_manager  = myGame->getSceneManager();
 
-    //Shows infowindow:
-
-    FunGTInfoWindow infowindow = myGame->getInfoWindow();
-
     // Creates a cube map object
     
     FunGTCubeMap cube_map = CubeMap::create(); 
@@ -56,13 +52,12 @@ int main(){
 
         // Adds the renderable objects Animation and CubeMap to the SceneManager
         scene_manager->addRenderableObj(animation);
-        scene_manager->addRenderableObj(cube_map);
+        //scene_manager->addRenderableObj(cube_map);
         // scene_manager->addRenderableObj(pSys);
     });
-
+   
     myGame->render([&](){ // Renders the entire scene using data from the SceneManager
         scene_manager->renderScene();
-        infowindow->renderGUI();
     });
 
 
