@@ -1,20 +1,19 @@
 #include "graphicsTool.hpp"
 
-template<typename Derived>
-GraphicsTool<Derived>::GraphicsTool(int _width, int _height)
+
+GraphicsTool::GraphicsTool(int _width, int _height)
 : m_width{_width}, m_height{_height},m_Windowname{"FunGT"}{
     std::cout<<"GraphicsTool constructor "<<std::endl; 
 }
-template <typename Derived>
-GraphicsTool<Derived>::~GraphicsTool(){
+
+GraphicsTool::~GraphicsTool(){
     std::cout<<"GraphicsTool destructor"<<std::endl; 
     // Delete window before ending the program
     glfwDestroyWindow(m_Window);
     // Terminate GLFW before ending the program
     glfwTerminate();
 }
-template<typename Derived>
-int GraphicsTool<Derived>::initGL(){
+int GraphicsTool::initGL(){
     std::cout<<"Init OpenGL "<<std::endl; 
     if (!glfwInit())
     return -1;
@@ -66,7 +65,14 @@ int GraphicsTool<Derived>::initGL(){
     /* Make the window's context current */
     glfwMakeContextCurrent(m_Window);
     glfwSetInputMode(m_Window,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
-    glfwSetCursorPosCallback(m_Window,&Derived::mouse_callback);
+    
+    // Lambda callback that bridges GLFW C callback to our C++ virtual method
+    glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xpos, double ypos) {
+        GraphicsTool* instance = static_cast<GraphicsTool*>(glfwGetWindowUserPointer(window));
+        if (instance) {
+            instance->onMouseMove(xpos, ypos);
+        }
+    });
 
     glClearColor(m_colors[0], m_colors[1],m_colors[2],m_colors[3]);
     glfwSwapBuffers(m_Window);
@@ -103,68 +109,23 @@ int GraphicsTool<Derived>::initGL(){
     return 1; 
 
 }
-template <typename Derived>
-void GraphicsTool<Derived>::render()
-{
-    //this->initGL();
-    //this->set();
 
-    while (!glfwWindowShouldClose(m_Window)){
-        /* Render here */
-         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        this->update();
-        /*IMGUI*/
-       
 
-        /*END IMGUI*/
-            
-        /* Swap front and back buffers */
-        glfwSwapBuffers(m_Window);
-        /* Poll for and process events */
-        glfwPollEvents();
-        
-       
-            //UPDATE
-            //updateInput(window);
-            //USE A PROGRAM
-    }    
-    /* */
-    
-}
-
-template <typename Derived>
-void GraphicsTool<Derived>::setWindowUserPointer(void* pointer) {
+void GraphicsTool::setWindowUserPointer(void* pointer) {
         glfwSetWindowUserPointer(m_Window, pointer);
 }
-template <typename Derived>
-void GraphicsTool<Derived>::update()
-{
-    static_cast<Derived *> (this)->update(); 
-}
 
-template <typename Derived>
-void GraphicsTool<Derived>::set()
-{
-    static_cast<Derived *> (this)->set();
-}
-
-template <typename Derived>
-void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, const std::function<void()> &guiRender)
+void GraphicsTool::render(const std::function<void()> &renderLambda, const std::function<void()> &guiRender)
 {
      while (!glfwWindowShouldClose(m_Window)){
         /* Render here */
          glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         //
-       
     
-        
         this->update(renderLambda);
-     
-            
-   
+                 
         /*IMGUI*/
-        
-        
+                
         if (guiRender) {
             this->guiUpdate(guiRender);
         }
@@ -180,40 +141,17 @@ void GraphicsTool<Derived>::render(const std::function<void()> &renderLambda, co
         /* Poll for and process events */
         glfwPollEvents();
         
-       
-            //UPDATE
-            //updateInput(window);
-            //USE A PROGRAM
     }    
 }
 
-template <typename Derived>
-void GraphicsTool<Derived>::update(const std::function<void()> &renderLambda)
+
+void GraphicsTool::update(const std::function<void()> &renderLambda)
 {
-    static_cast<Derived *> (this)->update(renderLambda); 
+    renderLambda();
 }
 
-template <typename Derived>
-void GraphicsTool<Derived>::guiUpdate(const std::function<void()> &guiRender)
-{
-    static_cast<Derived *> (this)->guiUpdate(guiRender);
-}
 
-template <typename Derived>
-void GraphicsTool<Derived>::mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void GraphicsTool::guiUpdate(const std::function<void()> &guiRender)
 {
-    std::cout<<"using mouse_callback"<<std::endl; 
-    static_cast<Derived*>(glfwGetWindowUserPointer(window))->mouse_callback(window, xpos, ypos);
-}
-
-template <typename Derived>
-void GraphicsTool<Derived>::run()
-{
-    this->render(); 
-}
-
-template <typename Derived>
-void GraphicsTool<Derived>::run(const std::function<void()> &renderLambda)
-{
-    this->render();
+    guiRender();
 }

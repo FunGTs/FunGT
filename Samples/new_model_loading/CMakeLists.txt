@@ -62,9 +62,11 @@ if (WIN32)
 endif()
 # Include directories
 include_directories(
+    ${FUNGT_BASE_DIR}
     ${FUNGT_BASE_DIR}/VertexGL
     ${FUNGT_BASE_DIR}/Shaders
     ${FUNGT_BASE_DIR}/funGT
+    ${FUNGT_BASE_DIR}/GT
     ${FUNGT_BASE_DIR}/AnimatedModel
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/vendor/stb_image
@@ -103,6 +105,7 @@ include_directories(
 # Source files
 set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${FUNGT_BASE_DIR}/GT/graphicsTool.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexArrayObjects.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
@@ -129,8 +132,6 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
-    #${FUNGT_BASE_DIR}/Physics/ParticleSystem/particle_sys.cpp
-    #${FUNGT_BASE_DIR}/Physics/ParticleSystem/particle.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
