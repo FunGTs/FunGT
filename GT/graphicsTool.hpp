@@ -33,7 +33,7 @@ class GraphicsTool{
         GraphicsTool(int _width, int _height);
         virtual ~GraphicsTool();
         int initGL(); //initialize OpenGL stuff
-        void render(const std::function<void()>& renderLambda, const std::function<void()>& guiRender = nullptr);
+        void render(const std::function<void()>& renderLambda);
 
     private: 
         void setWindowUserPointer(void* pointer);  
@@ -44,7 +44,8 @@ class GraphicsTool{
         virtual void onRender() {}
         /* implemented in the derived class*/
         virtual void update(const std::function<void()> &renderLambda);
-        void guiUpdate(const std::function<void()> &guiRender);
+        virtual void renderGUI();
+    
     public:
       
         

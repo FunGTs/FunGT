@@ -115,7 +115,7 @@ void GraphicsTool::setWindowUserPointer(void* pointer) {
         glfwSetWindowUserPointer(m_Window, pointer);
 }
 
-void GraphicsTool::render(const std::function<void()> &renderLambda, const std::function<void()> &guiRender)
+void GraphicsTool::render(const std::function<void()> &renderLambda)
 {
      while (!glfwWindowShouldClose(m_Window)){
         /* Render here */
@@ -126,9 +126,9 @@ void GraphicsTool::render(const std::function<void()> &renderLambda, const std::
                  
         /*IMGUI*/
                 
-        if (guiRender) {
-            this->guiUpdate(guiRender);
-        }
+        
+        this->renderGUI();
+    
         GLenum err;
             while ((err = glGetError()) != GL_NO_ERROR) {
             //std::cerr << "OpenGL error in RenderScene: " << err << std::endl;
@@ -150,8 +150,8 @@ void GraphicsTool::update(const std::function<void()> &renderLambda)
     renderLambda();
 }
 
-
-void GraphicsTool::guiUpdate(const std::function<void()> &guiRender)
+void GraphicsTool::renderGUI()
 {
-    guiRender();
+    
 }
+
