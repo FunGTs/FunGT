@@ -13,6 +13,7 @@ FunGT::FunGT(int _width, int _height)
     m_sceneManager = std::make_shared<SceneManager>();
     m_ViewPortLayer = std::make_unique<ViewPort>();
     m_imguiLayer = std::make_unique<ImGuiLayer>();
+    //m_grid = std::make_shared<InfiniteGrid>();
 }
 FunGT::~FunGT(){
     std::cout<<"FunGT destructor"<<std::endl; 
@@ -20,32 +21,40 @@ FunGT::~FunGT(){
 void FunGT::processKeyBoardInput()
 {
    
-    if (glfwGetKey(m_Window, GLFW_KEY_W) == GLFW_PRESS)
-         m_camera.move(deltaTime,0);
-    if (glfwGetKey(m_Window, GLFW_KEY_S) == GLFW_PRESS)
-        m_camera.move(deltaTime,1);
-    if (glfwGetKey(m_Window, GLFW_KEY_A) == GLFW_PRESS)
-        m_camera.move(deltaTime,2);
-    if (glfwGetKey(m_Window, GLFW_KEY_D) == GLFW_PRESS)
-        m_camera.move(deltaTime,3);
+    // if (glfwGetKey(m_Window, GLFW_KEY_W) == GLFW_PRESS)
+    //      m_camera.move(deltaTime,0);
+    // if (glfwGetKey(m_Window, GLFW_KEY_S) == GLFW_PRESS)
+    //     m_camera.move(deltaTime,1);
+    // if (glfwGetKey(m_Window, GLFW_KEY_A) == GLFW_PRESS)
+    //     m_camera.move(deltaTime,2);
+    // if (glfwGetKey(m_Window, GLFW_KEY_D) == GLFW_PRESS)
+    //     m_camera.move(deltaTime,3);
     
 }
 void FunGT::processMouseInput(double xpos, double ypos)
 {
 
-    if (m_firstMouse)
-    {
+    if (m_firstMouse) {
         m_lastXmouse = xpos;
         m_lastYmouse = ypos;
         m_firstMouse = false;
+        return;
     }
+
     float xoffset = xpos - m_lastXmouse;
-    float yoffset = m_lastYmouse - ypos; // reversed since y-coordinates go from bottom to top
+    float yoffset = ypos - m_lastYmouse;
+    m_lastXmouse = xpos;
+    m_lastYmouse = ypos;
 
-    m_lastXmouse = xpos; 
-    m_lastYmouse = ypos; 
+    bool shiftPressed = (glfwGetKey(m_Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+        glfwGetKey(m_Window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS);
 
-    m_camera.updateMouseInput(xoffset,yoffset); 
+    if (shiftPressed) {
+        m_camera.pan(xoffset, yoffset);
+    }
+    else {
+        m_camera.orbit(xoffset, yoffset);
+    }
 }
 
 // NEW: Override the virtual method from GraphicsTool
@@ -66,7 +75,7 @@ void FunGT::setBackgroundColor(float color){
      m_colors[0] = color/255.f; m_colors[1] = color/255.f; m_colors[2] = color/255.f; m_colors[3] = 1.0; 
 }
 
-Camera FunGT::getCamera()
+Camera &FunGT::getCamera()
 {
     return m_camera;
 }
@@ -77,9 +86,16 @@ std::shared_ptr<SceneManager> FunGT::getSceneManager()
 }
 void FunGT::set(const std::function<void()>& renderLambda){
     std::cout << "Starting FunGT Setting process..." << std::endl;
-
+    m_grid = std::make_shared<InfiniteGrid>();
+    std::string grid_vs = getAssetPath("shaders/grid_vs.glsl");
+    std::string grid_fs = getAssetPath("shaders/grid_fs.glsl");
+    m_grid->init(grid_vs,grid_fs);
+    m_grid->setPlanes(nearPlane, farPlane);
+    //m_grid->setViewMatrix(m_camera.getViewMatrix());
+    //m_grid->setProjectionMatrix(ProjectionMatrix);
+    m_sceneManager->addRenderableObj(m_grid);
     renderLambda();
-
+    
 
     ProjectionMatrix = glm::perspective(glm::radians(fov),
                                         static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
@@ -95,6 +111,8 @@ void FunGT::set(const std::function<void()>& renderLambda){
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
+       m_imguiLayer->addWindow(std::make_unique<SceneHierarchyWindow>(m_sceneManager));
+       m_imguiLayer->addWindow(std::make_unique<PropertiesWindow>(&m_camera));
        m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
        m_layerStack.PushLayer(std::move(m_imguiLayer));
    }
@@ -181,4 +199,9 @@ void FunGT::renderGUI()
 void FunGT::onUpdate(float dt) {
     deltaTime = dt;
     // This is called by base class, but we're not using it much yet
+}
+
+void FunGT::onMouseScroll(double xoffset, double yoffset)
+{
+    m_camera.zoom(-yoffset);
 }

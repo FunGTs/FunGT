@@ -5,7 +5,7 @@ const unsigned int SCREEN_HEIGHT = 1200;
 
 
 int main (){
-    std::string path = findProjectRoot();
+    //std::string path = findProjectRoot();
     //Path to your shaders and models:
     ModelPaths model_ball;
     //model.path   = getAssetPath("Animations/monster_dancing/monster_dancing.dae");
@@ -17,6 +17,11 @@ int main (){
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
     //Background color, use 255.f for pure white, 
     myGame->setBackgroundColor();
+    // TEMP: Position camera to see grid
+    //myGame->getCamera().m_vPos = glm::vec3(8.0f, 6.0f, 5.0f);
+    // myGame->getCamera().m_pitch = -25.0f;
+    // myGame->getCamera().m_yaw = -135.0f;
+    // myGame->getCamera().updateVectors();
     //Initializes the Graphics Stuff
     myGame->initGL();
     //Gets an instance of the SceneManager class to render objects
@@ -26,7 +31,7 @@ int main (){
 
     // Loads Pixar ball data
     pixarBall->load(model_ball);
-    pixarBall->position(0.f, 0.f, -5.f);
+    pixarBall->position(0.f, 0.f, 0.f);
     pixarBall->rotation(0.f, 0.f, 0.f);
     myGame->set([&]() { // Sets up all the scenes in your game
         // Adds the renderable objects to the SceneManager

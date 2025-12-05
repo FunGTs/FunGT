@@ -3,6 +3,7 @@
 #include "GT/graphicsTool.hpp"
 #include "SceneManager/scene_manager.hpp"
 #include "CubeMap/cube_map.hpp"
+#include "Geometries/inf_grid.hpp"
 #include "ParticleSimulation/particle_simulation.hpp"
 #include "Path_Manager/path_manager.hpp"
 #include "Physics/Clothing/clothing.hpp"
@@ -10,7 +11,9 @@
 #include "ViewPort/viewport.hpp"              
 #include "Layer/layer_stack.hpp"              
 #include "GUI/imgui_layer.hpp"                
-#include "GUI/render_info_window.hpp"         
+#include "GUI/render_info_window.hpp"   
+#include "GUI/scene_hierarchy_window.hpp"
+#include "GUI/properties_window.hpp"      
 #include <memory>
 #include <unordered_map>
 
@@ -56,6 +59,7 @@ class FunGT : public GraphicsTool{
     std::unique_ptr<ImGuiLayer> m_imguiLayer;      
     LayerStack m_layerStack;                       
 
+    std::shared_ptr<InfiniteGrid> m_grid;  // ← ADD (shared_ptr for SceneManager)
 
     public: 
         FunGT(int _width, int _height); 
@@ -67,7 +71,7 @@ class FunGT : public GraphicsTool{
         void processMouseInput(double xpos, double ypos);
         void setBackgroundColor(float red, float green, float blue, float alfa);
         void setBackgroundColor(float color = 0.f);
-        Camera getCamera(); 
+        Camera& getCamera(); 
         std::shared_ptr<SceneManager> getSceneManager();
         void set(const std::function<void()>& renderLambda);
         static std::unique_ptr<FunGT> createScene(int _width, int _height);
@@ -76,6 +80,7 @@ class FunGT : public GraphicsTool{
         // Override virtual methods from GraphicsTool
         void onMouseMove(double xpos, double ypos) override;
         void onUpdate(float deltaTime) override;
+        void onMouseScroll(double xoffset, double yoffset) override;
 
 };
 typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
