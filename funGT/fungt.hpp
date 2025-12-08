@@ -13,7 +13,8 @@
 #include "GUI/imgui_layer.hpp"                
 #include "GUI/render_info_window.hpp"   
 #include "GUI/scene_hierarchy_window.hpp"
-#include "GUI/properties_window.hpp"      
+#include "GUI/properties_window.hpp"
+#include "GUI/material_editor_window.hpp"      
 #include <memory>
 #include <unordered_map>
 

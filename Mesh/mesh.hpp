@@ -45,6 +45,10 @@ public:
     Mesh();
     Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Texture>& inTexture);
     Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Material>& inmaterial);
+    Mesh(const std::vector<funGTVERTEX>& inVertex,
+        const std::vector<GLuint>& inIndex,
+        const std::vector<Texture>& inTexture,
+        const std::vector<Material>& inMaterial);
     ~Mesh();
     void initMesh();
     void InitOGLBuffers();

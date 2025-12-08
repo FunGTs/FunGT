@@ -19,6 +19,8 @@ class Material
 
         ~Material();
         void sendToShader(Shader& program);
+        bool isInvalidMaterial() const;
+        static Material createDefaultMaterial();
 
     /* data */
 };

@@ -43,6 +43,9 @@ public:
     glm::mat4 getProjectionMatrix() override;
     glm::mat4 getModelMatrix() override;
     std::vector<Triangle> getTriangleList(); 
+    const std::vector<std::unique_ptr<Mesh>>& getMeshes() const {
+        return m_model->getMeshes();
+    }
     
     static std::shared_ptr<SimpleModel> create() {
         // This works because create() is a MEMBER of SimpleModel

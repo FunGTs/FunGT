@@ -114,6 +114,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<SceneHierarchyWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<PropertiesWindow>(&m_camera));
        m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
+       m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
        m_layerStack.PushLayer(std::move(m_imguiLayer));
    }
 

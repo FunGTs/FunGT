@@ -1,19 +1,26 @@
 #if !defined(_IMGUI_LAYER_H_)
 #define _IMGUI_LAYER_H_
 #include "imgui_window.hpp"
-#include "../Layer/layer.hpp"
+#include "Layer/layer.hpp"
+#include "InfoDevice/gpu_device_info.hpp"
+#include "render_settings_window.hpp"
 #include <memory>
-class ImGuiLayer : public Layer{
+
+class ImGuiLayer : public Layer {
 
 private:
     GLFWwindow* m_window;
     int m_width, m_height;
     std::vector<std::unique_ptr<ImGuiWindow>> m_windows;
+    // GPU and render settings management
+    std::shared_ptr<GPUDeviceManager> m_gpuManager;
+    //std::shared_ptr<RenderSettingsWindow> m_renderSettingsWindow;
+    RenderSettingsWindow* m_renderSettingsWindow;  // Just a pointer
 
 public:
     ImGuiLayer()
-    :Layer("IMGUI LAYER"){
-       
+        :Layer("IMGUI LAYER") {
+
     }
     void addWindow(std::unique_ptr<ImGuiWindow> window)
     {
@@ -81,8 +88,8 @@ public:
     }
     void SetGreenTheme()
     {
-        ImGuiStyle &style = ImGui::GetStyle();
-        ImVec4 *colors = style.Colors;
+        ImGuiStyle& style = ImGui::GetStyle();
+        ImVec4* colors = style.Colors;
 
         // Base dark tones
         colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.12f, 0.10f, 1.0f);
@@ -147,13 +154,13 @@ public:
         style.ScrollbarRounding = 3.0f;
         style.WindowRounding = 5.0f;
     }
-    ~ImGuiLayer() override{
+    ~ImGuiLayer() override {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
     void setNativeWindow(GLFWwindow& window, int _width, int _height) {
-        std::cout<<"setting native window"<<std::endl; 
+        std::cout << "setting native window" << std::endl;
         m_window = &window;
         m_width = _width;
         m_height = _height;
@@ -162,38 +169,48 @@ public:
             return;
         }
 
-    } 
+    }
 
     void onAttach() override {
-        //  Create ImGui context
+        // Create ImGui context
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-        
+
         // Apply style
         ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
         SetTheme();
         ImGui_ImplGlfw_InitForOpenGL(m_window, true);
         ImGui_ImplOpenGL3_Init("#version 460");
         io.Fonts->Clear();
+
         // Load your font file (TTF)
-        ImFont *myFont = io.Fonts->AddFontFromFileTTF(
-            "/home/juanchuletas/Documents/Development/FunGT/GUI/fonts/Nunito/static/Nunito-Regular.ttf", 18.0f // path + size in pixels
+        ImFont* myFont = io.Fonts->AddFontFromFileTTF(
+            "/home/juanchuletas/Documents/Development/FunGT/GUI/fonts/Nunito/static/Nunito-Regular.ttf", 18.0f
         );
 
         if (myFont == nullptr)
         {
             std::cerr << "Failed to load font!" << std::endl;
         }
+
         // Build font atlas
-        unsigned char *tex_pixels = nullptr;
+        unsigned char* tex_pixels = nullptr;
         int tex_width, tex_height;
         io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_width, &tex_height);
-        io.FontGlobalScale = 1.8f; // 1.0 = default, 1.5 = 50% bigger
+        io.FontGlobalScale = 1.8f;
+
+        // Initialize GPU device manager
+        m_gpuManager = std::make_shared<GPUDeviceManager>();
+        m_gpuManager->initialize();
+
+        // Create render settings window and add to windows list
+        auto renderSettings = std::make_unique<RenderSettingsWindow>(m_gpuManager);
+        m_renderSettingsWindow = renderSettings.get();  // Keep pointer for menu access
+        addWindow(std::move(renderSettings));
     }
 
     void onDetach() override {
@@ -268,51 +285,75 @@ public:
             ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
-        // ===== LOOP OVER YOUR WINDOWS =====
-        for (auto &window : m_windows)
+
+        // Loop over your windows
+        for (auto& window : m_windows)
         {
-            // Each window manages its own Begin/End
             window->onImGuiRender();
         }
-        // ==================================
-        // Example menu bar
+
+        // Menu Bar
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("File")) {
-                if (ImGui::MenuItem("Open")) {
-                    // Handle exit if needed
+                if (ImGui::MenuItem("Open", "Ctrl+O")) {
+                    // TODO: Handle file open
+                }
+                if (ImGui::MenuItem("Save", "Ctrl+S")) {
+                    // TODO: Handle file save
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Exit", "Alt+F4")) {
+                    // TODO: Handle exit
                 }
                 ImGui::EndMenu();
             }
-            ImGui::EndMenuBar();
-        }
-        if (ImGui::BeginMenuBar()) {
+
             if (ImGui::BeginMenu("Edit")) {
-                if (ImGui::MenuItem("Undo")) {
-                    // Handle exit if needed
+                if (ImGui::MenuItem("Undo", "Ctrl+Z")) {
+                    // TODO: Handle undo
+                }
+                if (ImGui::MenuItem("Redo", "Ctrl+Y")) {
+                    // TODO: Handle redo
                 }
                 ImGui::EndMenu();
             }
-            ImGui::EndMenuBar();
-        }
-        if (ImGui::BeginMenuBar()) {
-            if (ImGui::BeginMenu("Select GPU")) {
-                if (ImGui::MenuItem("NVIDIA GeForce")) {
-                    // Handle exit if needed
+
+            if (ImGui::BeginMenu("Render")) {
+                if (ImGui::MenuItem("Render Settings")) {
+                    m_renderSettingsWindow->open();
                 }
-                if (ImGui::MenuItem("Intel Arc")) {
-                    // Handle exit if needed
+
+                ImGui::Separator();
+
+                // Show active GPU using new API
+                const auto& devices = m_gpuManager->getDevices();
+                const fungt::GPUDeviceInfo* activeDevice = nullptr;
+
+                for (const auto& device : devices) {
+                    if (device.isActive) {
+                        activeDevice = &device;
+                        break;
+                    }
                 }
+
+                if (activeDevice) {
+                    ImGui::Text("Active Device:");
+                    ImGui::TextDisabled("%s (%s)",
+                        activeDevice->name.c_str(),
+                        activeDevice->getBackendName().c_str());
+                }
+                else {
+                    ImGui::TextDisabled("No GPU selected");
+                }
+
                 ImGui::EndMenu();
             }
+
             ImGui::EndMenuBar();
         }
+
         ImGui::End();
     }
-
-
 };
-
-
-
 
 #endif // _IMGUI_LAYER_H_
