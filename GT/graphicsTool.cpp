@@ -73,7 +73,13 @@ int GraphicsTool::initGL(){
             instance->onMouseMove(xpos, ypos);
         }
     });
-
+    // Scroll callback for mouse wheel (ADDED THIS)
+    glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xoffset, double yoffset) {
+        GraphicsTool* instance = static_cast<GraphicsTool*>(glfwGetWindowUserPointer(window));
+        if (instance) {
+            instance->onMouseScroll(xoffset, yoffset);
+        }
+    });
     glClearColor(m_colors[0], m_colors[1],m_colors[2],m_colors[3]);
     glfwSwapBuffers(m_Window);
 

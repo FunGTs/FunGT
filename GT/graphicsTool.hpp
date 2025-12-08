@@ -40,6 +40,7 @@ class GraphicsTool{
     protected:
         // Virtual methods that derived classes can override
         virtual void onMouseMove(double xpos, double ypos) {}
+        virtual void onMouseScroll(double xoffset, double yoffset){}
         virtual void onUpdate(float deltaTime) {}
         virtual void onRender() {}
         /* implemented in the derived class*/

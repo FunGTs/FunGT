@@ -1,11 +1,11 @@
 #if !defined(_GLMMATH_H_)
 #define _GLMMATH_H_
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp> 
 
 #ifdef _WIN32
     // Windows uses vcpkg-installed GLM (new version)
+    #include <glm/glm.hpp>
+    #include <glm/gtc/type_ptr.hpp> 
     #define NOMINMAX  // Prevents Windows headers from defining min/max
     #include <glm/ext/matrix_transform.hpp>
     #include <glm/ext/matrix_clip_space.hpp>
@@ -17,7 +17,12 @@
     #include <glm/ext/quaternion_float.hpp>
 #else
     // Linux uses system-installed GLM (older version)
+    #define GLM_FORCE_PURE          // ← BEFORE any includes
+    #undef __CUDACC__  
+    #include <glm/glm.hpp>
+    #include <glm/gtc/type_ptr.hpp> 
     #define GLM_ENABLE_EXPERIMENTAL
+    
     #include <glm/ext/matrix_transform.hpp>
     #include <glm/ext/matrix_projection.hpp>
     #include <glm/ext/scalar_constants.hpp>

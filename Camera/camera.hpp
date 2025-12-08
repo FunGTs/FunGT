@@ -1,7 +1,7 @@
 #if !defined(_CAMERA_H_)
 #define _CAMERA_H_
-#include <glm/gtc/quaternion.hpp>
-#include "../Shaders/shader.hpp"
+#include "include/glmath.hpp"    
+#include "Shaders/shader.hpp"
 
 enum keyboardDir {
     FORWRD = 0,
