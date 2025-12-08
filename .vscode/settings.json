@@ -73,7 +73,11 @@
         "set": "cpp",
         "__nullptr": "cpp",
         "locale": "cpp",
-        "__bit_reference": "cpp"
+        "__bit_reference": "cpp",
+        "version": "cpp",
+        "target": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp"
     },
     "cmake.sourceDirectory": "/home/juanchuletas/Documents/Development/FunGT/main",
     "editor.formatOnPaste": true,
