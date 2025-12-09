@@ -130,6 +130,8 @@ void Mesh::draw(Shader &shader){
 
     unsigned int diffuseL = 1; 
     unsigned int specularL = 1;
+    // ADD THIS LINE HERE:
+    shader.setUniform1i("hasTexture", numOfTextures > 0 ? 1 : 0);
     //std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
     for(unsigned int i=0; i<numOfTextures; i++){
       

@@ -13,7 +13,6 @@ void SimpleModel::load(const ModelPaths &data) {
 
     
     m_model->loadModelData(data.path);
-    // m_model->loadModel(data.path);
     m_model->createShader(data.vs_path, data.fs_path);
     m_model->InitGraphics();
     

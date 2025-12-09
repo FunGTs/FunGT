@@ -7,10 +7,11 @@
 #include <memory>
 #include <assimp/version.h>
 
-#include "../Mesh/mesh.hpp"
-#include "../Renderable/renderable.hpp"
-#include "../DataPaths/datapaths.hpp"
-#include "../Renders/display_graphics.hpp"
+#include "Mesh/mesh.hpp"
+#include "Renderable/renderable.hpp"
+#include "DataPaths/datapaths.hpp"
+#include "Renders/display_graphics.hpp"
+#include "Path_Manager/path_manager.hpp"
 
 class Model  {
 
@@ -47,7 +48,9 @@ class Model  {
        
         glm::mat4 m_viewMatrix = glm::mat4(1.f); 
         glm::mat4 m_projectionMatrix  = glm::mat4(1.f); 
-
+        static std::string s_defaultVertexShader;
+        static std::string s_defaultFragmentShader;
+        static bool s_defaultShadersInitialized;
 
     //Methods
 
@@ -56,6 +59,7 @@ class Model  {
         virtual std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene); 
         std::vector<Texture > loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
         std::vector<Material> loadMaterials(aiMaterial *mat);
+        static void initializeDefaultShaders();
     protected: 
         virtual std::vector<funGTVERTEX> getVertices(aiMesh *mesh, const aiScene *scene);
         std::vector<GLuint> getIndices(aiMesh *mesh, const aiScene *scene);

@@ -40,6 +40,10 @@ void SceneManager::renderScene()
         node->setViewMatrix(m_ViewMatrix);
         node->updateModelMatrix();
         node->updateTime(m_deltaTime);
+        node->getShader().setUniformVec3f(m_lightPosition, "light.position");
+        node->getShader().setUniformVec3f(m_lightAmbient, "light.ambient");
+        node->getShader().setUniformVec3f(m_lightDiffuse, "light.diffuse");
+        node->getShader().setUniformVec3f(m_lightSpecular, "light.specular");
         node->getShader().setUniformMat4fv("ViewMatrix",node->getViewMatrix());
         node->getShader().setUniformMat4fv("ProjectionMatrix",m_ProjectionMatrix);
         node->getShader().setUniformMat4fv("ModelMatrix",node->getModelMatrix());

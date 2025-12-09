@@ -15,6 +15,7 @@
 #include "GUI/scene_hierarchy_window.hpp"
 #include "GUI/properties_window.hpp"
 #include "GUI/material_editor_window.hpp"      
+#include "GUI/lights_editor_window.hpp"
 #include <memory>
 #include <unordered_map>
 

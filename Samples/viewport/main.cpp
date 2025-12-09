@@ -9,10 +9,8 @@ int main (){
     //Path to your shaders and models:
     ModelPaths model_ball;
     //model.path   = getAssetPath("Animations/monster_dancing/monster_dancing.dae");
-    model_ball.path = getAssetPath("Obj/monkey/monkeyobj.obj");
-    model_ball.vs_path = getAssetPath("resources/monkey_vs.glsl");
-    model_ball.fs_path = getAssetPath("resources/monkey_fs.glsl");
-   
+    model_ball.path = getAssetPath("Obj/Woody/woody-head.obj");
+
     //Creates a FunGT Scene to display 
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
     //Background color, use 255.f for pure white, 
