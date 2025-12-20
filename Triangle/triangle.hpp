@@ -4,7 +4,8 @@
 #include "../gpu/data/device_pod.hpp"
 struct Triangle {
     fungt::Vec3 v0, v1, v2;
-    fungt::Vec3 normal;
+    fungt::Vec3  n0, n1,n2;
+    float       uvs[3][2];
     MaterialData material;
 };
 

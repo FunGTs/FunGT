@@ -1,0 +1,188 @@
+
+#include "sycl_renderer.hpp"
+fgt_device inline fungt::Vec3 skyColor(const fungt::Ray& ray) {
+    return fungt::Vec3(0.4, 0.4f, 0.4);
+}
+
+
+fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
+    const fungt::Ray& initialRay,
+    const Triangle* tris,
+    const BVHNode* nodes,
+    const Light* lights,
+    const syclexp::sampled_image_handle* textures,
+    int numTextures,
+    int numOfTriangles,
+    int numOfNodes,
+    int numOfLights,
+    fungt::RNG& rng)
+{
+    fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
+    fungt::Vec3 radiance(0.0f, 0.0f, 0.0f);
+    fungt::Ray currRay = initialRay;
+
+    for (int bounce = 0; bounce < 6; ++bounce) {
+        HitData hit;
+        bool hitAny = traceRayBVH(currRay, tris, nodes, numOfNodes, textures, hit);
+
+        if (!hitAny) {
+            radiance += throughput * skyColor(currRay);
+            break;
+        }
+
+        fungt::Vec3 N = hit.normal.normalize();
+        fungt::Vec3 V = (currRay.m_dir * (-1.0f)).normalize();
+
+        fungt::Vec3 baseColor = fungt::Vec3(
+            hit.material.baseColor[0],
+            hit.material.baseColor[1],
+            hit.material.baseColor[2]);
+
+        float metallic = fmaxf(0.0f, fminf(hit.material.metallic, 1.0f));
+        float roughness = fmaxf(0.05f, fminf(hit.material.roughness, 1.0f));
+
+        fungt::Vec3 dielectricF0 = fungt::Vec3(
+            hit.material.reflectance,
+            hit.material.reflectance,
+            hit.material.reflectance);
+        fungt::Vec3 F0 = lerp(dielectricF0, baseColor, metallic);
+
+        if (hit.material.emission > 0.0f) {
+            radiance += throughput * baseColor * hit.material.emission;
+        }
+
+        fungt::Vec3 directLight(0.0f);
+        for (int l = 0; l < numOfLights; ++l) {
+            fungt::Vec3 toLight = lights[l].m_pos - hit.point;
+            float dist = toLight.length();
+            fungt::Vec3 L = toLight / dist;
+
+            fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
+            HitData temp;
+            bool occluded = traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, temp) && temp.dis < dist;
+
+            if (occluded) continue;
+
+            fungt::Vec3 lightRadiance = lights[l].m_intensity / (dist * dist + 1e-6f);
+            directLight += evaluateCookTorrance(N, V, L, hit.material, lightRadiance);
+        }
+
+        radiance += throughput * directLight;
+
+        fungt::Vec3 newDir = sampleHemisphere(N, rng);
+
+        fungt::Vec3 avgF = F_Schlick(F0, fmaxf(V.dot(N), 0.0f));
+        fungt::Vec3 kD = (fungt::Vec3(1.0f, 1.0f, 1.0f) - avgF) * (1.0f - metallic);
+        throughput = throughput * (kD * baseColor);
+
+        currRay = fungt::Ray(hit.point + N * 0.001f, newDir);
+
+        if (bounce > 2) {
+            float maxComponent = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
+            float p = fminf(0.95f, maxComponent);
+            if (rng.nextFloat() > p) break;
+            throughput = throughput / p;
+        }
+    }
+
+    return radiance;
+}
+std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
+    int width, 
+    int height, 
+    const std::vector<Triangle>& triangleList, 
+    const std::vector<BVHNode>& nodes, 
+    const std::vector<Light>& lightsList, 
+    const PBRCamera& camera, 
+    int samplesPerPixel)
+{
+    int imageSize = width*height;
+    std::vector<fungt::Vec3> framebuffer(imageSize);
+    std::cout << "SYCL_Renderer: Rendering " << width << "x" << height
+        << " with " << samplesPerPixel << " samples" << std::endl;
+
+    //Dimension creation
+
+    //Use of USM
+    Triangle *dev_triList = sycl::malloc_device<Triangle>(triangleList.size(),m_queue);
+    BVHNode  *dev_bvhNode = sycl::malloc_device<BVHNode>(nodes.size(),m_queue);
+    Light    *dev_lights  = sycl::malloc_device<Light>(lightsList.size(),m_queue);  
+
+    //ouput buffer
+    
+    fungt::Vec3 *dev_buff = sycl::malloc_device<fungt::Vec3>(imageSize,m_queue);
+
+
+    m_queue.memcpy(dev_triList,triangleList.data(),triangleList.size()*sizeof(Triangle));
+    m_queue.memcpy(dev_bvhNode,nodes.data(), nodes.size()*sizeof(BVHNode));
+    m_queue.memcpy(dev_lights,lightsList.data(),lightsList.size()*sizeof(Light));
+
+    // Store sizes BEFORE kernel (outside lambda scope)
+    int numTriangles = triangleList.size();
+    int numNodes    = nodes.size();
+    int numLights   = lightsList.size();
+    int numTextures = m_numTextures;
+
+    auto textureHandles = m_textureHandles;
+    m_queue.submit([&](sycl::handler &h) {
+        h.parallel_for(sycl::range<2>{static_cast<size_t>(width),static_cast<size_t>(height)},[=](sycl::id<2> idx){
+
+            int x = idx[0];
+            int y = idx[1];
+
+            int pixelIdx = x + y*width;
+            fungt::RNG rng(pixelIdx * 1337ULL + 123ULL);
+
+
+            fungt::Vec3 pixel(0.0f);
+            for (int s = 0; s < samplesPerPixel; s++) {
+                float u = (x + rng.nextFloat()) / (width - 1);
+                float v = (y + rng.nextFloat()) / (height - 1);
+
+                fungt::Ray ray = camera.getRay(u, v);
+
+                pixel += pathTracer_CookTorrance(
+                    ray,
+                    dev_triList,
+                    dev_bvhNode,
+                    dev_lights,
+                    textureHandles,
+                    numTextures,
+                    numTriangles,
+                    numNodes,
+                    numLights,
+                    rng);
+            }
+
+            pixel = pixel / float(samplesPerPixel);
+            dev_buff[pixelIdx] = pixel;
+            
+        });
+    }).wait();
+
+    m_queue.memcpy(framebuffer.data(), dev_buff, width * height * sizeof(fungt::Vec3));
+  
+    return framebuffer;
+}
+
+void SYCL_Renderer::createQueue()
+{
+    try {
+        
+        //flib::sycl_handler::sys_info(); // Prints system info
+        flib::sycl_handler::select_device("Intel"); // Selects a vendor for your computations
+        flib::sycl_handler::get_device_info(); // Prints current device info
+
+        m_queue = flib::sycl_handler::get_queue();
+
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+}
+
+sycl::queue& SYCL_Renderer::getQueue()
+{
+    return m_queue;
+}

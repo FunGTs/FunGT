@@ -9,7 +9,7 @@ void ComputeRender::Init() {
     s_API = Compute::Backend::CUDA;
     std::cout << "[ComputeRender] Using CUDA backend\n";
 #elif defined(FUNGT_USE_SYCL)
-    s_API = Compute::Backend::CPU;
+    s_API = Compute::Backend::SYCL;
     std::cout << "[ComputeRender] Using SYCL backend\n";
 #else
     s_API = Compute::Backend::CPU;

@@ -28,7 +28,7 @@ inline std::vector<Triangle> create_unit_cube(const Material& mat) {
         Triangle t1, t2;
         t1.v0 = p[a]; t1.v1 = p[b]; t1.v2 = p[c];
         t2.v0 = p[a]; t2.v1 = p[c]; t2.v2 = p[d];
-        t1.normal = t2.normal = normal;
+        t1.n0 = t2.n0 = normal;
         //t1.material = t2.material = mat;
 
         triangle_list.push_back(t1);

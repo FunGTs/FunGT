@@ -88,9 +88,9 @@ set(FUNGT_INCLUDES
 # ────────────────────────────────────────────────────────
 set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/PBR/Intersection/intersection.cpp
+    ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
     ${FUNGT_BASE_DIR}/PBR/Render/src/compute_backends.cpp
-    ${FUNGT_BASE_DIR}/PBR/Render/src/cpu_renderer.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
@@ -261,7 +261,6 @@ endif()
 # ────────────────────────────────────────────────────────
 add_executable(pbr_render 
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${FUNGT_BASE_DIR}/PBR/Space/space.cpp  # ← ADD THIS!
 )
 
 # CRITICAL: Add -fsycl IMMEDIATELY after add_executable

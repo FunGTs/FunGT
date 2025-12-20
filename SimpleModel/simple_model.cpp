@@ -114,9 +114,30 @@ std::vector<Triangle> SimpleModel::getTriangleList()
     }
     std::cout << "Total triangles to create: " << totalTriangles << std::endl;
     m_triangles.reserve(totalTriangles);
-
+    //std::cout<<"Total meshes to process : " <<meshes.size()<<std::cout;
     for (auto& meshPtr : meshes) {
-        std::cout << "Processing : " << meshPtr->m_index.size() << std::endl;
+        std::cout << " ********* Processing Mesh *********** : " << meshPtr->m_index.size() << std::endl;
+        const auto& vertices = meshPtr->m_vertex;
+        const auto& indices = meshPtr->m_index;
+        const auto& materials = meshPtr->m_material;
+        const auto& textures = meshPtr->m_texture;
+
+        std::cout << "Vertices: " << vertices.size() << std::endl;
+        std::cout << "Indices: " << indices.size() << std::endl;
+        std::cout << "Textures: " << textures.size() << std::endl;
+        std::cout << "Materials: " << materials.size() << std::endl;
+
+        // ========== Setup Material ONCE per mesh ==========
+        MaterialData global_material;
+        global_material.baseColor[0] = 0.922;
+        global_material.baseColor[1] = 0.467;
+        global_material.baseColor[2] = 0.882f;
+        global_material.metallic = 0.0f;
+        global_material.roughness = 0.5f;
+        global_material.reflectance = 0.05f;
+        global_material.emission = 0.0f;
+        global_material.baseColorTexIdx = -1;
+        
         for (size_t i = 0; i < meshPtr->m_index.size(); i += 3) {
             const funGTVERTEX& v0 = meshPtr->m_vertex[meshPtr->m_index[i + 0]];
             const funGTVERTEX& v1 = meshPtr->m_vertex[meshPtr->m_index[i + 1]];
@@ -127,45 +148,20 @@ std::vector<Triangle> SimpleModel::getTriangleList()
             tri.v2 = fungt::toFungtVec3(v2.position);
 
             // Flat face normal (correct for path tracing)
-            fungt::Vec3 e1 = tri.v1 - tri.v0;
-            fungt::Vec3 e2 = tri.v2 - tri.v0;
-            tri.normal = e1.cross(e2).normalize();
-
-            // Include material if present
-            if (!meshPtr->m_material.empty()) {
-
-                tri.material.ambient[0] = meshPtr->m_material[0].m_ambientLight.x;
-                tri.material.ambient[1] = meshPtr->m_material[0].m_ambientLight.y;
-                tri.material.ambient[2] = meshPtr->m_material[0].m_ambientLight.z;
-
-                tri.material.diffuse[0] = meshPtr->m_material[0].m_diffLigth.x;
-                tri.material.diffuse[1] = meshPtr->m_material[0].m_diffLigth.y;
-                tri.material.diffuse[2] = meshPtr->m_material[0].m_diffLigth.z;
-
-                tri.material.specular[0] = meshPtr->m_material[0].m_specLight.x;
-                tri.material.specular[1] = meshPtr->m_material[0].m_specLight.y;
-                tri.material.specular[2] = meshPtr->m_material[0].m_specLight.z;
-
-                tri.material.shininess = meshPtr->m_material[0].m_shininess;
-                
-            }
-            else{
-                tri.material.ambient[0] = tri.material.ambient[1] = tri.material.ambient[2] = 0.1f;
-                tri.material.diffuse[0] = tri.material.diffuse[1] = tri.material.diffuse[2] = 0.7f;
-                tri.material.specular[0] = tri.material.specular[1] = tri.material.specular[2] = 0.2f;
-                tri.material.shininess = 16.0f;
-            }
-
-            // Optional: handle texture-only meshes later when you add albedo maps
-            // if (!m_textures.empty()) tri.albedoMap = m_textures[0].id;
-
+            // fungt::Vec3 e1 = tri.v1 - tri.v0;
+            // fungt::Vec3 e2 = tri.v2 - tri.v0;
+            // tri.normal = e1.cross(e2).normalize();
+            // Per-vertex normals (for smooth shading!)
+            tri.n0 = fungt::toFungtVec3(v0.normal);
+            tri.n1 = fungt::toFungtVec3(v1.normal);
+            tri.n2 = fungt::toFungtVec3(v2.normal);
+            tri.material = global_material;
             m_triangles.push_back(std::move(tri));
         }
     }
 
     return m_triangles;
 }
-
 void SimpleModel::position(float x, float y, float z)
 {
     m_position.x = x;

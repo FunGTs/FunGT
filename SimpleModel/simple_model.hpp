@@ -1,6 +1,7 @@
 #if !defined(_SIMPLE_MODEL_HPP_)
 #define _SIMPLE_MODEL_HPP_
 #include "../Model/model.hpp"
+#include "../Triangle/triangle.hpp"
 #include "../Renderable/renderable.hpp"
 #include "../DataPaths/datapaths.hpp"
 #include "../Physics/RigidBody/rigid_body.hpp"
@@ -21,6 +22,7 @@ class SimpleModel : public Renderable {
     glm::vec3 m_rotation = glm::vec3(0.f);
     glm::vec3 m_scale    = glm::vec3(1.0); 
     std::vector<Triangle> m_triangles;
+
     SimpleModel();
 public:
   
@@ -42,11 +44,13 @@ public:
     void updateModelMatrix() override;
     glm::mat4 getProjectionMatrix() override;
     glm::mat4 getModelMatrix() override;
-    std::vector<Triangle> getTriangleList(); 
+    std::vector<Triangle> getTriangleList();
     const std::vector<std::unique_ptr<Mesh>>& getMeshes() const {
         return m_model->getMeshes();
     }
-    
+    Model&  getModel () const {
+        return *m_model;
+    }
     static std::shared_ptr<SimpleModel> create() {
         // This works because create() is a MEMBER of SimpleModel
         // and can access private members
