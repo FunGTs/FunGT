@@ -103,4 +103,14 @@ private:
         return fungt::Vec3(0, 0, 0);
     }
 };
+
+
 #endif // _PBR_CAMERA_H_
+
+#if defined(FUNGT_USE_SYCL) && !defined(PBRCAMERA_SYCL_DEVICE_COPYABLE_DEFINED)
+#define PBRCAMERA_SYCL_DEVICE_COPYABLE_DEFINED
+namespace sycl {
+    template<>
+    struct is_device_copyable<PBRCamera> : std::true_type {};
+}
+#endif

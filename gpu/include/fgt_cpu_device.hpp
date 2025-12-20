@@ -3,8 +3,10 @@
 // --- Choose the backend ---
 #if defined(FUNGT_USE_SYCL)
 #define __KERNEL_SYCL__
+#define FUNGT_USE_SYCL
 #elif defined(__CUDACC__)
 #define __KERNEL_CUDA__
+#define FUNGT_USE_CUDA
 #elif defined(FUNGT_USE_HIP)
 #define __KERNEL_HIP__
 #else

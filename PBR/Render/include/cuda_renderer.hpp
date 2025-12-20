@@ -18,8 +18,10 @@ using cudaTextureObject_t = unsigned long long;
 #include "PBR/Render/shared/core_renderer.hpp"
 #include "Random/fgt_rng.hpp"
 #include "PBR/Intersection/intersection.hpp"
-#include "PBR/Ray/ray.hpp"
+#include "PBR/Ray/ray.hpp"  
 
+#include "PBR/BVH/bvh_node.hpp"
+#include "PBR/Light/light.hpp"
 
 #define CUDA_CHECK(err) do { cudaError_t e = (err); if (e != cudaSuccess) { \
     std::cerr << "CUDA error: " << cudaGetErrorString(e) << " at " << __FILE__ << ":" << __LINE__ << std::endl; exit(1); }} while(0)

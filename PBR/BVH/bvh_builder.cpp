@@ -28,10 +28,10 @@ void BVHBuilder::build(const std::vector<Triangle>& triangles) {
     // Step 2: Recursively build tree
     buildRecursive(tri_bounds, 0, triangles.size());
     // VALIDATION - ADD THIS
-    std::cout << "========== BVH Validation ==========" << std::endl;
-    std::cout << "Nodes: " << m_nodes.size() << std::endl;
-    std::cout << "Triangle indices: " << m_triIndices.size() << std::endl;
-    std::cout << "Original triangles: " << triangles.size() << std::endl;
+    // std::cout << "========== BVH Validation ==========" << std::endl;
+    // std::cout << "Nodes: " << m_nodes.size() << std::endl;
+    // std::cout << "Triangle indices: " << m_triIndices.size() << std::endl;
+    // std::cout << "Original triangles: " << triangles.size() << std::endl;
     int leafCount = 0;
     int internalCount = 0;
     int totalLeafTris = 0;
@@ -45,18 +45,18 @@ void BVHBuilder::build(const std::vector<Triangle>& triangles) {
             leafCount++;
             totalLeafTris += node.triCount;
 
-            std::cout << "Leaf " << i << ": firstTriIdx=" << node.firstTriIdx
-                << ", triCount=" << node.triCount << std::endl;
+            // std::cout << "Leaf " << i << ": firstTriIdx=" << node.firstTriIdx
+            //     << ", triCount=" << node.triCount << std::endl;
 
             // Check bounds
             if (node.firstTriIdx < 0) {
-                std::cerr << "ERROR: Negative firstTriIdx in leaf " << i << std::endl;
+                //std::cerr << "ERROR: Negative firstTriIdx in leaf " << i << std::endl;
             }
             if (node.firstTriIdx >= (int)m_triIndices.size()) {
-                std::cerr << "ERROR: firstTriIdx out of bounds in leaf " << i << std::endl;
+                //std::cerr << "ERROR: firstTriIdx out of bounds in leaf " << i << std::endl;
             }
             if (node.firstTriIdx + node.triCount > (int)m_triIndices.size()) {
-                std::cerr << "ERROR: Leaf " << i << " extends past triIndices array" << std::endl;
+                //std::cerr << "ERROR: Leaf " << i << " extends past triIndices array" << std::endl;
             }
 
             // Check triangle indices themselves
@@ -66,32 +66,32 @@ void BVHBuilder::build(const std::vector<Triangle>& triangles) {
                 minTriIdx = std::min(minTriIdx, idx);
 
                 if (idx < 0 || idx >= (int)triangles.size()) {
-                    std::cerr << "ERROR: Invalid triangle index " << idx
-                        << " in leaf " << i << std::endl;
+                    //std::cerr << "ERROR: Invalid triangle index " << idx
+                      //  << " in leaf " << i << std::endl;
                 }
             }
         }
         else {
             internalCount++;
 
-            std::cout << "Internal " << i << ": left=" << node.leftChild
-                << ", right=" << node.rightChild << std::endl;
+            // std::cout << "Internal " << i << ": left=" << node.leftChild
+            //     << ", right=" << node.rightChild << std::endl;
 
             // Check child indices
             if (node.leftChild < 0 || node.leftChild >= (int)m_nodes.size()) {
-                std::cerr << "ERROR: Invalid leftChild in node " << i << std::endl;
+                //std::cerr << "ERROR: Invalid leftChild in node " << i << std::endl;
             }
             if (node.rightChild < 0 || node.rightChild >= (int)m_nodes.size()) {
-                std::cerr << "ERROR: Invalid rightChild in node " << i << std::endl;
+                //std::cerr << "ERROR: Invalid rightChild in node " << i << std::endl;
             }
         }
     }
 
-    std::cout << "Leaf nodes: " << leafCount << std::endl;
-    std::cout << "Internal nodes: " << internalCount << std::endl;
-    std::cout << "Total leaf triangles: " << totalLeafTris << std::endl;
-    std::cout << "Triangle index range: [" << minTriIdx << ", " << maxTriIdx << "]" << std::endl;
-    std::cout << "=====================================" << std::endl;
+    // std::cout << "Leaf nodes: " << leafCount << std::endl;
+    // std::cout << "Internal nodes: " << internalCount << std::endl;
+    // std::cout << "Total leaf triangles: " << totalLeafTris << std::endl;
+    // std::cout << "Triangle index range: [" << minTriIdx << ", " << maxTriIdx << "]" << std::endl;
+    // std::cout << "=====================================" << std::endl;
 
     if (totalLeafTris != (int)triangles.size()) {
         std::cerr << "FATAL: Triangle count mismatch!" << std::endl;

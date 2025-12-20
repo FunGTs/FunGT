@@ -1,5 +1,6 @@
-#include "../include/cuda_renderer.hpp"
-#include "../brdf/cook_torrance.hpp"
+#include "PBR/Render/include/cuda_renderer.hpp"
+#include "PBR/Render/brdf/cook_torrance.hpp"
+#include "PBR/PBRCamera/pbr_camera.hpp"
 fgt_device_gpu  float randomFloat(curandState* state) {
     return curand_uniform(state);
 }

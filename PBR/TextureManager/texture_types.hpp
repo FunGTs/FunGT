@@ -1,18 +1,16 @@
 // texture_types.hpp
 #pragma once
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) || defined(__NVCC__)
 #include <cuda_runtime.h>
 using TextureDeviceObject = cudaTextureObject_t;
 #define TEXTURE_BACKEND_CUDA
 
-#elif defined(_FUNGT_USE_SYCL_)
+#elif defined(FUNGT_USE_SYCL) && !defined(__CUDACC__)
 #include <sycl/sycl.hpp>
-// SYCL textures are more complex - typically need both image and sampler
-struct TextureDeviceObject {
-    sycl::image<2>* image;
-    sycl::sampler* sampler;
-    };
+#include <sycl/ext/oneapi/bindless_images.hpp>  // ← ADD THIS!
+namespace syclexp = sycl::ext::oneapi::experimental;           // ← FIX THIS!
+using TextureDeviceObject = syclexp::sampled_image_handle;
 #define TEXTURE_BACKEND_SYCL
 
 #else

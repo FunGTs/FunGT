@@ -38,6 +38,7 @@ int main(){
         float(IMAGE_WIDTH) / float(IMAGE_HEIGHT)
     );
     Space space(camera);
+    space.InitComputeRenderBackend();
     space.LoadModelToRender(*monkey_model);
     space.setSamples(256);
     space.BuildBVH();

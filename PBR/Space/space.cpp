@@ -6,6 +6,11 @@ Space::Space(){
         fungt::Vec3(-5.0f, 8.0f, 4.0f),    // position
         fungt::Vec3(10.0f, 10.0f, 10.0f)  // strong white intensity
     ));  
+    // DEBUG
+    std::cout << "DEBUG: GetBackend() returns: " << static_cast<int>(ComputeRender::GetBackend()) << std::endl;
+    std::cout << "  CUDA = " << static_cast<int>(Compute::Backend::CUDA) << std::endl;
+    std::cout << "  SYCL = " << static_cast<int>(Compute::Backend::SYCL) << std::endl;
+    std::cout << "  CPU = " << static_cast<int>(Compute::Backend::CPU) << std::endl;
     switch (ComputeRender::GetBackend())
     {
     case Compute::Backend::CPU:
@@ -22,13 +27,16 @@ Space::Space(){
         /* code */
         std::cout << "Using CUDA to render scene" << std::endl;
         m_computeRenderer = std::make_unique<CUDA_Renderer>();
-        m_textureManager = std::make_shared<CUDATexture>();
-        CUDA_Renderer* cudaRenderer = dynamic_cast<CUDA_Renderer*>(m_computeRenderer.get());
-        if (cudaRenderer && m_textureManager) {
-            auto cudaTexMgr = dynamic_cast<CUDATexture*>(m_textureManager.get());
-            if(cudaTexMgr)
-                cudaRenderer->setCudaTextureObjects(cudaTexMgr->getTextureObjects());
-        }
+
+        break;
+    }
+#endif
+#ifdef FUNGT_USE_SYCL
+    case Compute::Backend::SYCL:
+    {
+        std::cout << "Using SYCL to render scene" << std::endl;
+        m_computeRenderer = std::make_unique<SYCL_Renderer>();
+      
         break;
     }
 #endif
@@ -59,20 +67,34 @@ Space::~Space(){
 
 std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
   
+    std::cout << "Starting render with " << ComputeRender::GetBackendName() << std::endl;
+
+    std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(
+        width, height, m_triangles, m_bvh_nodes, m_lights, m_camera, m_samplesPerPixel
+    );
+
+    return frameBuffer;
+}
+
+void Space::sendTexturesToRender()
+{
+    if (!m_computeRenderer) {
+        std::cout << "Error in sendTexturesToRender :  computeRenderer pointer is null" <<std::endl;
+        return;
+    }
     switch (ComputeRender::GetBackend())
     {
     case Compute::Backend::CPU:
-    {
-        /* code */
-        std::cout << "Using CPU to render scene" << std::endl;
-    
+        std::cout << "Sending CPU Textures" << std::endl;
+        
         break;
-    }
+
 #ifdef FUNGT_USE_CUDA
     case Compute::Backend::CUDA:
     {
-        /* code */
-        std::cout << "Using CUDA to render scene" << std::endl;
+        std::cout << "Sending CUDA Textures" << std::endl;
+        
+        // Set textures on renderer
         CUDA_Renderer* cudaRenderer = dynamic_cast<CUDA_Renderer*>(m_computeRenderer.get());
         if (cudaRenderer && m_textureManager) {
             auto cudaTexMgr = dynamic_cast<CUDATexture*>(m_textureManager.get());
@@ -82,17 +104,68 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
         break;
     }
 #endif
+
+#ifdef FUNGT_USE_SYCL
+    case Compute::Backend::SYCL:
+    {
+        std::cout << "Sending SYCL Textures" << std::endl;
+        SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
+        if (syclRenderer && m_textureManager) { 
+            // Set textures on renderer
+            auto syclTexMgr = dynamic_cast<SYCLTexture*>(m_textureManager.get());
+            if (syclTexMgr)
+                syclRenderer->setSyclTextureHandles(syclTexMgr->getImageHandles());
+        }
+        break;
+    }
+#endif
+
     default:
         throw std::runtime_error("Unknown Compute API!");
     }
 
-  //Starting render:
-    std::cout << "Starting render" << std::endl;
-    std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(width, height,m_triangles,
-                                                                           m_bvh_nodes,m_lights,
-                                                                           m_camera,m_samplesPerPixel);
+}
 
-    return frameBuffer;
+void Space::InitComputeRenderBackend()
+{
+    if (!m_computeRenderer) {
+        std::cout << "Error: Renderer not created!" << std::endl;
+        return;
+    }
+
+    switch (ComputeRender::GetBackend())
+    {
+    case Compute::Backend::CPU:
+        std::cout << "Initializing CPU backend" << std::endl;
+        m_textureManager = std::make_shared<CPUTexture>();
+        break;
+
+#ifdef FUNGT_USE_CUDA
+    case Compute::Backend::CUDA:
+    {
+        std::cout << "Initializing CUDA backend" << std::endl;
+        m_textureManager = std::make_shared<CUDATexture>();
+
+        break;
+    }
+#endif
+
+#ifdef FUNGT_USE_SYCL
+    case Compute::Backend::SYCL:
+    {
+        std::cout << "Initializing SYCL backend" << std::endl;
+        SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
+        if (syclRenderer) {
+            syclRenderer->createQueue();
+            m_textureManager = std::make_shared<SYCLTexture>(syclRenderer->getQueue());
+        }
+        break;
+    }
+#endif
+
+    default:
+        throw std::runtime_error("Unknown Compute API!");
+    }
 }
 
 void Space::LoadModelToRender(const SimpleModel& Simplemodel)
@@ -198,6 +271,9 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
         std::cout << "  Roughness: " << global_material.roughness << std::endl;
         std::cout << "  Metallic: " << global_material.metallic << std::endl;
     }
+
+
+    sendTexturesToRender();
 }
 
 void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height)

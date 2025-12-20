@@ -3,9 +3,12 @@
 #include <vector>
 #include "Triangle/triangle.hpp"
 #include "Vector/vector3.hpp"
-#include "PBR/PBRCamera/pbr_camera.hpp"
 #include "PBR/BVH/bvh_node.hpp"
 #include "PBR/Light/light.hpp"
+// Forward declarations 
+class PBRCamera;
+
+
 class IComputeRenderer{
 
     public: 

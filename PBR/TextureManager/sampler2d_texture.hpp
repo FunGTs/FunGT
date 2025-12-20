@@ -13,10 +13,12 @@ fgt_device_gpu inline fungt::Vec3 sampleTexture2D(
     return fungt::Vec3(c.x, c.y, c.z);
 
 #elif defined(TEXTURE_BACKEND_SYCL)
-    //auto coords = sycl::float2(u, v);
-    //sycl::float4 c = texture.image->read(coords, *texture.sampler);
-    //return fungt::Vec3(c.x(), c.y(), c.z());
-    return fungt::Vec3(1.0f, 0.0f, 1.0f);
+    sycl::float4 c = sycl::ext::oneapi::experimental::sample_image<sycl::float4>(
+        texture,
+        sycl::float2(u, v)
+    );
+    return fungt::Vec3(c.x(), c.y(), c.z());
+
 #else
     // CPU fallback or error
     return fungt::Vec3(1.0f, 0.0f, 1.0f); // Magenta error color
