@@ -1,25 +1,26 @@
 #if !defined(_FUNGT_H_)
 #define _FUNGT_H_
-#include "../GT/graphicsTool.hpp"
-#include "../SceneManager/scene_manager.hpp"
-#include "../CubeMap/cube_map.hpp"
-//#include "../Physics/ParticleSystem/noise_particle.hpp"
-#include "../ParticleSimulation/particle_simulation.hpp"
-#include "../Path_Manager/path_manager.hpp"
-#include "../InfoWindow/infowindow.hpp"
-#include "../Physics/Clothing/clothing.hpp"
-#include <memory> 
+#include "GT/graphicsTool.hpp"
+#include "SceneManager/scene_manager.hpp"
+#include "CubeMap/cube_map.hpp"
+#include "Geometries/inf_grid.hpp"
+#include "ParticleSimulation/particle_simulation.hpp"
+#include "Path_Manager/path_manager.hpp"
+#include "Physics/Clothing/clothing.hpp"
+#include "Physics/Clothing/clothing.hpp"
+#include "ViewPort/viewport.hpp"              
+#include "Layer/layer_stack.hpp"              
+#include "GUI/fungt_gui_headers.hpp"
+#include <memory>
 #include <unordered_map>
 
-
-
-class FunGT : public GraphicsTool<FunGT>{
+class FunGT : public GraphicsTool{
 
     Camera m_camera;
     //Shader m_shader; 
 
     //Projection matrix 
-    float fov = 45.f; 
+   
     float nearPlane = 0.1f; 
     float farPlane = 500.f; 
 
@@ -50,39 +51,39 @@ class FunGT : public GraphicsTool<FunGT>{
     //Creates an animation:
     
     std::shared_ptr<SceneManager> m_sceneManager;
-    std::shared_ptr<GUI> m_infoWindow;
+    // IMGUI LAYER SYSTEM
+    std::unique_ptr<ViewPort> m_ViewPortLayer;     
+    std::unique_ptr<ImGuiLayer> m_imguiLayer;      
+    LayerStack m_layerStack;                       
 
-
-  
-        
+    std::shared_ptr<InfiniteGrid> m_grid;  // ← ADD (shared_ptr for SceneManager)
 
     public: 
         FunGT(int _width, int _height); 
         ~FunGT();
 
-        virtual void update(); 
-        virtual void update(const std::function<void()> &renderLambda);
-        virtual void guiUpdate(const std::function<void()>&guiRender);
-        void set(); 
+        void update(const std::function<void()> &renderLambda) override;
+        void renderGUI() override;
         void processKeyBoardInput();
         void processMouseInput(double xpos, double ypos);
-        static void mouse_callback(GLFWwindow *window, double xpos, double ypos); 
         void setBackgroundColor(float red, float green, float blue, float alfa);
         void setBackgroundColor(float color = 0.f);
-        void addShader();
-        Camera getCamera(); 
-      
+        Camera& getCamera(); 
         std::shared_ptr<SceneManager> getSceneManager();
-        std::shared_ptr<GUI> getInfoWindow();
         void set(const std::function<void()>& renderLambda);
-        static std::unique_ptr<FunGT> createScene(int _width, int _height); 
-};
+        static std::unique_ptr<FunGT> createScene(int _width, int _height);
 
+    protected:
+        // Override virtual methods from GraphicsTool
+        void onMouseMove(double xpos, double ypos) override;
+        void onUpdate(float deltaTime) override;
+        void onMouseScroll(double xoffset, double yoffset) override;
+
+};
 typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
 typedef std::shared_ptr<Animation> FunGTAnimation;
 typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
-typedef std::shared_ptr<GUI> FunGTInfoWindow;
 typedef std::shared_ptr<SimpleModel> FunGTSModel;
 
 

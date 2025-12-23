@@ -3,10 +3,9 @@
 #include<assimp/quaternion.h>
 #include<assimp/vector3.h>
 #include<assimp/matrix4x4.h>
-#include<glm/gtc/quaternion.hpp>
-#include "../include/glmath.hpp"
-#include "../include/prerequisites.hpp"
-#include "../Matrix/matrix4x4f.h"
+#include "include/glmath.hpp"
+#include "include/prerequisites.hpp"
+#include "Matrix/matrix4x4f.h"
 
 const float EPSILON = 1e-6f; //For floating point comparison
 

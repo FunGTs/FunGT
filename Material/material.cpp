@@ -55,3 +55,24 @@ void Material::sendToShader(Shader& program) {
     program.setUniform1f(m_shininess, "material.shininess");
 
 }
+
+bool Material::isInvalidMaterial() const
+{
+    // Check if ambient AND diffuse are essentially zero
+    // (specular alone won't make the mesh visible)
+    const float epsilon = 0.001f;
+    return (glm::length(m_ambientLight) < epsilon &&
+        glm::length(m_diffLigth) < epsilon);
+    // Note: We don't check specular - it can be non-zero but won't help if base colors are black
+}
+
+Material Material::createDefaultMaterial()
+{
+    // Nice neutral gray;
+    glm::vec3 ambient(0.2f, 0.2f, 0.2f);
+    glm::vec3 diffuse(0.8f, 0.8f, 0.8f);
+    glm::vec3 specular(0.5f, 0.5f, 0.5f);
+    float shininess = 32.0f;
+
+    return Material(ambient, diffuse, specular, shininess, "FunGT_Default");
+}

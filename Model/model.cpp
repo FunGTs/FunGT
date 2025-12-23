@@ -1,5 +1,10 @@
 #include "model.hpp"
 #include "../vendor/stb_image/stb_image.h"
+
+std::string Model::s_defaultVertexShader = "";
+std::string Model::s_defaultFragmentShader = "";
+bool Model::s_defaultShadersInitialized = false;
+
 Model::Model()
 {
      std::cout<<"Model Default Constructor"<<std::endl;
@@ -233,7 +238,19 @@ void Model::processAssimpScene(aiNode *node, const aiScene *scene)
 
 void Model::createShader(std::string vertex_shader, std::string fragment_shader)
 {
-    m_shader.create(vertex_shader,fragment_shader);
+    if (!s_defaultShadersInitialized) {
+        initializeDefaultShaders();
+    }
+
+    if (vertex_shader.empty() || fragment_shader.empty()) {
+        std::cout << "Using default FunGT shader" << std::endl;
+        m_shader.create(s_defaultVertexShader, s_defaultFragmentShader);
+    }
+    else {
+        std::cout << "Using custom shader" << std::endl;
+        m_shader.create(vertex_shader, fragment_shader);
+    }
+   
 }
 
 const std::vector<std::unique_ptr<Mesh>>& Model::getMeshes()
@@ -251,26 +268,62 @@ void Model::draw()
 
 std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
 {
-    std::vector<funGTVERTEX> vertices; 
-    std::vector<unsigned int> indices; 
-    std::vector<Texture > texture; //Texture is a class
-    std::vector<Material> materials; 
+    std::vector<funGTVERTEX> vertices;
+    std::vector<unsigned int> indices;
+    std::vector<Texture> texture;
+    std::vector<Material> materials;
 
-
-
-    vertices = getVertices(mesh, scene); 
-    indices = getIndices(mesh,scene);
-    texture  = getTextures(mesh,scene);
+    vertices = getVertices(mesh, scene);
+    indices = getIndices(mesh, scene);
+    texture = getTextures(mesh, scene);
     materials = getMaterials(mesh, scene);
-    std::cout<<"Indices loaded   : "<<indices.size()<<std::endl; 
-    std::cout<<"Vertices loaded  : "<<vertices.size()<<std::endl; 
-    std::cout<<"Textures loaded  : "<<texture.size()<<std::endl; 
-    std::cout<<"Materials loaded : "<<materials.size()<<std::endl; 
-    if(texture.size()==0 && materials.size()>0){
-         std::cout<<"Mesh with only material"<<std::endl; 
-        return std::make_unique<Mesh>(vertices,indices,materials);
+    // std::cout << "========== BEFORE FIX ==========" << std::endl;
+    // std::cout << "Materials loaded : " << materials.size() << std::endl;
+    // if (!materials.empty()) {
+    //     std::cout << "Material[0] name: " << materials[0].m_name << std::endl;
+    //     std::cout << "Material[0] ambient: " << materials[0].m_ambientLight.x << ", "
+    //         << materials[0].m_ambientLight.y << ", "
+    //         << materials[0].m_ambientLight.z << std::endl;
+    //     std::cout << "Material[0] diffuse: " << materials[0].m_diffLigth.x << ", "
+    //         << materials[0].m_diffLigth.y << ", "
+    //         << materials[0].m_diffLigth.z << std::endl;
+    //     std::cout << "Material[0] specular: " << materials[0].m_specLight.x << ", "
+    //         << materials[0].m_specLight.y << ", "
+    //         << materials[0].m_specLight.z << std::endl;
+    //     std::cout << "isBlackMaterial? " << (materials[0].isInvalidMaterial() ? "YES" : "NO") << std::endl;
+    // }
+    // Fix black materials
+    if (!materials.empty() && materials[0].isInvalidMaterial()) {
+        std::cout << "Invakid material detected, replacing with FunGT default" << std::endl;
+        materials[0] = Material::createDefaultMaterial();
     }
-    return std::make_unique<Mesh>(vertices,indices,texture);
+
+    // Always ensure we have at least one material
+    if (materials.empty()) {
+        std::cout << "No materials found, adding FunGT default" << std::endl;
+        materials.push_back(Material::createDefaultMaterial());
+    }
+    // std::cout << "========== AFTER FIX ==========" << std::endl;
+    // if (!materials.empty()) {
+    //     std::cout << "Material[0] name: " << materials[0].m_name << std::endl;
+    //     std::cout << "Material[0] ambient: " << materials[0].m_ambientLight.x << ", "
+    //         << materials[0].m_ambientLight.y << ", "
+    //         << materials[0].m_ambientLight.z << std::endl;
+    //     std::cout << "Material[0] diffuse: " << materials[0].m_diffLigth.x << ", "
+    //         << materials[0].m_diffLigth.y << ", "
+    //         << materials[0].m_diffLigth.z << std::endl;
+    //     std::cout << "Material[0] specular: " << materials[0].m_specLight.x << ", "
+    //         << materials[0].m_specLight.y << ", "
+    //         << materials[0].m_specLight.z << std::endl;
+    // }
+    std::cout << "================================" << std::endl;
+    std::cout << "Indices loaded   : " << indices.size() << std::endl;
+    std::cout << "Vertices loaded  : " << vertices.size() << std::endl;
+    std::cout << "Textures loaded  : " << texture.size() << std::endl;
+    std::cout << "Materials loaded : " << materials.size() << std::endl;
+
+    // ALWAYS use the combined constructor - handles all cases!
+    return std::make_unique<Mesh>(vertices, indices, texture, materials);
 }
 
 std::vector<Texture > Model::loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
@@ -350,6 +403,15 @@ std::vector<Material> Model::loadMaterials(aiMaterial *mat)
     internalMat.push_back(myMaterial); 
 
     return internalMat;
+}
+void Model::initializeDefaultShaders()
+{
+    if (s_defaultShadersInitialized) return;
+
+    s_defaultVertexShader = getAssetPath("shaders/fungt_default.vs");
+    s_defaultFragmentShader = getAssetPath("shaders/fungt_default.fs");
+    s_defaultShadersInitialized = true; 
+    std::cout << "Default shaders initialized" << std::endl;
 }
 void Model::Info()
 {

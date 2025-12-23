@@ -7,16 +7,22 @@ Mesh::Mesh(){
 Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Texture> &inTexture)
 : m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_texture{inTexture}{
      
-     //Calls the init mesh to populate the VAO, VBO and EBO
-     
-     
-     //this->initMesh();
-     
 }
 Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inMaterial)
 : m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_material{inMaterial}{
       //Calls the init mesh to populate the VAO, VBO and EBO
      //this->initMesh();
+}
+Mesh::Mesh(const std::vector<funGTVERTEX>& inVertex,
+    const std::vector<GLuint>& inIndex,
+    const std::vector<Texture>& inTexture,
+    const std::vector<Material>& inMaterial)
+    : m_vertex(std::move(inVertex)),
+    m_index{ std::move(inIndex) },
+    m_texture{ inTexture },
+    m_material{ inMaterial }
+{
+    // Holds BOTH textures and materials!
 }
 Mesh::~Mesh()
 {
@@ -124,6 +130,8 @@ void Mesh::draw(Shader &shader){
 
     unsigned int diffuseL = 1; 
     unsigned int specularL = 1;
+    // ADD THIS LINE HERE:
+    shader.setUniform1i("hasTexture", numOfTextures > 0 ? 1 : 0);
     //std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
     for(unsigned int i=0; i<numOfTextures; i++){
       
@@ -147,7 +155,9 @@ void Mesh::draw(Shader &shader){
     } 
     //loading the materials
     for(int i=0; i<m_material.size(); i++){
+        
         m_material[i].sendToShader(shader);
+
     }
 
        //Draw your mesh!

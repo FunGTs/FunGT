@@ -14,7 +14,6 @@
 #include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
 #include "../Material/material.hpp"
-#include "../Triangle/triangle.hpp"
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 #define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices)
 struct Texture_struct {
@@ -45,6 +44,10 @@ public:
     Mesh();
     Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Texture>& inTexture);
     Mesh(const std::vector<funGTVERTEX>& inVertex, const std::vector<GLuint>& inIndex, const std::vector<Material>& inmaterial);
+    Mesh(const std::vector<funGTVERTEX>& inVertex,
+        const std::vector<GLuint>& inIndex,
+        const std::vector<Texture>& inTexture,
+        const std::vector<Material>& inMaterial);
     ~Mesh();
     void initMesh();
     void InitOGLBuffers();
