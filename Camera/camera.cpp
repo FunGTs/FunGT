@@ -83,6 +83,14 @@ glm::vec3 Camera::getFront()
     return m_vFront;
 }
 
+glm::vec3 Camera::getUp()
+{
+    return m_vUp;
+}
+float Camera::getFOV()
+{
+    return m_fov;
+}
 void Camera::move(const float dt, const int dir) {
     m_speed = 2.5 * dt;
     switch (dir)

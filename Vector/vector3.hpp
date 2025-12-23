@@ -106,6 +106,20 @@ namespace fungt{
 }
 
 
+// ════════════════════════════════════════════════════════════════════════════
+// SYCL DEVICE COPYABLE TRAIT - ADDED FOR SYCL BUFFER COMPATIBILITY
+// Tells SYCL that Vec3 can be safely copied to/from GPU memory
+// Uses sycl inline namespace _V1 (SYCL 2020 versioned namespace)
+// ════════════════════════════════════════════════════════════════════════════
+#if defined(SYCL_LANGUAGE_VERSION) || defined(__SYCL_DEVICE_ONLY__)
+#include <sycl/sycl.hpp>
+namespace sycl {
+    inline namespace _V1 {
+        template <>
+        struct is_device_copyable<fungt::Vec3> : std::true_type {};
+    }
+}
+#endif
 
 
 

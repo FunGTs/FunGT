@@ -105,15 +105,36 @@ int CUDATexture::getTextureCount() const {
 
 void CUDATexture::cleanup() {
     std::cout << "  [CUDA] Cleaning up " << textures.size() << " textures..." << std::endl;
-    for (auto& tex : textures) {
+
+    // Synchronize before cleanup
+    cudaDeviceSynchronize();
+
+    for (size_t i = 0; i < textures.size(); i++) {
+        auto& tex = textures[i];
+
+        std::cout << "  [CUDA] Destroying texture " << i << std::endl;
+
         if (tex.texObj) {
-            cudaDestroyTextureObject(tex.texObj);
+            cudaError_t err = cudaDestroyTextureObject(tex.texObj);
+            if (err != cudaSuccess) {
+                std::cerr << "  [CUDA] cudaDestroyTextureObject failed: "
+                    << cudaGetErrorString(err) << std::endl;
+            }
+            tex.texObj = 0;
         }
+
         if (tex.cuArray) {
-            cudaFreeArray(tex.cuArray);
+            cudaError_t err = cudaFreeArray(tex.cuArray);
+            if (err != cudaSuccess) {
+                std::cerr << "  [CUDA] cudaFreeArray failed: "
+                    << cudaGetErrorString(err) << std::endl;
+            }
+            tex.cuArray = nullptr;
         }
     }
+
     textures.clear();
     pathToIndex.clear();
+    std::cout << "  [CUDA] Cleanup complete!" << std::endl;
 }
 

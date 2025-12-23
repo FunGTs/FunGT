@@ -97,7 +97,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
     renderLambda();
     
 
-    ProjectionMatrix = glm::perspective(glm::radians(fov),
+    ProjectionMatrix = glm::perspective(glm::radians(m_camera.getFOV()),
                                         static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
 
    for(const auto& node : m_sceneManager->getRenderable()){
@@ -116,7 +116,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
        m_imguiLayer->addWindow(std::make_unique<LightEditorWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
-      
+       m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager,&m_camera));
        m_layerStack.PushLayer(std::move(m_imguiLayer));
    }
 
@@ -134,7 +134,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
    {
        auto view_port_size = view_port->getViewPortSize();
        if (view_port_size.x > 0 && view_port_size.y > 0) {
-           ProjectionMatrix = glm::perspective(glm::radians(fov),
+           ProjectionMatrix = glm::perspective(glm::radians(m_camera.getFOV()),
                view_port_size.x / view_port_size.y, nearPlane, farPlane);
        }
    }
@@ -165,7 +165,7 @@ void FunGT::update(const std::function<void()> &renderLambda)
     if (view_port) {
         auto view_port_size = view_port->getViewPortSize();
         if (view_port_size.x > 0 && view_port_size.y > 0) {
-            ProjectionMatrix = glm::perspective(glm::radians(fov),
+            ProjectionMatrix = glm::perspective(glm::radians(m_camera.getFOV()),
                 view_port_size.x / view_port_size.y, nearPlane, farPlane);
         }
     }

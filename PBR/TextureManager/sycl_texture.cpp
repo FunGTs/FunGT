@@ -85,13 +85,35 @@
     void SYCLTexture::cleanup() {
         std::cout << "SYCLTexture: Cleaning up " << textures.size() << " textures" << std::endl;
 
-        for (auto& tex : textures) {
-            try {
-                syclexp::destroy_image_handle(tex.imgHandle, *m_queue);
+        // Check if queue is still valid
+        if (!m_queue) {
+            std::cout << "SYCLTexture: Queue already destroyed, skipping cleanup" << std::endl;
+            textures.clear();
+            pathToIndex.clear();
+            return;
+        }
+
+        try {
+            // Wait for all operations to complete
+            m_queue->wait_and_throw();
+
+            for (size_t i = 0; i < textures.size(); i++) {
+                auto& tex = textures[i];
+                std::cout << "SYCLTexture: Destroying texture " << i << std::endl;
+
+                try {
+                    syclexp::destroy_image_handle(tex.imgHandle, *m_queue);
+                }
+                catch (const sycl::exception& e) {
+                    std::cerr << "SYCLTexture: Error destroying texture " << i
+                        << ": " << e.what() << std::endl;
+                }
             }
-            catch (const sycl::exception& e) {
-                std::cerr << "SYCLTexture: Error destroying image handle: " << e.what() << std::endl;
-            }
+
+            std::cout << "SYCLTexture: Cleanup complete" << std::endl;
+        }
+        catch (const sycl::exception& e) {
+            std::cerr << "SYCLTexture: Queue wait failed: " << e.what() << std::endl;
         }
 
         textures.clear();

@@ -4,8 +4,8 @@ project(FunGT)
 # ════════════════════════════════════════════════════════════════════════════
 # GPU BACKEND OPTIONS
 # ════════════════════════════════════════════════════════════════════════════
-option(USE_CUDA "Enable CUDA backend for NVIDIA GPUs" OFF)
-option(USE_SYCL "Enable SYCL backend for Intel GPUs" ON)
+option(FUNGT_USE_CUDA "Enable CUDA backend for NVIDIA GPUs" ON)
+option(FUNGT_USE_SYCL "Enable SYCL backend for Intel GPUs" ON)
 
 # Allow FUNGT_BASE_DIR to be set externally (command line, environment, or cache)
 # Priority: 1. Cache variable, 2. Environment variable, 3. Default fallback
@@ -36,6 +36,10 @@ endif()
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# ════════════════════════════════════════════════════════════════════════════
+# PBR RENDERER LIBRARIES - PREBUILT FROM PBR/main/build
+# ════════════════════════════════════════════════════════════════════════════
+set(PBR_LIB_DIR ${FUNGT_BASE_DIR}/PBR/main/build)
 
 if(UNIX)
     # Set the build type to Release
@@ -59,6 +63,31 @@ if(UNIX)
         IMPORTED_LOCATION ${FUNLIB_DIR}/lib/libfunlib.a
         INTERFACE_INCLUDE_DIRECTORIES ${FUNLIB_DIR}/include
     )
+    # PBR Core (always required)
+    add_library(pbr_core STATIC IMPORTED)
+    set_target_properties(pbr_core PROPERTIES
+        IMPORTED_LOCATION "${PBR_LIB_DIR}/libpbr_core.a"
+    )
+
+    # PBR CUDA renderer (if enabled)
+    if(FUNGT_USE_CUDA)
+        add_library(pbr_cuda STATIC IMPORTED)
+        set_target_properties(pbr_cuda PROPERTIES
+            IMPORTED_LOCATION "${PBR_LIB_DIR}/libpbr_cuda.a"
+        )
+        set(PBR_CUDA_LIB pbr_cuda)
+        message(STATUS "PBR CUDA renderer library: ${PBR_LIB_DIR}/libpbr_cuda.a")
+    endif()
+
+    # PBR SYCL renderer (if enabled)
+    if(FUNGT_USE_SYCL)
+        add_library(pbr_sycl STATIC IMPORTED)
+        set_target_properties(pbr_sycl PROPERTIES
+            IMPORTED_LOCATION "${PBR_LIB_DIR}/libpbr_sycl.a"
+        )
+        set(PBR_SYCL_LIB pbr_sycl)
+        message(STATUS "PBR SYCL renderer library: ${PBR_LIB_DIR}/libpbr_sycl.a")
+    endif()
 endif()
 
 if (WIN32)
@@ -114,6 +143,18 @@ include_directories(
     ${FUNGT_BASE_DIR}/Renders
     ${FUNGT_BASE_DIR}/Platform/OpenGL
     ${FUNGT_BASE_DIR}/InfoDevice
+    ${FUNGT_BASE_DIR}/PBR/PBRCamera
+    ${FUNGT_BASE_DIR}/PBR/Ray
+    ${FUNGT_BASE_DIR}/PBR/HitData
+    ${FUNGT_BASE_DIR}/PBR/Intersection
+    ${FUNGT_BASE_DIR}/PBR/Light
+    ${FUNGT_BASE_DIR}/PBR/Space
+    ${FUNGT_BASE_DIR}/PBR/Render/include
+    ${FUNGT_BASE_DIR}/PBR/Render/brdf
+    ${FUNGT_BASE_DIR}/PBR/Render/shared
+    ${FUNGT_BASE_DIR}/PBR/TextureManager
+    ${FUNGT_BASE_DIR}/PBR/BVH
+    ${FUNGT_BASE_DIR}/Triangle
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -163,6 +204,9 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
     ${FUNGT_BASE_DIR}/Platform/OpenGL/OGLframeBuffer.cpp
     ${FUNGT_BASE_DIR}/InfoDevice/gpu_device_info.cpp
+    ${FUNGT_BASE_DIR}/PBR/Intersection/intersection.cpp
+    ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
+    ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -170,7 +214,7 @@ set(SOURCE_FILES
 # ════════════════════════════════════════════════════════════════════════════
 
 # CUDA backend (compiled with g++, NOT SYCL compiler)
-if(USE_CUDA)
+if(FUNGT_USE_CUDA)
     find_package(CUDAToolkit REQUIRED)
     
     if(CUDAToolkit_FOUND)
@@ -198,8 +242,9 @@ if(USE_CUDA)
         )
         
         set(CUDA_BACKEND_LIB cuda_backend)
-        add_compile_definitions(USE_CUDA)
+        add_compile_definitions(FUNGT_USE_CUDA)
         message(STATUS "CUDA device detection enabled (compiled with g++)")
+        enable_language(CUDA)
     else()
         message(FATAL_ERROR "CUDA requested but CUDA Toolkit not found!")
     endif()
@@ -208,7 +253,7 @@ else()
 endif()
 
 # SYCL backend (compiled with SYCL compiler)
-if(USE_SYCL)
+if(FUNGT_USE_SYCL)
     list(APPEND SOURCE_FILES ${FUNGT_BASE_DIR}/InfoDevice/sycl_backend.cpp)
     message(STATUS "SYCL device detection enabled (compiled with SYCL compiler)")
 else()
@@ -219,7 +264,12 @@ endif()
 # CREATE EXECUTABLE
 # ════════════════════════════════════════════════════════════════════════════
 add_executable(FunGT ${SOURCE_FILES})
-
+if(FUNGT_USE_CUDA)
+    set_target_properties(FunGT PROPERTIES
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+        CUDA_SEPARABLE_COMPILATION ON
+    )
+endif()
 # ════════════════════════════════════════════════════════════════════════════
 # PLATFORM-SPECIFIC CONFIGURATIONS
 # ════════════════════════════════════════════════════════════════════════════
@@ -303,6 +353,11 @@ elseif (UNIX)
         imgui
         ${OpenCL_LIBRARIES}
         ${CUDA_BACKEND_LIB}
+        pbr_core                   
+        ${PBR_CUDA_LIB}           
+        ${PBR_SYCL_LIB} 
+        $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cudart_static>  # CHANGE TO cudart_static
+        $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cuda_driver>           
     )
     
     # ════════════════════════════════════════════════════════════════════════
@@ -311,8 +366,8 @@ elseif (UNIX)
     target_compile_options(FunGT PRIVATE -fsycl)
     target_link_options(FunGT PRIVATE -fsycl)
     
-    if(USE_SYCL)
-        target_compile_definitions(FunGT PRIVATE USE_SYCL)
+    if(FUNGT_USE_SYCL)
+        target_compile_definitions(FunGT PRIVATE FUNGT_USE_SYCL)
     endif()
     
 endif()
@@ -325,10 +380,10 @@ message(STATUS "═════════════════════�
 message(STATUS "  FunGT Build Configuration")
 message(STATUS "════════════════════════════════════════")
 message(STATUS "  Main Compiler:  ${CMAKE_CXX_COMPILER}")
-message(STATUS "  CUDA Backend:   ${USE_CUDA}")
-message(STATUS "  SYCL Backend:   ${USE_SYCL}")
+message(STATUS "  CUDA Backend:   ${FUNGT_USE_CUDA}")
+message(STATUS "  SYCL Backend:   ${FUNGT_USE_SYCL}")
 message(STATUS "  Build Type:     ${CMAKE_BUILD_TYPE}")
-if(USE_CUDA)
+if(FUNGT_USE_CUDA)
     message(STATUS "  CUDA Compiled:  Separately with g++")
 endif()
 message(STATUS "════════════════════════════════════════")

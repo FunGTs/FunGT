@@ -39,7 +39,7 @@ public:
     float m_distance;     // distance from target
     float m_orbitSpeed;
     float m_panSpeed;
-
+    float m_fov = 45;
 private:
     glm::mat4 m_ViewMatrix;
 
@@ -52,7 +52,8 @@ public:
     glm::mat4 getViewMatrix();
     glm::vec3 getPosition();
     glm::vec3 getFront();
-
+    glm::vec3 getUp();
+    float getFOV();
     // Blender-style controls
     void orbit(float deltaX, float deltaY);     // MMB drag
     void pan(float deltaX, float deltaY);       // Shift+MMB drag

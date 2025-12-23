@@ -10,12 +10,7 @@
 #include "Physics/Clothing/clothing.hpp"
 #include "ViewPort/viewport.hpp"              
 #include "Layer/layer_stack.hpp"              
-#include "GUI/imgui_layer.hpp"                
-#include "GUI/render_info_window.hpp"   
-#include "GUI/scene_hierarchy_window.hpp"
-#include "GUI/properties_window.hpp"
-#include "GUI/material_editor_window.hpp"      
-#include "GUI/lights_editor_window.hpp"
+#include "GUI/fungt_gui_headers.hpp"
 #include <memory>
 #include <unordered_map>
 
@@ -25,7 +20,7 @@ class FunGT : public GraphicsTool{
     //Shader m_shader; 
 
     //Projection matrix 
-    float fov = 45.f; 
+   
     float nearPlane = 0.1f; 
     float farPlane = 500.f; 
 

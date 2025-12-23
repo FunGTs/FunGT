@@ -95,6 +95,10 @@ fgt_device_gpu bool inline traceRayBVH(
                             tris[triIdx].uvs[2][1] * temp.bary.z;
 
                         fungt::Vec3 texColor = sampleTexture2D(textures[hit.material.baseColorTexIdx], u, v);
+                        texColor.x = powf(texColor.x, 2.2f);
+                        texColor.y = powf(texColor.y, 2.2f);
+                        texColor.z = powf(texColor.z, 2.2f);
+
                         hit.material.baseColor[0] = texColor.x;
                         hit.material.baseColor[1] = texColor.y;
                         hit.material.baseColor[2] = texColor.z;
