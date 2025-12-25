@@ -1,10 +1,11 @@
 #pragma once
-
 // --- Choose the backend ---
-#if defined(FUNGT_USE_SYCL)
-#define __KERNEL_SYCL__
-#elif defined(__CUDACC__)
+#if defined(__NVCC__)
 #define __KERNEL_CUDA__
+#define FUNGT_USE_CUDA
+#elif defined(FUNGT_USE_SYCL)
+#define __KERNEL_SYCL__
+#define FUNGT_USE_SYCL
 #elif defined(FUNGT_USE_HIP)
 #define __KERNEL_HIP__
 #else
@@ -26,18 +27,17 @@
 #define fgt_device_constant __constant__
 #define fgt_global __global__
 #define fgt_shared __shared__
-
 #elif defined(__KERNEL_SYCL__)
 #define fgt_device inline
+#define fgt_device_gpu inline
 #define fgt_device_forceinline inline
 #define fgt_device_constant const
 #define fgt_global
 #define fgt_shared /* use local_accessor in SYCL kernels */
-
 #elif defined(__KERNEL_CPU__)
-#define fgt_device inline              // ← Changed from empty to inline
-#define fgt_device_forceinline inline  // ← Already correct
-#define fgt_device_constant static const
+#define fgt_device
+#define fgt_device_gpu
+#define fgt_device_forceinline inline
 #define fgt_global
 #define fgt_shared
 #endif

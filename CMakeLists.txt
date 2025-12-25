@@ -62,6 +62,7 @@ if (WIN32)
 endif()
 # Include directories
 include_directories(
+    ${FUNGT_BASE_DIR}
     ${FUNGT_BASE_DIR}/VertexGL
     ${FUNGT_BASE_DIR}/Shaders
     ${FUNGT_BASE_DIR}/funGT

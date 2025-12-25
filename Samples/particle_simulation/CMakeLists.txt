@@ -62,6 +62,7 @@ if (WIN32)
 endif()
 # Include directories
 include_directories(
+    ${FUNGT_BASE_DIR}
     ${FUNGT_BASE_DIR}/VertexGL
     ${FUNGT_BASE_DIR}/Shaders
     ${FUNGT_BASE_DIR}/funGT
@@ -96,6 +97,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/Physics/Clothing
     ${FUNGT_BASE_DIR}/Quaternion
     ${FUNGT_BASE_DIR}/Vector
+    ${FUNGT_BASE_DIR}/Renders
     
 
 )
@@ -139,6 +141,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
+    ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
 )
 
 # Add executable
