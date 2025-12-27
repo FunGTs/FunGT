@@ -33,7 +33,7 @@ public:
     }
     fgt_device fungt::Vec3 center() const {
         fungt::Vec3 mid = m_min + m_max;
-        mid = mid / 0.5;
+        mid = mid * 0.5;
         return mid;
     }
     // Surface area (used for building quality BVH)

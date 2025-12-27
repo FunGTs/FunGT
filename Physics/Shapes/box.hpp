@@ -21,7 +21,10 @@ public:
         
         return inertia;
     }
-    
+    AABB getBoundingBox(const fungt::Vec3& position) const override {
+         fungt::Vec3 halfSize = size * 0.5f;
+         return AABB(position - halfSize, position + halfSize);
+    }
     float getVolume() const override {
         return size.x * size.y * size.z;
     }

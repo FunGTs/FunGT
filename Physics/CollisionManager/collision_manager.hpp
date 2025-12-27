@@ -1,83 +1,52 @@
 #if !defined(_COLLISION_MANAGER_H_)
 #define _COLLISION_MANAGER_H_
 #include <vector>
-#include<algorithm>
-#include "../ContactHelpers/contact_helpers.hpp"
-#include "../Collisions/simple_collision.hpp"
-#include "../RigidBody/rigid_body.hpp"
+#include <map>
+#include <memory>
+#include "Physics/ContactHelpers/contact_helpers.hpp"
+#include "Physics/Collisions/simple_collision.hpp"
+#include "Physics/Collisions/manifold_collision.hpp"
+#include "Physics/Contact/contact_manifold.hpp"
+#include "Physics/RigidBody/rigid_body.hpp"
+#include "Physics/BroadPhase/uniform_grid.hpp"
+
+// Helper to create unique key for body pairs
+struct BodyPairKey {
+    size_t bodyA_id;
+    size_t bodyB_id;
+
+    BodyPairKey(size_t a, size_t b);
+    bool operator<(const BodyPairKey& other) const;
+};
+
 class CollisionManager {
 private:
     std::vector<std::shared_ptr<RigidBody>> m_collidableBodies;
+    std::unique_ptr<UniformGrid> m_broadPhase;
+    std::map<BodyPairKey, ContactManifold> m_manifoldCache;
 
-    
+    // Helper methods for collision manifold detection
+    void warmStartManifold(ContactManifold& newManifold, const ContactManifold& existingManifold);
+    void solveContactImpulse(ContactPoint& cp, std::shared_ptr<RigidBody> bodyA,
+                            std::shared_ptr<RigidBody> bodyB, float dt, float ERP);
+    void solveFriction(ContactPoint& cp, std::shared_ptr<RigidBody> bodyA,
+                      std::shared_ptr<RigidBody> bodyB, const fungt::Vec3& rA,
+                      const fungt::Vec3& rB, float effectiveMass);
+
 public:
-    void add(std::shared_ptr<RigidBody> body) {
-        m_collidableBodies.push_back(body);  // Converts to weak_ptr automatically
-    }
-    int getNumOfCollidableObjects(){
-        
-        int num = static_cast<int>(m_collidableBodies.size());
+    CollisionManager();
 
-        return num;
-    }
-     // Remove body
-    void remove(std::shared_ptr<RigidBody> body) {
-        m_collidableBodies.erase(
-            std::remove_if(
-                m_collidableBodies.begin(),
-                m_collidableBodies.end(),
-                [&body](const std::shared_ptr<RigidBody>& shared) {
-                    return shared == body;
-                }),
-            m_collidableBodies.end()
-        );
-    }
-    // Access a body by index (returns shared_ptr)
-    std::shared_ptr<RigidBody> getCollideBody(size_t index) const {
-        if (index >= m_collidableBodies.size()) return nullptr; // bounds check
-        return m_collidableBodies[index];  // return shared_ptr
-    }
-        // Getter (const)
-    const std::vector<std::shared_ptr<RigidBody>>& getCollidable() const {
-        return m_collidableBodies;
-    }
+    void add(std::shared_ptr<RigidBody> body);
+    int getNumOfCollidableObjects();
+    void remove(std::shared_ptr<RigidBody> body);
+    std::shared_ptr<RigidBody> getCollideBody(size_t index) const;
+    const std::vector<std::shared_ptr<RigidBody>>& getCollidable() const;
+    std::vector<std::shared_ptr<RigidBody>>& getCollidable();
 
-    // Getter (non-const, allows modification)
-    std::vector<std::shared_ptr<RigidBody>>& getCollidable() {
-        return m_collidableBodies;
-    }
-    void detectCollisions() {
-        //std::cout<<"Detecting Collisions among "<<m_collidableBodies.size()<<" objects.\n";
-        std::vector<Contact> contacts;
-        // Check collisions between valid bodies
-        for (size_t i = 0; i < m_collidableBodies.size(); ++i) {
-            for (size_t j = i + 1; j < m_collidableBodies.size(); ++j) {
-
-                auto bodyA = m_collidableBodies[i];
-                auto bodyB = m_collidableBodies[j];
-                
-                if (!bodyA || !bodyB || (bodyA->isStatic() && bodyB->isStatic())){
-                    
-                    continue;  // Skip if either is nullptr
-  
-                }               
-                
-                auto collision = SimpleCollision::Detect(bodyA, bodyB); // returns std::optional
-                if (collision && collision->isValid()) {
-                    //Add the collision to the list of contacts
-                    //print some info
-                    //std::cout<<"Collision detected between bodies at point ("<<collision->colissionPoint.x<<", "
-                    //<<collision->colissionPoint.y<<", "<<collision->colissionPoint.z<<") with normal ("
-                    //<<collision->colissionNormal.x<<", "<<collision->colissionNormal.y<<", "<<collision->colissionNormal.z
-                    //<<") and penetration depth "<<collision->penetrationDepth<<"\n";
-                    contacts.push_back(collision.value()); //.-value() returns a reference to the contained value
-                }
-            }
-        }
-        for(auto & _contact : contacts){
-            ContactHelpers::resolveContactEx2(_contact);
-        }
-    }
-    
+    void detectCollisions();
+    void detectCollisionsUg();
+    void detectCollisionsEx();
+    void detectCollisionsManifold();
+    void clearManifoldCache();
 };
 #endif // _COLLISION_MANAGER_H_

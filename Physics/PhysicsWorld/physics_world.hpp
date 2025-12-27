@@ -20,6 +20,7 @@ private:
 public:
     PhysicsWorld(fungt::Vec3 g = fungt::Vec3(0, -9.81f, 0)) : gravity(g) {
         SimpleCollision::Init();
+        ManifoldCollision::Init();
         //std::unique_ptr<Integrator> m_integrator = std::make_unique<EulerIntegrator>(); //Default Integrator
         m_integrator = std::make_unique<EulerIntegrator>(); //Default Integrator
         m_collisionManager = std::make_shared<CollisionManager>();
@@ -35,12 +36,15 @@ public:
         }
 
         // Fixed physics timestep (for stable simulation)
-        constexpr float physicsTimeStep = 1.0f / 60.0f; // 60 Hz
+        constexpr float physicsTimeStep = 1.0f / 120.0f; // 60 Hz
         static float accumulator = 0.0f;
 
         accumulator += dt;
 
+     
         while (accumulator >= physicsTimeStep) {
+            // CLEAR CACHE ONCE PER FRAME (BEFORE SUBSTEPS)
+            //m_collisionManager->clearManifoldCache();  // ← ADD THIS!
             // Apply forces (like gravity)
             for (auto &body : m_collisionManager->getCollidable()) {
                 if (body && !body->isStatic()) {
@@ -66,12 +70,73 @@ public:
                 if (body->m_angularVel.length() < 0.05f) body->m_angularVel = fungt::Vec3(0, 0, 0);
             }
 
-            // Detect collisions
-            m_collisionManager->detectCollisions();
-
+            // Detect collisions using manifolds with broad phase and persistence
+            m_collisionManager->detectCollisionsManifold();
+            // Clear cache AFTER solving, so fresh collisions next substep
+            m_collisionManager->clearManifoldCache();
             accumulator -= physicsTimeStep;
         }
               
+    }
+    // In PhysicsWorld::runColliders()
+    void runCollidersEx(float dt) {
+        if (0 == m_collisionManager->getNumOfCollidableObjects()) {
+            std::cout << "No collision objects added, exiting .. \n";
+            return;
+        }
+
+        constexpr float physicsTimeStep = 1.0f / 60.0f;
+        static float accumulator = 0.0f;
+        accumulator += dt;
+
+        while (accumulator >= physicsTimeStep) {
+            // Clear correction velocities at start of step
+            for (auto& body : m_collisionManager->getCollidable()) {
+                if (body && !body->isStatic()) {
+                    body->m_pushVelocity = fungt::Vec3(0, 0, 0);
+                    body->m_turnVelocity = fungt::Vec3(0, 0, 0);
+                }
+            }
+
+            // Apply forces (like gravity)
+            for (auto& body : m_collisionManager->getCollidable()) {
+                if (body && !body->isStatic()) {
+                    body->applyForce(gravity * body->m_mass);
+                }
+            }
+
+            // Integrate all bodies
+            for (auto& body : m_collisionManager->getCollidable()) {
+                if (!body || body->isStatic()) continue;
+                m_integrator->integrate(body, physicsTimeStep);
+
+                // Damping
+                float linearDamping = 1.f;
+                float angularDamping = 0.98f;
+                body->m_vel = body->m_vel * linearDamping;
+                body->m_angularVel = body->m_angularVel * angularDamping;
+
+                // Stop very small velocities
+                if (body->m_vel.length() < 0.05f) body->m_vel = fungt::Vec3(0, 0, 0);
+                if (body->m_angularVel.length() < 0.05f) body->m_angularVel = fungt::Vec3(0, 0, 0);
+            }
+
+            // Detect collisions and apply impulses (fills pushVelocity)
+            m_collisionManager->detectCollisionsEx();
+
+            // NEW: Apply correction velocities to positions
+            for (auto& body : m_collisionManager->getCollidable()) {
+                if (body && !body->isStatic()) {
+                    // Apply push velocity to position (doesn't affect physics velocity!)
+                    body->m_pos += body->m_pushVelocity * physicsTimeStep;
+
+                    // Note: We're ignoring turnVelocity for now (rotation correction)
+                    // You can add it later if needed
+                }
+            }
+
+            accumulator -= physicsTimeStep;
+        }
     }
     std::shared_ptr<CollisionManager> getCollisionManager(){
        return m_collisionManager; 

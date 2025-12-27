@@ -1,7 +1,7 @@
 #if !defined(_SHAPE_H_)
 #define _SHAPE_H_
 #include "Matrix/matrix3x3f.hpp"
-
+#include "ComputationalGeom/aabb.hpp"
 enum class ShapeType {
     BOX,
     SPHERE,
@@ -20,7 +20,7 @@ class Shape {
         }
         virtual fungt::Matrix3f getInertiaMatrix(float mass) const = 0;
         virtual float getVolume() const = 0 ;
-        //virtual AABB getBoundingBox(const fungt::Vec3& position) const = 0;
+        virtual AABB getBoundingBox(const fungt::Vec3& position) const = 0;
         virtual ShapeType GetType() const { return m_shapeType; }
 };
 
