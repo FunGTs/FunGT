@@ -74,9 +74,9 @@ void SimpleModel::updateModelMatrix()
         m_rotation.y = glm::degrees(eulerAngles.y);
         m_rotation.z = glm::degrees(eulerAngles.z);
     }
-    else {
-        std::cout << "WEAK_PTR LOCK FAILED!" << std::endl;
-    }
+    // else {
+    //     std::cout << "WEAK_PTR LOCK FAILED! use_count=" << m_physicsBody.use_count() << std::endl;
+    // }
     //m_rotation.x = (float)glfwGetTime()*10.0;
     //m_rotation.z = (float)glfwGetTime()*10.0;
     m_ModelMatrix = glm::mat4(1.f);

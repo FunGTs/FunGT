@@ -161,7 +161,7 @@ void CollisionManager::detectCollisionsManifold() {
 
     // Step 1: Use broad phase to get potential collision pairs
     auto potentialPairs = m_broadPhase->getPotentialPairs(m_collidableBodies);
-
+   // std::cout << "Broad phase found " << potentialPairs.size() << " pairs" << std::endl;  // ADD THIS
     // Step 2: Detect collisions and update/create manifolds
     for (auto [i, j] : potentialPairs) {
         auto bodyA = m_collidableBodies[i];
@@ -173,8 +173,9 @@ void CollisionManager::detectCollisionsManifold() {
 
         BodyPairKey key(i, j);
         std::optional<ContactManifold> newManifold = ManifoldCollision::Detect(bodyA, bodyB);
-
+        //std::cout << "  Pair (" << i << "," << j << "): ";
         if (newManifold) {
+            //std::cout << "COLLISION DETECTED!" << std::endl;
             auto it = m_manifoldCache.find(key);
             if (it != m_manifoldCache.end()) {
                 // Warm-start: preserve impulses from previous frame
@@ -182,9 +183,13 @@ void CollisionManager::detectCollisionsManifold() {
                 it->second = newManifold.value();
             } else {
                 // New collision
+                
                 m_manifoldCache[key] = newManifold.value();
             }
         }
+        // else{
+        //     std::cout << "NO COLLISION" << std::endl;
+        // }
     }
 
     // Step 3: Sequential impulse solver
@@ -295,7 +300,7 @@ void CollisionManager::solveContactImpulse(ContactPoint& cp, std::shared_ptr<Rig
     } else {
         cp.normalImpulse = sum;
     }
-
+    float velB_before = bodyB->m_vel.y;
     // Apply impulse to bodies
     fungt::Vec3 impulse = cp.normal * deltaImpulse;
 
@@ -305,7 +310,18 @@ void CollisionManager::solveContactImpulse(ContactPoint& cp, std::shared_ptr<Rig
     if (!bodyB->isStatic()) {
         bodyB->m_vel += impulse * bodyB->m_invMass;
     }
-
+    // ADD THIS DEBUG:
+    // static int debugCount = 0;
+    // if (debugCount++ % 60 == 0) {
+    //     std::cout << "IMPULSE DEBUG:" << std::endl;
+    //     std::cout << "  normal=(" << cp.normal.x << "," << cp.normal.y << "," << cp.normal.z << ")" << std::endl;
+    //     std::cout << "  rel_vel=" << rel_vel << std::endl;
+    //     std::cout << "  velocityBias=" << velocityBias << std::endl;
+    //     std::cout << "  biasTerm=" << biasTerm << std::endl;
+    //     std::cout << "  deltaImpulse=" << deltaImpulse << std::endl;
+    //     std::cout << "  impulse.y=" << impulse.y << std::endl;
+    //     std::cout << "  velB BEFORE=" << velB_before << " AFTER=" << bodyB->m_vel.y << std::endl;
+    // }
     // Solve friction after normal impulse
     solveFriction(cp, bodyA, bodyB, rA, rB, effectiveMass);
 }

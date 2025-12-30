@@ -41,7 +41,7 @@ public:
 
         accumulator += dt;
 
-     
+        static int stepCount = 0;  // ADD THIS
         while (accumulator >= physicsTimeStep) {
             // CLEAR CACHE ONCE PER FRAME (BEFORE SUBSTEPS)
             //m_collisionManager->clearManifoldCache();  // ← ADD THIS!
@@ -55,9 +55,18 @@ public:
             // Integrate all bodies
             for (auto &body : m_collisionManager->getCollidable()) {
                 if (!body || body->isStatic()) continue;
-
+                // DEBUG: BEFORE INTEGRATION
+                // if (stepCount % 60 == 0) {  // Every 60 substeps
+                //     std::cout << "BEFORE integrate: pos.y=" << body->m_pos.y
+                //         << " vel.y=" << body->m_vel.y << std::endl;
+                // }
                 m_integrator->integrate(body, physicsTimeStep);
 
+                // DEBUG: AFTER INTEGRATION
+                // if (stepCount % 60 == 0) {
+                //     std::cout << "AFTER integrate: pos.y=" << body->m_pos.y
+                //         << " vel.y=" << body->m_vel.y << std::endl;
+                // }
                 // Damping
                 float linearDamping = 1.f;  // Was 1.0f (no damping)
                 float angularDamping = 0.98f;  // Was 0.90f
@@ -72,6 +81,15 @@ public:
 
             // Detect collisions using manifolds with broad phase and persistence
             m_collisionManager->detectCollisionsManifold();
+            // DEBUG: AFTER SOLVER
+            // for (auto& body : m_collisionManager->getCollidable()) {
+            //     if (!body || body->isStatic()) continue;
+            //     if (stepCount % 60 == 0) {
+            //         std::cout << "AFTER solver: pos.y=" << body->m_pos.y
+            //             << " vel.y=" << body->m_vel.y << std::endl;
+            //         std::cout << "---" << std::endl;
+            //     }
+            // }
             // Clear cache AFTER solving, so fresh collisions next substep
             m_collisionManager->clearManifoldCache();
             accumulator -= physicsTimeStep;

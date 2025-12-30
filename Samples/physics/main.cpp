@@ -43,7 +43,7 @@ int main() {
     // Create 5 balls at different positions
     
     float positions[10] = { -10.0f, -8.0f, -6.0f, -4.0f, -2.0f, 2.0f, 6.0f, 10.0f, 14.0f, 18.0f };
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 5; i < 7; ++i) {
         // Create physics body
         auto ball = std::make_shared<RigidBody>(
             std::make_unique<Sphere>(1.0f),
@@ -52,7 +52,7 @@ int main() {
         ball->m_pos = fungt::Vec3(positions[i], 5.0f + i * 2.0f, -15.f);
 
         // Random horizontal velocity
-        float randomVelX = ((rand() % 100) / 20.0f) - 2.5f;
+        float randomVelX = ((rand() % 100) / 20.0f) - 8.5f;
         ball->m_vel = fungt::Vec3(randomVelX, 0.0f, 0.0f);
 
         // Angular velocity to match rolling motion
