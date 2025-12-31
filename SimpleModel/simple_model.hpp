@@ -11,7 +11,8 @@ class SimpleModel : public Renderable {
 
 
     std::shared_ptr<Model> m_model; // Pointer to the Model object
-    std::optional<std::shared_ptr<CollisionManager>> m_collisionM; // Optional RigidBody for physics
+    std::weak_ptr<RigidBody> m_physicsBody;
+    
     std::string m_path_fs;
     std::string m_path_vs;
     glm::mat4 m_ModelMatrix;
@@ -33,7 +34,7 @@ public:
     void position(float x = 0.f, float y = 0.f, float z = 0.f);
     void rotation(float x = 0.f, float y = 0.f, float z = 0.f);
     void scale(float s = 1.f);
-    void addCollisionProperty(std::shared_ptr<CollisionManager> _collisionM);
+    void addCollisionProperty(std::shared_ptr<RigidBody> body);;
     //Override methods from Renderable
     void draw() override;
     Shader& getShader() override;

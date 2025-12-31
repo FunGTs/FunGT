@@ -207,12 +207,94 @@ void ParticleSimulation::simulation()
         p.position[1] += p.velocity[1] * dt;
         p.position[2] += p.velocity[2] * dt; // Z remains unaffected
     };
+    auto vortexSim = [](flib::Particle<float>& p, float dt) {
+        constexpr float vortex_strength = 2.0f;
+        constexpr float lift_force = 0.3f;
+        constexpr float damping = 0.98f;
 
+        float r = std::sqrt(p.position[0] * p.position[0] + p.position[1] * p.position[1]);
+        float tangential = vortex_strength / (r + 0.1f);
+
+        // Swirl around Z-axis
+        p.velocity[0] += -tangential * p.position[1] * dt;
+        p.velocity[1] += tangential * p.position[0] * dt;
+
+        // Pull inward + lift upward
+        p.velocity[0] -= 0.5f * p.position[0] * dt;
+        p.velocity[1] -= 0.5f * p.position[1] * dt;
+        p.velocity[2] += lift_force * dt;
+
+        p.velocity[0] *= damping;
+        p.velocity[1] *= damping;
+
+        p.position[0] += p.velocity[0] * dt;
+        p.position[1] += p.velocity[1] * dt;
+        p.position[2] += p.velocity[2] * dt;
+    };
+    auto blackHoleSim = [](flib::Particle<float>& p, float dt) {
+        constexpr float gravity = 5.0f;
+        constexpr float event_horizon = 0.1f;
+
+        float dx = -p.position[0];
+        float dy = -p.position[1];
+        float dz = -p.position[2];
+        float dist_sq = dx * dx + dy * dy + dz * dz;
+        float dist = std::sqrt(dist_sq);
+
+        if (dist > event_horizon) {
+            float force = gravity / dist_sq;
+            p.velocity[0] += force * (dx / dist) * dt;
+            p.velocity[1] += force * (dy / dist) * dt;
+            p.velocity[2] += force * (dz / dist) * dt;
+        }
+        else {
+            // Trapped! Slow down
+            p.velocity[0] *= 0.9f;
+            p.velocity[1] *= 0.9f;
+            p.velocity[2] *= 0.9f;
+        }
+
+        p.position[0] += p.velocity[0] * dt;
+        p.position[1] += p.velocity[1] * dt;
+        p.position[2] += p.velocity[2] * dt;
+        };
+    auto fireworkSim = [](flib::Particle<float>& p, float dt) {
+        constexpr float gravity = -2.0f;
+        constexpr float drag = 0.99f;
+
+        // Gravity pulls down
+        p.velocity[2] += gravity * dt;
+
+        // Air resistance
+        p.velocity[0] *= drag;
+        p.velocity[1] *= drag;
+        p.velocity[2] *= drag;
+
+        p.position[0] += p.velocity[0] * dt;
+        p.position[1] += p.velocity[1] * dt;
+        p.position[2] += p.velocity[2] * dt;
+
+        // Fade/shrink over time (if you have a size/alpha parameter)
+        };
+    auto waveSim = [](flib::Particle<float>& p, float dt) {
+        float time = 0.0f;
+        time += dt;
+
+        constexpr float wave_speed = 2.0f;
+        constexpr float amplitude = 0.5f;
+
+        float wave = std::sin(p.position[0] * wave_speed + time) *
+            std::cos(p.position[1] * wave_speed + time);
+
+        p.velocity[2] = wave * amplitude;
+
+        p.position[2] += p.velocity[2] * dt;
+        };
     //SYCL update
     //std::cout<<"Update particles"<<std::endl;
     //std::cout<<"VBO ID: "<<m_vbo.getId()<<std::endl;
     int numParticles = m_pSet._particles.size();
-    flib::ParticleSystem<float, decltype(spiralExplosionSim)>::update_ocl(numParticles, m_vbo.getId(),spiralExplosionSim,0.005f);
+    flib::ParticleSystem<float, decltype(waveSim)>::update_ocl(numParticles, m_vbo.getId(), waveSim, 0.005f);
   
     /*for (std::size_t i = 0; i < 2; ++i) {
         std::cout << "Particle "<< i << ": ("

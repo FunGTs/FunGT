@@ -1,6 +1,6 @@
 #if !defined(_MATRIX3X3F_HPP_ )
 #define _MATRIX3X3F_HPP_
-#include "../Vector/vector3.hpp"
+#include "Vector/vector3.hpp"
 
 namespace fungt {
 

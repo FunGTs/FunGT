@@ -1,10 +1,10 @@
 #include "simple_collision.hpp"
 
-std::optional<Contact> SimpleCollision::SphereBox(const std::shared_ptr<RigidBody>& sphere, 
+std::optional<Contact> SimpleCollision::SphereBox(const std::shared_ptr<RigidBody>& sphere,
      const std::shared_ptr<RigidBody>& box)
 {
 
-    //This is the function to retunr a Contact 
+    // This is the function to return a Contact
     
     Sphere *sphere_shape = static_cast<Sphere *>(sphere->m_shape.get());
     Box    *box_shape    = static_cast<Box *>(box->m_shape.get());
@@ -63,24 +63,26 @@ std::optional<Contact> SimpleCollision::BoxSphere(const std::shared_ptr<RigidBod
     }
     return Contact;
 }
-std::optional<Contact> SimpleCollision::SphereSphere(const std::shared_ptr<RigidBody> &sphereA, const std::shared_ptr<RigidBody> &sphereB)
+std::optional<Contact> SimpleCollision::SphereSphere(const std::shared_ptr<RigidBody>& sphereA, const std::shared_ptr<RigidBody>& sphereB)
 {
     Sphere* shapeA = static_cast<Sphere*>(sphereA->m_shape.get());
     Sphere* shapeB = static_cast<Sphere*>(sphereB->m_shape.get());
-    
+
     fungt::Vec3 direction = sphereB->m_pos - sphereA->m_pos;
     float distance = direction.length();
     float combinedRadius = shapeA->m_radius + shapeB->m_radius;
-    
-    if (distance < combinedRadius && distance > 0) {
-        fungt::Vec3 normal = direction.normalize();
+
+    if (distance < combinedRadius && distance > 0.0001f) {
+        fungt::Vec3 normal = direction / distance;
         float penetration = combinedRadius - distance;
+
+        // FIXED: Contact point at MIDPOINT between the two sphere surfaces
         fungt::Vec3 contactPoint = sphereA->m_pos + normal * (shapeA->m_radius - penetration * 0.5f);
-        
+
         Contact contact(sphereA, sphereB, contactPoint, normal, penetration);
-        return contact; // automatically wrapped into std::optional
+        return contact;
     }
-    
+
     return std::nullopt;
 }
 std::optional<Contact> SimpleCollision::BoxBox(const std::shared_ptr<RigidBody> &boxA, const std::shared_ptr<RigidBody> &boxB)
