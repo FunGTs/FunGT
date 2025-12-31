@@ -7,7 +7,7 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
     std::cout<<"Particle system constructor"<<std::endl;
     std::cout<<"Num particles: "<<m_pSet._particles.size()<<std::endl;
    
-    loadDemo(1);
+    loadDemo(4);
     //Print just the position of the firs 2 particles
     std::cout << "Particle positions:" << std::endl;
     for (std::size_t i = 0; i < 2; ++i) {
@@ -99,31 +99,31 @@ void ParticleSimulation::simulation()
 
     switch (m_currentDemo) {
     case 0:
-        flib::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update_ocl(
+        flib::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::spiralExplosionUpdate, 0.005f);
         break;
     case 1:
-        flib::ParticleSystem<float, decltype(fgt::blackHoleUpdate)>::update_ocl(
+        flib::ParticleSystem<float, decltype(fgt::blackHoleUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::blackHoleUpdate, 0.005f);
         break;
     case 2:
-        flib::ParticleSystem<float, decltype(fgt::vortexUpdate)>::update_ocl(
+        flib::ParticleSystem<float, decltype(fgt::vortexUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::vortexUpdate, 0.005f);
         break;
     case 3:
-        flib::ParticleSystem<float, decltype(fgt::fireworkUpdate)>::update_ocl(
+        flib::ParticleSystem<float, decltype(fgt::fireworkUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::fireworkUpdate, 0.005f);
         break;
     case 4:
-        flib::ParticleSystem<float, decltype(fgt::waveUpdate)>::update_ocl(
+        flib::ParticleSystem<float, decltype(fgt::waveUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::waveUpdate, 0.005f);
         break;
     case 5:
-        flib::ParticleSystem<float, decltype(fgt::smokeUpdate)>::update_ocl(
+        flib::ParticleSystem<float, decltype(fgt::smokeUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::smokeUpdate, 0.005f);
         break;
     default:
-        flib::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update_ocl(
+        flib::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::spiralExplosionUpdate, 0.005f);
         break;
     }
