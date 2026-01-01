@@ -20,7 +20,7 @@ void GPUDeviceManager::initialize() {
     std::cout << "Initializing GPU backends..." << std::endl;
 
     // Try to create CUDA backend
-#ifdef USE_CUDA
+#ifdef FUNGT_USE_CUDA
     try {
         auto cuda_backend = std::unique_ptr<fungt::IGPUBackend>(fungt::createCudaBackend());
         if (cuda_backend) {
@@ -40,7 +40,7 @@ void GPUDeviceManager::initialize() {
 #endif
 
     // Try to create SYCL backend
-#ifdef USE_SYCL
+#ifdef FUNGT_USE_SYCL
     try {
         auto sycl_backend = std::unique_ptr<fungt::IGPUBackend>(fungt::createSyclBackend());
         if (sycl_backend) {

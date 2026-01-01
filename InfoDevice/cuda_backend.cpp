@@ -1,7 +1,7 @@
 // THIS FILE IS COMPILED WITH g++, NOT SYCL COMPILER!
 #include "gpu_device_info.hpp"
 
-#ifdef USE_CUDA
+#ifdef FUNGT_USE_CUDA
 #include <cuda_runtime.h>
 #include <stdexcept>
 

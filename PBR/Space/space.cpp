@@ -299,7 +299,7 @@ void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, in
         }
     }
 
-    std::string file_name = ComputeRender::GetBackendName() + "_output.png";
+    std::string file_name = ComputeRender::GetBackendName() + "_render" + "_output.png";
     stbi_write_png(file_name.c_str(), width, height, 3, pixels.data(), width * 3);
 }
 

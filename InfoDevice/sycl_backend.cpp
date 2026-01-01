@@ -1,7 +1,7 @@
 // THIS FILE IS COMPILED WITH SYCL COMPILER
 #include "gpu_device_info.hpp"
 
-#ifdef USE_SYCL
+#ifdef FUNGT_USE_SYCL
 #include <sycl/sycl.hpp>
 
 namespace fungt {

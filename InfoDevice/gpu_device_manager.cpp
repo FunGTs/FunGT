@@ -8,11 +8,11 @@ namespace fungt {
     void GPUDeviceManager::initialize() {
         backends_.clear();
 
-#ifdef USE_CUDA
+#ifdef FUNGT_USE_CUDA
         backends_.emplace_back(createCudaBackend());
 #endif
 
-#ifdef USE_SYCL
+#ifdef FUNGT_USE_SYCL
         backends_.emplace_back(createSyclBackend());
 #endif
     }
