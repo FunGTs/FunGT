@@ -87,6 +87,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/InfoWindow
     ${FUNGT_BASE_DIR}/GUI
     ${FUNGT_BASE_DIR}/SimpleModel
+    ${FUNGT_BASE_DIR}/SimpleGeometry
     ${FUNGT_BASE_DIR}/Physics/CollisionManager
     ${FUNGT_BASE_DIR}/Physics/Contact
     ${FUNGT_BASE_DIR}/Physics/RigidBody
@@ -122,7 +123,6 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp
     ${FUNGT_BASE_DIR}/Geometries/primitives.cpp
     ${FUNGT_BASE_DIR}/Geometries/pyramid.cpp
-    ${FUNGT_BASE_DIR}/Geometries/shape.cpp
     ${FUNGT_BASE_DIR}/Geometries/square.cpp
     ${FUNGT_BASE_DIR}/Model/model.cpp
     ${FUNGT_BASE_DIR}/Helpers/helpers.cpp
@@ -138,6 +138,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
     ${FUNGT_BASE_DIR}/GUI/gui.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
+    ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/manifold_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
