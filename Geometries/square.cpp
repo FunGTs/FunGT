@@ -125,6 +125,19 @@ void Square::draw(){
     m_vao.bind();
     glDrawElements(GL_TRIANGLES,this->getNumOfIndices(), GL_UNSIGNED_INT,0);
 }
+
+void Square::create(const std::string &pathToTexture)
+{
+    // Already implemented in constructor, could be refactored
+    // For now, just a placeholder to satisfy pure virtual
+}
+
+void Square::setData()
+{
+    // Already implemented in constructor, could be refactored
+    // For now, just a placeholder to satisfy pure virtual
+}
+
 Square::~Square(){
 
 }

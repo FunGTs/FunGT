@@ -82,3 +82,40 @@ void Primitive::unsetAttribs()
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
 }
+
+// Renderable interface implementations
+Shader& Primitive::getShader()
+{
+    return m_Shader;
+}
+
+glm::mat4 Primitive::getModelMatrix()
+{
+    return m_ShapeModelMatrix;
+}
+
+void Primitive::updateModelMatrix()
+{
+    m_ShapeModelMatrix = glm::mat4(1.f);
+    m_ShapeModelMatrix = glm::translate(m_ShapeModelMatrix, m_ShapePos);
+    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.x), glm::vec3(1.f, 0.f, 0.f));
+    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.y), glm::vec3(0.f, 1.f, 0.f));
+    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.z), glm::vec3(0.f, 0.f, 1.f));
+    m_ShapeModelMatrix = glm::scale(m_ShapeModelMatrix, m_ShapeScale);
+}
+
+// Transform setters
+void Primitive::setPosition(glm::vec3 pos)
+{
+    m_ShapePos = pos;
+}
+
+void Primitive::setRotation(glm::vec3 rot)
+{
+    m_ShapeRot = rot;
+}
+
+void Primitive::setScale(glm::vec3 scale)
+{
+    m_ShapeScale = scale;
+}

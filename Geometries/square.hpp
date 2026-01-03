@@ -3,12 +3,14 @@
 #include "primitives.hpp"
 class Square : public Primitive{
 
-public: 
+public:
     Square();
     Square(const std::string  &path);
     ~Square();
 
-    void draw();
+    void draw() override;
+    void create(const std::string &pathToTexture) override;
+    void setData() override;
 
 
 

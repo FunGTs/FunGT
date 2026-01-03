@@ -20,11 +20,6 @@ Plane::~Plane()
 
 }
 
-void Plane::setScale(glm::vec3 scale)
-{
-    m_ShapeScale = scale; 
-
-}
 
 void Plane::create(const std::string &pathToTexture)
 {
@@ -95,37 +90,4 @@ void Plane::setData()
     };
     unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
     this->set(vertices,nOfvertices);
-}
-glm::mat4 Plane::getModelMatrix()
-{
-    return this->m_ShapeModelMatrix;
-}
-
-void Plane::setPosition(glm::vec3 pos)
-{
-
-    m_ShapePos = pos; 
-
-}
-
-void Plane::setModelMatrix()
-{
-    //std::cout<<"pos : "<<m_ShapePos.x << ", " <<m_ShapePos.y<<", "<<m_ShapePos.z<<std::endl; 
-    m_ShapeModelMatrix = glm::translate(m_ShapeModelMatrix, m_ShapePos);
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.x), glm::vec3(1.f, 0.f, 0.f));
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.y), glm::vec3(0.f, 1.f, 0.f)); 
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.z), glm::vec3(0.f, 0.f, 1.f));
-    m_ShapeModelMatrix = glm::scale(m_ShapeModelMatrix, m_ShapeScale);
-    
-}
-
-void Plane::updateModelMatrix(float zrot)
-{
-   
-    m_ShapeModelMatrix = glm::mat4(1.f); 
-    m_ShapeModelMatrix = glm::translate(m_ShapeModelMatrix, m_ShapePos);
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.x), glm::vec3(1.f, 0.f, 0.f));
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.y), glm::vec3(0.f, 1.f, 0.f)); 
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.z), glm::vec3(0.f, 0.f, 1.f));
-    m_ShapeModelMatrix = glm::scale(m_ShapeModelMatrix, m_ShapeScale);
 }
