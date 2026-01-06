@@ -122,7 +122,6 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp
     ${FUNGT_BASE_DIR}/Geometries/primitives.cpp
     ${FUNGT_BASE_DIR}/Geometries/pyramid.cpp
-    ${FUNGT_BASE_DIR}/Geometries/shape.cpp
     ${FUNGT_BASE_DIR}/Geometries/square.cpp
     ${FUNGT_BASE_DIR}/Model/model.cpp
     ${FUNGT_BASE_DIR}/Helpers/helpers.cpp
