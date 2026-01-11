@@ -33,7 +33,7 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 ## Screenshots
 
 ### Main Interface
-*[Space for main GUI screenshot showing viewport + material editor]*
+![Render Demo](demos/pixar_ball_render.png)
 
 ### Model Rendering
 *[Space for rendered model screenshot]*
