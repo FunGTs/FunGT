@@ -21,9 +21,7 @@ namespace gpu {
         int m_capacity;  // ADD THIS - max bodies
 
     public:
-        PhysicsWorld() : m_numBodies(0), m_capacity(0) {
-            
-        }  // ADD constructor
+        PhysicsWorld();
         ~PhysicsWorld();  // ADD destructor (to free GPU memory)
 
         void init(int maxBodies);
