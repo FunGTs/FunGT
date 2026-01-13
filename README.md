@@ -108,6 +108,9 @@ Advanced physics simulation and particle systems are available in the `experimen
 
 ![Particles Demo](demos/particles.gif)
 
+**Collsion detection** - 10 pixar balls colliding:
+![Balls Demo](demos/pixar_balls_demo.mp4)
+
 ## Roadmap
 
 - [ ] Path tracing renderer integration (PBR branch in progress)
