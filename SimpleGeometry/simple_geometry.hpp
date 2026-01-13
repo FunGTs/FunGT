@@ -1,10 +1,12 @@
 #if !defined(_SIMPLE_GEOMETRY_HPP_)
 #define _SIMPLE_GEOMETRY_HPP_
 
-#include "../Geometries/primitives.hpp"
-#include "../Renderable/renderable.hpp"
-#include "../Path_Manager/path_manager.hpp"
-#include "../Shaders/shader.hpp"
+#include "Geometries/primitives.hpp"
+#include "Geometries/cube.hpp"
+#include "Geometries/sphere.hpp"
+#include "Renderable/renderable.hpp"
+#include "Path_Manager/path_manager.hpp"
+#include "Shaders/shader.hpp"
 #include <memory>
 
 enum class Geometry {

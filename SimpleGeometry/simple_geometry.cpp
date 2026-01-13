@@ -1,5 +1,5 @@
 #include "simple_geometry.hpp"
-#include "../Geometries/cube.hpp"
+
 
 SimpleGeometry::SimpleGeometry() {
     // Private constructor for factory pattern
@@ -101,7 +101,9 @@ std::shared_ptr<SimpleGeometry> SimpleGeometry::create(Geometry geomType) {
         }
         case Geometry::Sphere: {
             // TODO: Implement Sphere primitive
-            throw std::runtime_error("Sphere geometry not yet implemented");
+            simpleGeom->setPrimitive(std::make_shared<geometry::Sphere>(1.0f, 72, 18));
+            simpleGeom->m_vs_path = getAssetPath("resources/sphere_vs.glsl");
+            simpleGeom->m_fs_path = getAssetPath("resources/sphere_fs.glsl");
             break;
         }
         case Geometry::Plane: {

@@ -7,7 +7,7 @@ int main() {
     std::string path = findProjectRoot();
     std::cout << "Project root: " << path << std::endl;
 
-    std::string texture_path = getAssetPath("img/box.jpg");
+    std::string texture_path = getAssetPath("img/moon.jpg");
 
     DisplayGraphics::SetBackend(Backend::OpenGL);
 
@@ -20,7 +20,7 @@ int main() {
     FunGTInfoWindow infowindow = myGame->getInfoWindow();
 
     // Create a cube geometry using SimpleGeometry
-    FunGTSGeom cubeGeom = SimpleGeometry::create(Geometry::Cube);
+    FunGTSGeom cubeGeom = SimpleGeometry::create(Geometry::Sphere);
     cubeGeom->load(texture_path);
 
     // Position the cube in the middle of the screen
