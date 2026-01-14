@@ -33,6 +33,8 @@ class ParticleSimulation : public Renderable {
         float random_between(float min, float max) {
             return min + static_cast<float>(rand()) / RAND_MAX * (max - min);
         }
+        size_t getParticleCount() const { return m_pSet._particles.size(); }
+        int getCurrentDemo() const { return m_currentDemo; }
         //methods for vector  oflambdas:
         void  loadDemo(int index);
 

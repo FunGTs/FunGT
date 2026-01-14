@@ -2,7 +2,11 @@
 
 ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader)
 : m_NumParticles{num}{
-    
+    // INITIALIZE SYCL WITH GL INTEROP (ParticleSimulation owns this responsibility)
+    std::cout << "Initializing SYCL for ParticleSimulation..." << std::endl;
+    flib::sycl_handler::select_backend_device("OpenCL", "GPU");
+    flib::sycl_handler::create_gl_interop_context();
+    flib::sycl_handler::get_device_info();
     m_pSet.SetNumParticles(m_NumParticles);
     std::cout<<"Particle system constructor"<<std::endl;
     std::cout<<"Num particles: "<<m_pSet._particles.size()<<std::endl;
@@ -29,8 +33,14 @@ void ParticleSimulation::loadDemo(int demo_index)
     }
 
     m_currentDemo = demo_index;
-    
     fgt::demoInits[m_currentDemo](m_pSet._particles);
+    // UPLOAD NEW POSITIONS TO GPU VBO!
+    m_vbo.bind();
+    m_vbo.bufferData(m_pSet._particles.data(),
+        m_pSet._particles.size() * sizeof(flib::Particle<float>),
+        GL_DYNAMIC_DRAW);
+    m_vbo.unbind();
+   
     std::cout << "Loaded demo: " << fgt::demoNames[m_currentDemo] << std::endl;
 }
 

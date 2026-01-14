@@ -108,7 +108,7 @@ public:
         Mesh* mesh = meshes[m_selectedMeshIndex].get();
 
         if (mesh->m_material.empty()) {
-            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "⚠ No materials in this mesh");
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), " No materials in this mesh");
             ImGui::End();
             return;
         }
