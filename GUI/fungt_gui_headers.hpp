@@ -7,6 +7,6 @@
 #include "GUI/material_editor_window.hpp"      
 #include "GUI/lights_editor_window.hpp"
 #include "GUI/render_action_window.hpp"
-
+#include "GUI/demo_particles_window.hpp"
 
 #endif // _FUNGT_GUI_HEADERS_H_
