@@ -35,6 +35,13 @@ int main(){
 
     std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000,ps_vs,ps_fs);
     
+    if(flib::sycl_handler::is_rtc_available){
+        std::cout<<"*** RTC AVAILABLE ***"<<std::endl;
+
+    }
+    else{
+        std::cout << "*** RTC NOT AVAILABLE ***" << std::endl;
+    }
 
     myGame->set([&](){ // Sets up all the scenes in your game
 
