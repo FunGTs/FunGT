@@ -6,9 +6,13 @@
 #include "VertexGL/vertexIndices.hpp"
 #include "Shaders/shader.hpp"
 #include "particle_demos.hpp"
-#include <funlib/funlib.hpp>
+#include "particle_simulation_rtc.hpp"
+
 class ParticleSimulation : public Renderable {
     
+    //RTC
+    std::unique_ptr<ParticleRTC> m_rtc;
+
     VertexArrayObject m_vao; 
     VertexBuffer m_vbo; 
     Shader m_shader;
