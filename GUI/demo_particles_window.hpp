@@ -1,17 +1,22 @@
 #if !defined(_PARTICLE_SIM_DEMO_WINDOW_H_)
 #define _PARTICLE_SIM_DEMO_WINDOW_H_
-
 #include "imgui_window.hpp"
 #include "SceneManager/scene_manager.hpp"
 #include "ParticleSimulation/particle_simulation.hpp"
 #include "ParticleSimulation/particle_demos.hpp"
 #include <memory>
+#include <chrono>
 
 class ParticleSimDemoWindow : public ImGuiWindow {
 private:
     std::shared_ptr<SceneManager> m_sceneManager;
     int m_selectedDemoIndex;
     bool m_autoApply;
+
+    // FPS measurement
+    std::chrono::high_resolution_clock::time_point m_lastFPSTime;
+    int m_frameCount;
+    float m_measuredFPS;
 
     const std::vector<std::string> m_descriptions = {
         "Spiral outward with radial expansion",
@@ -31,10 +36,24 @@ public:
         : m_sceneManager(sceneManager)
         , m_selectedDemoIndex(4)
         , m_autoApply(false)
+        , m_lastFPSTime(std::chrono::high_resolution_clock::now())
+        , m_frameCount(0)
+        , m_measuredFPS(0.0f)
     {
     }
 
     void onImGuiRender() override {
+        // Measure FPS
+        m_frameCount++;
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float elapsed = std::chrono::duration<float>(currentTime - m_lastFPSTime).count();
+
+        if (elapsed >= 0.5f) { // Update twice per second for smooth display
+            m_measuredFPS = m_frameCount / elapsed;
+            m_frameCount = 0;
+            m_lastFPSTime = currentTime;
+        }
+
         ImGui::Begin("Particle Demos");
 
         if (!m_sceneManager) {
@@ -64,7 +83,6 @@ public:
         ImGui::TextColored(ImVec4(0.4f, 0.7f, 1.0f, 1.0f), "Active:");
         ImGui::SameLine();
         ImGui::Text("%s", fgt::demoNames[particleSim->getCurrentDemo()].c_str());
-
         ImGui::Separator();
 
         // Demo selection
@@ -97,7 +115,9 @@ public:
         // Collapsing info section
         if (ImGui::CollapsingHeader("Info")) {
             ImGui::Text("Particles: %zu", particleSim->getParticleCount());
-            ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+            ImGui::Text("Measured FPS: %.1f", m_measuredFPS);
+            ImGui::Text("ImGui FPS: %.1f", ImGui::GetIO().Framerate);
+            ImGui::Text("Frame time: %.2f ms", 1000.0f / m_measuredFPS);
             ImGui::Text("Recommended: %d", m_recommendedCounts[m_selectedDemoIndex]);
         }
 
