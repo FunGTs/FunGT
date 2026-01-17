@@ -64,6 +64,8 @@ int GraphicsTool::initGL(){
     glViewport(0,0,m_frameBufferWidth,m_frameBufferHeight);
     /* Make the window's context current */
     glfwMakeContextCurrent(m_Window);
+    // DISABLE VSYNC FOR ACCURATE FPS MEASUREMENT
+    glfwSwapInterval(0);
     glfwSetInputMode(m_Window,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     
     // Lambda callback that bridges GLFW C callback to our C++ virtual method

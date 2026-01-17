@@ -32,13 +32,14 @@ int main (){
     pixarBall->position(0.f, 0.f, 0.f);
     pixarBall->rotation(0.f, 0.f, 0.f);
 
-    std::string ps_vs = getAssetPath("resources/particle.vs");
-    std::string ps_fs = getAssetPath("resources/particle.fs");
-    std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000, ps_vs, ps_fs);
+    
+    //std::string ps_vs = getAssetPath("resources/particle.vs");
+    //std::string ps_fs = getAssetPath("resources/particle.fs");
+    //std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000, ps_vs, ps_fs);
     myGame->set([&]() { // Sets up all the scenes in your game
         // Adds the renderable objects to the SceneManager
                 // Adds the renderable objects to the SceneManager
-        scene_manager->addRenderableObj(pSys);
+        scene_manager->addRenderableObj(pixarBall);
     });
     myGame->render([&](){
 
