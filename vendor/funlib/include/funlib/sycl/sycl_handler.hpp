@@ -35,6 +35,7 @@ namespace flib
         static void select_backend_device(const std::string& platform_filter,
                                       const std::string& device_type_filter);
         static void create_gl_interop_context();
+        static bool is_rtc_available();
         static sycl::queue get_queue();
         static cl_context get_clContext();
         static sycl::context get_sycl_context();
