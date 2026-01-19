@@ -1,27 +1,20 @@
 #if !defined(_GPU_PHYSICS_WORLD_HPP_)
 #define _GPU_PHYSICS_WORLD_HPP_
 
-#include "Physics/GPU/include/gpu_physics_kernel.hpp"
-#include "Physics/GPU/include/gpu_collision_manager.hpp"
+#include "gpu_physics_kernel.hpp"
+#include "gpu_collision_manger.hpp"
 #include <memory>
 
 namespace gpu {
 
     class PhysicsWorld {
     private:
+        std::shared_ptr<gpu::PhysicsKernel> m_kernel;
         std::shared_ptr<gpu::CollisionManager> m_collisionManager;
-        std::unique_ptr<gpu::PhysicsKernel> m_kernel;
         
 
     public:
-        PhysicsWorld() {
-            // Create kernel
-            m_kernel = std::make_unique<gpu::PhysicsKernel>();
-            m_kernel->init(10000);
-
-            // Create collision manager (shares kernel)
-            m_collisionManager = std::make_shared<gpu::CollisionManager>(m_kernel.get());
-        }
+        PhysicsWorld();
 
         ~PhysicsWorld() = default;
 
@@ -32,12 +25,44 @@ namespace gpu {
 
         // Update physics
         void update(float dt) {
-            m_kernel->applyForces(dt);
-            m_kernel->integrate(dt);
+        
+
+            try {
+                //std::cout << "Calling applyForces..." << std::endl;
+                m_kernel->applyForces(dt);
+               
+                //std::cout << "applyForces OK" << std::endl;
+            }
+            catch (const sycl::exception& e) {
+                std::cerr << "ERROR in applyForces: " << e.what() << std::endl;
+                throw;
+            }
+
+            try {
+                //std::cout << "Calling integrate..." << std::endl;
+                m_kernel->integrate(dt);
+                
+                //std::cout << "integrate OK" << std::endl;
+            }
+            catch (const sycl::exception& e) {
+                std::cerr << "ERROR in integrate: " << e.what() << std::endl;
+                throw;
+            }
+
+            // Comment out these for now
             // m_kernel->broadPhase();
             // m_kernel->narrowPhase();
             // m_kernel->solve();
-            m_kernel->buildMatrices();
+
+            try {
+                //std::cout << "Calling buildMatrices..." << std::endl;
+                m_kernel->buildMatrices();
+                //std::cout << "buildMatrices OK" << std::endl;
+            }
+            catch (const sycl::exception& e) {
+                std::cerr << "ERROR in buildMatrices: " << e.what() << std::endl;
+                throw;
+            }
         }
 
         int getNumBodies() const {

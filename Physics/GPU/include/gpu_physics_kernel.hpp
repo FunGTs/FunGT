@@ -1,10 +1,10 @@
 #if !defined(_GPU_PHYSICS_KERNEL_HPP_)
 #define _GPU_PHYSICS_KERNEL_HPP_
 
-#include <funlib/funlib.hpp>
 #include <GL/glew.h>
+#include <funlib/funlib.hpp>
 #include <CL/opencl.h>
-
+#include "gpu_device_data.hpp"
 namespace gpu {
 
     class PhysicsKernel {
@@ -12,14 +12,7 @@ namespace gpu {
         sycl::queue m_queue;
 
         // Physics state (Structure of Arrays)
-        float* x_pos, * y_pos, * z_pos;
-        float* x_vel, * y_vel, * z_vel;
-        float* x_force, * y_force, * z_force;
-        float* x_angVel, * y_angVel, * z_angVel;
-        float* x_torque, * y_torque, * z_torque;
-        float* orientW_gpu, * orientX_gpu, * orientY_gpu, * orientZ_gpu;
-        float* invMass_gpu;
-        float* invInertiaTensor_gpu;  // 9 floats per body (3x3 matrix)
+        DeviceData m_data;
 
         // Rendering (SYCL-OpenGL interop)
         unsigned int m_modelMatrixSSBO;

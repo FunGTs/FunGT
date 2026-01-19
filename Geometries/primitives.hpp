@@ -7,6 +7,7 @@
 #include "../VertexGL/vertexBuffers.hpp"
 #include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
+#include "Shaders/shader.hpp"
 
 struct PrimitiveVertex{
     glm::vec3 position;
@@ -54,6 +55,9 @@ public:
 
         // Pure virtual draw method
         virtual void draw() = 0;
+        virtual void IntancedDraw(Shader &shader, int instanceCount){
+
+        }
 
 
 }; 

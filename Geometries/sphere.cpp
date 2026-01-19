@@ -26,6 +26,7 @@ void geometry::Sphere::draw() {
 }
 
 void geometry::Sphere::setData() {
+    std::cout << "Calling Sphere::setData() " << std::endl;
     std::vector<PrimitiveVertex> vertices;
 
     float sectorStep = 2 * M_PI / m_sectorCount;
@@ -84,4 +85,20 @@ void geometry::Sphere::setData() {
 
     unsigned nOfvertices = triangleVertices.size();
     this->set(triangleVertices.data(), nOfvertices);
+}
+
+void geometry::Sphere::IntancedDraw(Shader &shader, int instanceCount)
+{
+
+    texture.active();
+    texture.bind();
+    m_vao.bind();
+
+    // Get vertex count from primitive!
+    int vertexCount = getNumOfVertices();
+
+
+    glDrawArraysInstanced(GL_TRIANGLES, 0, vertexCount, instanceCount);
+
+    m_vao.unbind();
 }

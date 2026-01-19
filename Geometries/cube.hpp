@@ -9,6 +9,7 @@ class Cube : public Primitive {
 
         void draw() override;
         void setData() override;
+        void IntancedDraw(Shader &shader, int instanceCount) override;
 };
 
 #endif // _CUBE_H_

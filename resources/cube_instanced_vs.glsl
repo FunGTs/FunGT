@@ -11,10 +11,11 @@ layout(std430, binding = 0) buffer ModelMatrices {
 
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
-uniform int u_startIndex;
+
 out vec3 FragPos;
 out vec3 Normal;
 out vec2 TexCoord;
+uniform int u_startIndex;
 
 void main() {
     // Get model matrix for this instance

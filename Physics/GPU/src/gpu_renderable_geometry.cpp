@@ -32,20 +32,20 @@ void GPUGeometry::load(const std::string& pathToTexture) {
 void GPUGeometry::draw() {
     if (!m_primitive) return;
 
-    m_shader.Bind();
+   // m_shader.Bind();
 
-    // Get kernel from collision manager
     auto kernel = m_collision->getKernel();
+    if (kernel == nullptr) {
+        std::cout << "Kernel is invalid" << std::endl;
+        return;
+    }
 
-    // Bind SSBO
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, kernel->getModelMatrixSSBO());
+    // tells shader which index to start from
+    m_shader.setUniform1i("u_startIndex", m_startIndex);
 
-    // Set uniforms
-    m_shader.setUniformMat4fv("ViewMatrix", m_ViewMatrix);
-    m_shader.setUniformMat4fv("ProjectionMatrix", m_ProjectionMatrix);
-
-    // Draw
-    m_primitive->draw();
+    m_primitive->IntancedDraw(m_shader, m_instanceCount);
+   
 }
 
 Shader& GPUGeometry::getShader() {
@@ -71,41 +71,58 @@ void GPUGeometry::setViewMatrix(const glm::mat4& viewMatrix) {
 glm::mat4 GPUGeometry::getProjectionMatrix() {
     return m_ProjectionMatrix;
 }
-
-// Static factory method
 std::shared_ptr<GPUGeometry> GPUGeometry::create(
     std::shared_ptr<gpu::CollisionManager> collision,
-    GPUGeometryType geomType)
+    GPUGeometryType geomType,
+    std::shared_ptr<Primitive> primitive)
 {
-    // Get the last group
     int groupIdx = collision->getNumGroups() - 1;
     if (groupIdx < 0) {
         throw std::runtime_error("GPUGeometry::create() - No bodies in collision manager!");
     }
 
     gpu::BodyGroup group = collision->getGroup(groupIdx);
-
     auto gpuGeom = std::shared_ptr<GPUGeometry>(
         new GPUGeometry(collision, group.startIndex, group.count)
     );
 
     switch (geomType) {
     case GPUGeometryType::Cube: {
-        auto cube = std::make_shared<Cube>();
-        gpuGeom->setPrimitive(cube);
+        std::cout << "Creating a cube" << std::endl;
+        if (primitive != nullptr) {
+            gpuGeom->setPrimitive(primitive);
+        }
+        else {
+            gpuGeom->setPrimitive(std::make_shared<Cube>());
+        }
         gpuGeom->m_vs_path = getAssetPath("resources/cube_instanced_vs.glsl");
-        gpuGeom->m_fs_path = getAssetPath("resources/cube_fs.glsl");
+        gpuGeom->m_fs_path = getAssetPath("resources/cube_instanced_fs.glsl");
         break;
     }
     case GPUGeometryType::Sphere: {
-        gpuGeom->setPrimitive(std::make_shared<Sphere>(1.0f, 36, 18));
+        if (primitive != nullptr) {
+            gpuGeom->setPrimitive(primitive);
+        }
+        else {
+            gpuGeom->setPrimitive(std::make_shared<geometry::Sphere>(1.0f, 36, 18));
+        }
         gpuGeom->m_vs_path = getAssetPath("resources/sphere_instanced_vs.glsl");
-        gpuGeom->m_fs_path = getAssetPath("resources/sphere_fs.glsl");
+        gpuGeom->m_fs_path = getAssetPath("resources/sphere_instanced_fs.glsl");
+        break;
+    }
+    case GPUGeometryType::Box: {
+        if (primitive != nullptr) {
+            gpuGeom->setPrimitive(primitive);
+        }
+        else {
+            gpuGeom->setPrimitive(std::make_shared<geometry::Box>());
+        }
+        gpuGeom->m_vs_path = getAssetPath("resources/box_instanced_vs.glsl");
+        gpuGeom->m_fs_path = getAssetPath("resources/box_instanced_fs.glsl");
         break;
     }
     case GPUGeometryType::Plane: {
         throw std::runtime_error("Plane geometry not yet implemented");
-        break;
     }
     default:
         throw std::runtime_error("Unknown geometry type");

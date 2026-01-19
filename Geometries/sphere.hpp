@@ -18,6 +18,7 @@ namespace geometry{
 
         void draw() override;
         void setData() override;
+        void IntancedDraw(Shader &shader, int instanceCount) override;
     };
 
 
