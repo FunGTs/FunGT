@@ -23,15 +23,23 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     m_numBodies = 0;
 
     m_queue = flib::sycl_handler::get_queue();
-
+    if (!checkGPUMemory(m_queue, maxBodies, m_worldSize, m_cellSize)) {
+        throw std::runtime_error("Not enough GPU memory for requested body count");
+    }
     auto device = m_queue.get_device();
     std::cout << "GPU Physics Kernel initializing on: "
         << device.get_info<sycl::info::device::name>()
         << std::endl;
 
     std::cout << "Allocating GPU memory for " << maxBodies << " bodies..." << std::endl;
-
-    // Allocate positions
+  
+    //Allocate shape data:
+    m_data.shapeType   = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = sphere, 1 = box
+    m_data.radius      = sycl::malloc_device<float>(maxBodies, m_queue);       // for spheres
+    m_data.halfExtentX = sycl::malloc_device<float>(maxBodies, m_queue);  // for boxes
+    m_data.halfExtentY = sycl::malloc_device<float>(maxBodies, m_queue);
+    m_data.halfExtentZ = sycl::malloc_device<float>(maxBodies, m_queue);
+    //Allocate positions
     m_data.x_pos = sycl::malloc_device<float>(maxBodies, m_queue);
     m_data.y_pos = sycl::malloc_device<float>(maxBodies, m_queue);
     m_data.z_pos = sycl::malloc_device<float>(maxBodies, m_queue);
@@ -88,6 +96,13 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     m_queue.memset(m_data.invMass, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.invInertiaTensor, 0, maxBodies * 9 * sizeof(float)).wait();
 
+    // Initialize shape data to zero
+    m_queue.memset(m_data.shapeType, 0, maxBodies * sizeof(int)).wait();
+    m_queue.memset(m_data.radius, 0, maxBodies * sizeof(float)).wait();
+    m_queue.memset(m_data.halfExtentX, 0, maxBodies * sizeof(float)).wait();
+    m_queue.memset(m_data.halfExtentY, 0, maxBodies * sizeof(float)).wait();
+    m_queue.memset(m_data.halfExtentZ, 0, maxBodies * sizeof(float)).wait();
+
     // Create OpenGL SSBO for model matrices
     std::cout << "Creating OpenGL SSBO for model matrices..." << std::endl;
     glGenBuffers(1, &m_modelMatrixSSBO);
@@ -109,6 +124,11 @@ void gpu::PhysicsKernel::init(int maxBodies) {
 
 void gpu::PhysicsKernel::cleanup() {
     // Free GPU memory
+    if (m_data.shapeType) sycl::free(m_data.shapeType, m_queue);
+    if (m_data.radius) sycl::free(m_data.radius, m_queue);
+    if (m_data.halfExtentX) sycl::free(m_data.halfExtentX, m_queue);
+    if (m_data.halfExtentY) sycl::free(m_data.halfExtentY, m_queue);
+    if (m_data.halfExtentZ) sycl::free(m_data.halfExtentZ, m_queue);
     if (m_data.x_pos) sycl::free(m_data.x_pos, m_queue);
     if (m_data.y_pos) sycl::free(m_data.y_pos, m_queue);
     if (m_data.z_pos) sycl::free(m_data.z_pos, m_queue);
@@ -190,6 +210,12 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
     };
 
     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], inertiaTensor, 9 * sizeof(float)).wait();
+
+    // Set shape type and geometry
+    int shapeType = 1;  // sphere
+    m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
+    m_queue.memcpy(&m_data.radius[id], &radius, sizeof(float)).wait();
+
     // === DEBUG ===
     float readback_invMass;
     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
@@ -247,6 +273,17 @@ int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float hei
     }
 
     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], invInertia, 9 * sizeof(float)).wait();
+
+    // Set shape type and geometry
+    int shapeType = 2;  // box
+    m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
+    float halfX = width * 0.5f;
+    float halfY = height * 0.5f;
+    float halfZ = depth * 0.5f;
+    m_queue.memcpy(&m_data.halfExtentX[id], &halfX, sizeof(float)).wait();
+    m_queue.memcpy(&m_data.halfExtentY[id], &halfY, sizeof(float)).wait();
+    m_queue.memcpy(&m_data.halfExtentZ[id], &halfZ, sizeof(float)).wait();
+
     float readback_invMass;
     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
     std::cout << "addBox: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;

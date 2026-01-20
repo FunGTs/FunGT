@@ -5,6 +5,7 @@
 #include <funlib/funlib.hpp>
 #include <CL/opencl.h>
 #include "gpu_device_data.hpp"
+#include "gpu_memory_utils.hpp"
 namespace gpu {
 
     class PhysicsKernel {
@@ -20,6 +21,8 @@ namespace gpu {
         // Metadata
         int m_numBodies;
         int m_capacity;
+        float m_worldSize = 200.f;
+        float m_cellSize = 5.0f;
 
     public:
         PhysicsKernel();

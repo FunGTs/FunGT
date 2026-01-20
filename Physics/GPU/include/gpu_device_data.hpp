@@ -5,6 +5,12 @@ namespace gpu
 {
 
     struct DeviceData {
+            // Shape data
+        int*   shapeType;      // 0 = sphere, 1 = box
+        float* radius;       // for spheres
+        float* halfExtentX;  // for boxes
+        float* halfExtentY;
+        float* halfExtentZ;
         float* x_pos;
         float* y_pos;
         float* z_pos;
