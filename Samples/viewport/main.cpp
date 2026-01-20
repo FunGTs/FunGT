@@ -9,7 +9,7 @@ int main (){
     //Path to your shaders and models:
     ModelPaths model_ball;
     //model.path   = getAssetPath("Animations/monster_dancing/monster_dancing.dae");
-    model_ball.path = getAssetPath("Obj/Woody/woody-head.obj");
+    model_ball.path = getAssetPath("Obj/LuxoLamp/Luxo.obj");
 
     //Creates a FunGT Scene to display 
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
