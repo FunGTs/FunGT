@@ -68,7 +68,18 @@ Space::~Space(){
 std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
   
     std::cout << "Starting render with " << ComputeRender::GetBackendName() << std::endl;
+    size_t triMem = m_triangles.size() * sizeof(Triangle);
+    size_t bvhMem = m_bvh_nodes.size() * sizeof(BVHNode);
+    size_t lightMem = m_lights.size() * sizeof(Light);
+    size_t frameMem = (width*height) * sizeof(fungt::Vec3);
+    size_t totalMem = triMem + bvhMem + lightMem + frameMem;
 
+    std::cout << "Memory usage:\n"
+        << "  Triangles: " << triMem / (1024.0 * 1024.0) << " MB\n"
+        << "  BVH nodes: " << bvhMem / (1024.0 * 1024.0) << " MB\n"
+        << "  Lights:    " << lightMem / (1024.0 * 1024.0) << " MB\n"
+        << "  Framebuffer: " << frameMem / (1024.0 * 1024.0) << " MB\n"
+        << "  Total:     " << totalMem / (1024.0 * 1024.0) << " MB\n";
     std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(
         width, height, m_triangles, m_bvh_nodes, m_lights, m_camera, m_samplesPerPixel
     );

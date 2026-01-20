@@ -88,83 +88,91 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
     return radiance;
 }
 std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
-    int width, 
-    int height, 
-    const std::vector<Triangle>& triangleList, 
-    const std::vector<BVHNode>& nodes, 
-    const std::vector<Light>& lightsList, 
-    const PBRCamera& camera, 
+    int width,
+    int height,
+    const std::vector<Triangle>& triangleList,
+    const std::vector<BVHNode>& nodes,
+    const std::vector<Light>& lightsList,
+    const PBRCamera& camera,
     int samplesPerPixel)
 {
-    int imageSize = width*height;
+    int imageSize = width * height;
     std::vector<fungt::Vec3> framebuffer(imageSize);
     std::cout << "SYCL_Renderer: Rendering " << width << "x" << height
         << " with " << samplesPerPixel << " samples" << std::endl;
 
-    //Dimension creation
+    // USM allocations
+    Triangle* dev_triList = sycl::malloc_device<Triangle>(triangleList.size(), m_queue);
+    BVHNode* dev_bvhNode = sycl::malloc_device<BVHNode>(nodes.size(), m_queue);
+    Light* dev_lights = sycl::malloc_device<Light>(lightsList.size(), m_queue);
+    fungt::Vec3* dev_buff = sycl::malloc_device<fungt::Vec3>(imageSize, m_queue);
 
-    //Use of USM
-    Triangle *dev_triList = sycl::malloc_device<Triangle>(triangleList.size(),m_queue);
-    BVHNode  *dev_bvhNode = sycl::malloc_device<BVHNode>(nodes.size(),m_queue);
-    Light    *dev_lights  = sycl::malloc_device<Light>(lightsList.size(),m_queue);  
+    m_queue.memcpy(dev_triList, triangleList.data(), triangleList.size() * sizeof(Triangle));
+    m_queue.memcpy(dev_bvhNode, nodes.data(), nodes.size() * sizeof(BVHNode));
+    m_queue.memcpy(dev_lights, lightsList.data(), lightsList.size() * sizeof(Light));
+    m_queue.wait();
 
-    //ouput buffer
-    
-    fungt::Vec3 *dev_buff = sycl::malloc_device<fungt::Vec3>(imageSize,m_queue);
-
-
-    m_queue.memcpy(dev_triList,triangleList.data(),triangleList.size()*sizeof(Triangle));
-    m_queue.memcpy(dev_bvhNode,nodes.data(), nodes.size()*sizeof(BVHNode));
-    m_queue.memcpy(dev_lights,lightsList.data(),lightsList.size()*sizeof(Light));
-
-    // Store sizes BEFORE kernel (outside lambda scope)
     int numTriangles = triangleList.size();
-    int numNodes    = nodes.size();
-    int numLights   = lightsList.size();
+    int numNodes = nodes.size();
+    int numLights = lightsList.size();
     int numTextures = m_numTextures;
-
     auto textureHandles = m_textureHandles;
-    m_queue.submit([&](sycl::handler &h) {
-        h.parallel_for(sycl::range<2>{static_cast<size_t>(width),static_cast<size_t>(height)},[=](sycl::id<2> idx){
 
-            int x = idx[0];
-            int y = idx[1];
+    // Tiled rendering
+    const int tileSize = 64;  // Adjust if still too heavy (try 32) or too slow (try 128)
 
-            int pixelIdx = x + y*width;
-            fungt::RNG rng(pixelIdx * 1337ULL + 123ULL);
+    for (int tileY = 0; tileY < height; tileY += tileSize) {
+        for (int tileX = 0; tileX < width; tileX += tileSize) {
+            int tileW = std::min(tileSize, width - tileX);
+            int tileH = std::min(tileSize, height - tileY);
 
+            m_queue.submit([&](sycl::handler& h) {
+                h.parallel_for(
+                    sycl::range<2>{static_cast<size_t>(tileW), static_cast<size_t>(tileH)},
+                    [=](sycl::id<2> idx) {
+                        int x = tileX + idx[0];
+                        int y = tileY + idx[1];
+                        int pixelIdx = x + y * width;
 
-            fungt::Vec3 pixel(0.0f);
-            for (int s = 0; s < samplesPerPixel; s++) {
-                float u = (x + rng.nextFloat()) / (width - 1);
-                float v = (y + rng.nextFloat()) / (height - 1);
+                        fungt::RNG rng(pixelIdx * 1337ULL + 123ULL);
 
-                fungt::Ray ray = camera.getRay(u, v);
+                        fungt::Vec3 pixel(0.0f);
+                        for (int s = 0; s < samplesPerPixel; s++) {
+                            float u = (x + rng.nextFloat()) / (width - 1);
+                            float v = (y + rng.nextFloat()) / (height - 1);
 
-                pixel += pathTracer_CookTorrance(
-                    ray,
-                    dev_triList,
-                    dev_bvhNode,
-                    dev_lights,
-                    textureHandles,
-                    numTextures,
-                    numTriangles,
-                    numNodes,
-                    numLights,
-                    rng);
-            }
+                            fungt::Ray ray = camera.getRay(u, v);
 
-            pixel = pixel / float(samplesPerPixel);
-            dev_buff[pixelIdx] = pixel;
-            
-        });
-    }).wait();
+                            pixel += pathTracer_CookTorrance(
+                                ray,
+                                dev_triList,
+                                dev_bvhNode,
+                                dev_lights,
+                                textureHandles,
+                                numTextures,
+                                numTriangles,
+                                numNodes,
+                                numLights,
+                                rng);
+                        }
 
-    m_queue.memcpy(framebuffer.data(), dev_buff, width * height * sizeof(fungt::Vec3));
-  
+                        pixel = pixel / float(samplesPerPixel);
+                        dev_buff[pixelIdx] = pixel;
+                    });
+                }).wait();  // Wait after each tile - lets system breathe
+        }
+    }
+
+    m_queue.memcpy(framebuffer.data(), dev_buff, imageSize * sizeof(fungt::Vec3));
+    m_queue.wait();
+
+    sycl::free(dev_triList, m_queue);
+    sycl::free(dev_bvhNode, m_queue);
+    sycl::free(dev_lights, m_queue);
+    sycl::free(dev_buff, m_queue);
+
     return framebuffer;
 }
-
 void SYCL_Renderer::createQueue()
 {
     try {
