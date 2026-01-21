@@ -316,14 +316,20 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
     //         << materials[0].m_specLight.y << ", "
     //         << materials[0].m_specLight.z << std::endl;
     // }
+    // Get mesh name from Assimp
+    std::string meshName = mesh->mName.C_Str();
+
     std::cout << "================================" << std::endl;
+    std::cout << "Mesh name        : " << meshName << std::endl;
     std::cout << "Indices loaded   : " << indices.size() << std::endl;
     std::cout << "Vertices loaded  : " << vertices.size() << std::endl;
     std::cout << "Textures loaded  : " << texture.size() << std::endl;
     std::cout << "Materials loaded : " << materials.size() << std::endl;
 
     // ALWAYS use the combined constructor - handles all cases!
-    return std::make_unique<Mesh>(vertices, indices, texture, materials);
+    auto newMesh = std::make_unique<Mesh>(vertices, indices, texture, materials);
+    newMesh->m_name = meshName;
+    return newMesh;
 }
 
 std::vector<Texture > Model::loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
