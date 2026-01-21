@@ -32,7 +32,7 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 
 ## Screenshots
 ### PBR Path Tracing
-![Path Traced Render](demos/luxo_lamp.png__)
+![Path Traced Render](demos/luxo_lamp.png)
 *Cook-Torrance BRDF with emissive materials - rendered on Intel integrated GPU via SYCL*
 
 ### Main Interface
