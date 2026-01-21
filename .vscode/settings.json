@@ -83,7 +83,7 @@
         "__hash_table": "cpp",
         "__tree": "cpp"
     },
-    "cmake.sourceDirectory": "/home/juanchuletas/Documents/Development/FunGT/main",
+    "cmake.sourceDirectory": "/home/juanchuletas/Documents/Development/FunGT",
     "editor.formatOnPaste": true,
     "C_Cpp.errorSquiggles": "disabled"
 }

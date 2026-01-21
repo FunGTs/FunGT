@@ -88,11 +88,18 @@ public:
         if (meshes.size() > 1) {
             ImGui::Text("Mesh:");
             ImGui::SameLine();
-            if (ImGui::BeginCombo("##MeshSelect",
-                ("Mesh " + std::to_string(m_selectedMeshIndex)).c_str())) {
+            // Get current mesh name for combo preview
+            std::string currentMeshName = meshes[m_selectedMeshIndex]->m_name.empty()
+                ? "Mesh " + std::to_string(m_selectedMeshIndex)
+                : meshes[m_selectedMeshIndex]->m_name;
+            if (ImGui::BeginCombo("##MeshSelect", currentMeshName.c_str())) {
                 for (int i = 0; i < meshes.size(); i++) {
                     bool isSelected = (m_selectedMeshIndex == i);
-                    if (ImGui::Selectable(("Mesh " + std::to_string(i)).c_str(), isSelected)) {
+                    // Use mesh name if available, fallback to index
+                    std::string meshLabel = meshes[i]->m_name.empty()
+                        ? "Mesh " + std::to_string(i)
+                        : meshes[i]->m_name;
+                    if (ImGui::Selectable(meshLabel.c_str(), isSelected)) {
                         m_selectedMeshIndex = i;
                     }
                     if (isSelected) {

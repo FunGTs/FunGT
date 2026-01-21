@@ -25,8 +25,9 @@ struct Texture_struct {
 class Mesh {
 
 public:
+    std::string m_name; // Name of the mesh
     std::vector<funGTVERTEX> m_vertex; //An array of vertices
-    std::vector<unsigned int> m_index;// an array of indices 
+    std::vector<unsigned int> m_index;// an array of indices
     std::vector<Texture> m_texture; //An array of texturesç
     std::vector<Material> m_material;
     //unsigned int VAO;
