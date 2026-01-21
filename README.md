@@ -31,6 +31,9 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 - **Cross-platform** (Linux with planned Windows support)
 
 ## Screenshots
+### PBR Path Tracing
+![Path Traced Render](demos/luxo_lamp.png__)
+*Cook-Torrance BRDF with emissive materials - rendered on Intel integrated GPU via SYCL*
 
 ### Main Interface
 ![Interface Demo](demos/interface.png)
