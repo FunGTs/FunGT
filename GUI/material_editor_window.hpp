@@ -158,7 +158,13 @@ public:
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
+        // Emission
+        ImGui::Text("Emission");
+        ImGui::SliderFloat("##Emission", &mat.m_emission, 0.0f, 50.0f, "%.1f");
 
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
         // Reset button
         if (ImGui::Button("Reset to Default", ImVec2(-1, 0))) {
             mat = Material::createDefaultMaterial();

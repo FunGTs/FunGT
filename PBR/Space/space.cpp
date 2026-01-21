@@ -213,7 +213,7 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
         global_material.metallic = 0.0f;
         global_material.roughness = 0.5f;
         global_material.reflectance = 0.05f;
-        global_material.emission = 0.0f;
+        global_material.emission = materials[0].m_emission;
         global_material.baseColorTexIdx = -1;
         if (!textures.empty() && m_textureManager != nullptr) {
             std::string texPath = textures[0].getPath();

@@ -10,6 +10,7 @@ struct Material {
     vec3 diffuse;
     vec3 specular;
     float shininess;
+    float emission;
 };
 
 struct Light {
@@ -73,6 +74,7 @@ void main() {
     // ========================================================================
     // 5. COMBINE LIGHTING
     // ========================================================================
-    vec3 result = ambient + diffuse + specular;
+    vec3 emissive = baseColor * material.emission;
+    vec3 result = ambient + diffuse + specular + emissive;
     vs_color = vec4(result, 1.0);
 }
