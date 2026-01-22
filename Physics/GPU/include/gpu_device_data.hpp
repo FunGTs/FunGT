@@ -3,12 +3,13 @@
 
 namespace gpu
 {
-
+  
     struct DeviceData {
             // Shape data
-        int*   shapeType;      // 0 = sphere, 1 = box
-        float* radius;       // for spheres
-        float* halfExtentX;  // for boxes
+        int*   shapeType;     // 0 = sphere, 1 = box
+        int*   bodyMode;      // 0 = STATIC, 1 = DYNAMIC
+        float* radius;        // for spheres
+        float* halfExtentX;   // for boxes
         float* halfExtentY;
         float* halfExtentZ;
         float* x_pos;

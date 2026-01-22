@@ -30,7 +30,7 @@ int main() {
     //gpuCollision->addBox(0, -0.5f, -15.f, 40, 1, 40, 0.0f);
     //gpuCollision->addBox(0, 2.0f, -15.f, 40, 1, 40, 0.0f);  // Y = 2 instead of -0.5
    // gpuCollision->addBox(0, -2.5f, -15.f, 40, 5, 40, 0.0f);  // adjust Y position
-    gpuCollision->addBox(0, -3.0f, -15.f, 20, 1, 20, 0.0f);
+    gpuCollision->addBox(0, -3.0f, -15.f, 20, 1, 20, 0.0f, MODE::STATIC);
     gpuCollision->endGroup();
     
     auto groundBox = std::make_shared<geometry::Box>(20.0f, 1.0f, 20.0f);

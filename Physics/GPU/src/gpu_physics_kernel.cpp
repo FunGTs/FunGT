@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 
+
 gpu::PhysicsKernel::PhysicsKernel()
     : m_numBodies(0), m_capacity(0),
     m_data{nullptr, nullptr, nullptr,
@@ -9,8 +10,8 @@ gpu::PhysicsKernel::PhysicsKernel()
            nullptr, nullptr, nullptr,
            nullptr, nullptr, nullptr,
            nullptr, nullptr, nullptr,
-           nullptr, nullptr, nullptr, nullptr,
-           nullptr, nullptr},
+           nullptr, nullptr, nullptr,
+           nullptr, nullptr, nullptr, nullptr},
     m_modelMatrixSSBO(0) {
 }
 
@@ -35,6 +36,7 @@ void gpu::PhysicsKernel::init(int maxBodies) {
   
     //Allocate shape data:
     m_data.shapeType   = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = sphere, 1 = box
+    m_data.bodyMode    = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = STATIC, 1 = DYNAMIC
     m_data.radius      = sycl::malloc_device<float>(maxBodies, m_queue);       // for spheres
     m_data.halfExtentX = sycl::malloc_device<float>(maxBodies, m_queue);  // for boxes
     m_data.halfExtentY = sycl::malloc_device<float>(maxBodies, m_queue);
@@ -98,6 +100,7 @@ void gpu::PhysicsKernel::init(int maxBodies) {
 
     // Initialize shape data to zero
     m_queue.memset(m_data.shapeType, 0, maxBodies * sizeof(int)).wait();
+    m_queue.memset(m_data.bodyMode, 0, maxBodies * sizeof(int)).wait();
     m_queue.memset(m_data.radius, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.halfExtentX, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.halfExtentY, 0, maxBodies * sizeof(float)).wait();
@@ -125,6 +128,7 @@ void gpu::PhysicsKernel::init(int maxBodies) {
 void gpu::PhysicsKernel::cleanup() {
     // Free GPU memory
     if (m_data.shapeType) sycl::free(m_data.shapeType, m_queue);
+    if (m_data.bodyMode) sycl::free(m_data.bodyMode, m_queue);
     if (m_data.radius) sycl::free(m_data.radius, m_queue);
     if (m_data.halfExtentX) sycl::free(m_data.halfExtentX, m_queue);
     if (m_data.halfExtentY) sycl::free(m_data.halfExtentY, m_queue);
@@ -160,7 +164,7 @@ void gpu::PhysicsKernel::cleanup() {
     std::cout << "GPU Physics Kernel cleaned up" << std::endl;
 }
 
-int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass) {
+int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass, MODE mode) {
     if (m_numBodies >= m_capacity) {
         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
         return -1;
@@ -213,7 +217,9 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
 
     // Set shape type and geometry
     int shapeType = 1;  // sphere
+    int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;
     m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
+    m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();
     m_queue.memcpy(&m_data.radius[id], &radius, sizeof(float)).wait();
 
     // === DEBUG ===
@@ -225,7 +231,7 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
     return id;
 }
 
-int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float height, float depth, float mass) {
+int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode) {
     if (m_numBodies >= m_capacity) {
         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
         return -1;
@@ -546,4 +552,67 @@ void gpu::PhysicsKernel::buildMatrices() {
 
     // Release OpenCL memory object
     clReleaseMemObject(clbuffer);
+}
+int gpu::PhysicsKernel::findManifold(int bodyA, int bodyB)
+{
+    int key = gpu::makePairKey(bodyA, bodyB);
+    int hashIndex = key % m_hashTableSize;
+
+    // Linear probing - check this slot and next ones
+    for (int i = 0; i < m_hashTableSize; i++) {
+        int slot = (hashIndex + i) % m_hashTableSize;
+        int manifoldIdx = m_pairToManifold[slot];
+
+        if (manifoldIdx == -1) {
+            // Empty slot - pair doesn't exist
+            return -1;
+        }
+
+        // Check if this manifold matches our pair
+        GPUManifold& m = m_manifolds[manifoldIdx];
+        if ((m.bodyA == bodyA && m.bodyB == bodyB) ||
+            (m.bodyA == bodyB && m.bodyB == bodyA)) {
+            return manifoldIdx;
+        }
+
+        // Collision - different pair in this slot, keep probing
+    }
+
+    // Table full, not found
+    return -1;
+}
+
+int gpu::PhysicsKernel::createManifold(int bodyA, int bodyB)
+{
+    // Get next available manifold slot
+    int manifoldIdx = (*m_numManifolds)++;
+
+    if (manifoldIdx >= m_maxManifolds) {
+        (*m_numManifolds)--;  // rollback
+        return -1;  // full
+    }
+
+    // Initialize manifold
+    GPUManifold& m = m_manifolds[manifoldIdx];
+    m.bodyA = bodyA;
+    m.bodyB = bodyB;
+    m.numPoints = 0;
+
+    // Insert into hash table
+    int key = gpu::makePairKey(bodyA, bodyB);
+    int hashIndex = key % m_hashTableSize;
+
+    // Linear probing - find empty slot
+    for (int i = 0; i < m_hashTableSize; i++) {
+        int slot = (hashIndex + i) % m_hashTableSize;
+
+        if (m_pairToManifold[slot] == -1) {
+            m_pairToManifold[slot] = manifoldIdx;
+            return manifoldIdx;
+        }
+    }
+
+    // Hash table full - shouldn't happen if sized correctly
+    (*m_numManifolds)--;  // rollback
+    return -1;
 }

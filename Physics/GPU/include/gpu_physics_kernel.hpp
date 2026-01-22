@@ -6,6 +6,11 @@
 #include <CL/opencl.h>
 #include "gpu_device_data.hpp"
 #include "gpu_memory_utils.hpp"
+#include "gpu_manifold_contacts.hpp"
+enum class MODE {
+    STATIC,
+    DYNAMIC
+};
 namespace gpu {
 
     class PhysicsKernel {
@@ -17,6 +22,16 @@ namespace gpu {
 
         // Rendering (SYCL-OpenGL interop)
         unsigned int m_modelMatrixSSBO;
+
+        // Manifold cache
+        GPUManifold* m_manifolds;
+        int* m_numManifolds;          // GPU counter
+        int m_maxManifolds;
+
+        // Pair hash table (pair key -> manifold index, -1 if empty)
+        int* m_pairToManifold;
+        int m_hashTableSize;          // should be prime, larger than maxManifolds
+                
 
         // Metadata
         int m_numBodies;
@@ -33,8 +48,8 @@ namespace gpu {
         void cleanup();
 
         // Body management
-        int addSphere(float x, float y, float z, float radius, float mass);
-        int addBox(float x, float y, float z, float width, float height, float depth, float mass);
+        int addSphere(float x, float y, float z, float radius, float mass, MODE mode); //Mode dynamic by default
+        int addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode);
 
         // Physics pipeline (no parameters needed - uses member data!)
         void applyForces(float dt);
@@ -47,6 +62,16 @@ namespace gpu {
         // Getters
         int getNumBodies() const { return m_numBodies; }
         unsigned int getModelMatrixSSBO() const { return m_modelMatrixSSBO; }
+
+        // Collision detection
+        void detectStaticVsDynamic();   // spheres vs ground
+        void detectDynamicVsDynamic();  // spheres vs spheres (later, with grid)
+
+        // Manifold management
+        int  findManifold(int bodyA, int bodyB);      // returns index, or -1 if not found
+        int  createManifold(int bodyA, int bodyB);    // creates new, returns index
+        void refreshManifolds();        // update world positions from local
+        void pruneOldContacts();        // remove contacts that separated
     };
 
 } // namespace gpu

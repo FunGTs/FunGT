@@ -45,20 +45,20 @@ namespace gpu {
             m_isGroupOpen = false;
         }
 
-        // Add sphere
-        int addSphere(float x, float y, float z, float radius, float mass) {
+        // Add sphere  //Mode dynamic by default
+        int addSphere(float x, float y, float z, float radius, float mass, MODE mode = MODE::DYNAMIC) {
             if (!m_isGroupOpen) {
                 throw std::runtime_error("CollisionManager::addSphere() - No group open! Call beginGroup() first.");
             }
-            return m_kernel->addSphere(x, y, z, radius, mass);
+            return m_kernel->addSphere(x, y, z, radius, mass, mode);
         }
 
-        // Add box
-        int addBox(float x, float y, float z, float width, float height, float depth, float mass) {
+        // Add box  //Mode dynamic by default
+        int addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode = MODE::DYNAMIC) {
             if (!m_isGroupOpen) {
                 throw std::runtime_error("CollisionManager::addBox() - No group open! Call beginGroup() first.");
             }
-            return m_kernel->addBox(x, y, z, width, height, depth, mass);
+            return m_kernel->addBox(x, y, z, width, height, depth, mass,mode);
         }
 
         // Get number of groups
