@@ -616,3 +616,65 @@ int gpu::PhysicsKernel::createManifold(int bodyA, int bodyB)
     (*m_numManifolds)--;  // rollback
     return -1;
 }
+void gpu::PhysicsKernel::detectStaticVsDynamic() {
+    DeviceData data = m_data;
+    GPUManifold* manifolds = m_manifolds;
+    int* pairToManifold = m_pairToManifold;
+    int* numManifolds = m_numManifolds;
+    int hashTableSize = m_hashTableSize;
+    int maxManifolds = m_maxManifolds;
+    int n = m_numBodies;
+
+    std::size_t xdim = 32;
+    std::size_t ydim = (n + xdim - 1) / xdim;
+
+    m_queue.parallel_for(sycl::range<2>(ydim, xdim), [=](sycl::item<2> item) {
+        std::size_t i = item[0] * xdim + item[1];
+        if (i >= n) return;
+
+        // Skip if static
+        if (data.bodyMode[i] == 0) return;
+
+        // Check against all static bodies
+        for (std::size_t j = 0; j < n; j++) {
+            if (data.bodyMode[j] == 1) continue;  // skip dynamic
+
+            // Sphere (i) vs Box (j)
+            if (data.shapeType[i] == 0 && data.shapeType[j] == 1) {
+                float nx, ny, nz, pen;
+                float wAx, wAy, wAz, wBx, wBy, wBz;
+                float lAx, lAy, lAz, lBx, lBy, lBz;
+
+                bool hit = SphereBoxCollision(
+                    data.x_pos[i], data.y_pos[i], data.z_pos[i],
+                    data.radius[i],
+                    data.x_pos[j], data.y_pos[j], data.z_pos[j],
+                    data.halfExtentX[j], data.halfExtentY[j], data.halfExtentZ[j],
+                    true,  // box is static
+                    nx, ny, nz, pen,
+                    wAx, wAy, wAz, wBx, wBy, wBz,
+                    lAx, lAy, lAz, lBx, lBy, lBz
+                );
+
+                if (hit) {
+                    int manifoldIdx = findManifold(pairToManifold, manifolds,
+                        hashTableSize, j, i);
+                    if (manifoldIdx == -1) {
+                        manifoldIdx = createManifold(pairToManifold, manifolds,
+                            numManifolds, hashTableSize,
+                            maxManifolds, j, i);
+                    }
+
+                    if (manifoldIdx != -1) {
+                        addContactToManifold(manifolds, manifoldIdx,
+                            lAx, lAy, lAz,
+                            lBx, lBy, lBz,
+                            wAx, wAy, wAz,
+                            wBx, wBy, wBz,
+                            nx, ny, nz, pen);
+                    }
+                }
+            }
+        }
+    }).wait();
+}
