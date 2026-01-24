@@ -3,16 +3,7 @@
 Primitive::Primitive(){
 
 }
-Primitive::Primitive(glm::vec3 shapePos)
-{
-    m_ShapePos = shapePos; 
-}
-Primitive::Primitive(float xpos, float ypos, float zpos)
-{
-    m_ShapePos.x = xpos; 
-    m_ShapePos.y = ypos; 
-    m_ShapePos.z = zpos; 
-}
+
 Primitive::~Primitive()
 {
 }
@@ -81,4 +72,30 @@ void Primitive::unsetAttribs()
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
+}
+
+// Graphics initialization
+void Primitive::setTexture(const std::string &pathToTexture)
+{
+    texture.genTexture(pathToTexture);
+    texture.active();
+    texture.bind();
+}
+
+void Primitive::InitGraphics()
+{
+    m_vao.genVAO();
+    m_vb.genVB();
+    m_vi.genVI();
+
+    m_vao.bind();
+
+    m_vb.bind();
+    m_vb.bufferData(this->getVertices(), this->sizeOfVertices());
+
+    this->setAttribs();
+
+    m_vao.unbind();
+    this->unsetAttribs();
+    m_vb.unbind();
 }
