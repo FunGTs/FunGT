@@ -16,7 +16,7 @@ public:
     void draw() override;
     void create(const std::string &path) override; 
     void setData() override;
-    glm::mat4 getModelMatrix() override; 
+    glm::mat4 getModelMatrix() const override; 
     void setPosition(glm::vec3 pos) override; 
     void setModelMatrix() override;
     void updateModelMatrix(float zrot) override;    

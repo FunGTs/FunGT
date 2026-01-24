@@ -96,7 +96,7 @@ void Plane::setData()
     unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
     this->set(vertices,nOfvertices);
 }
-glm::mat4 Plane::getModelMatrix()
+glm::mat4 Plane::getModelMatrix() const
 {
     return this->m_ShapeModelMatrix;
 }

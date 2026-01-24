@@ -99,7 +99,7 @@ void ParticleSimulation::updateModelMatrix()
     m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(m_rotation.z), glm::vec3(0.f, 0.f, 1.f));
     m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
 }
-glm::mat4 ParticleSimulation::getModelMatrix()
+glm::mat4 ParticleSimulation::getModelMatrix() const
 {
     return m_ModelMatrix;
 }
