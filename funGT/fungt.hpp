@@ -11,6 +11,7 @@
 #include "ViewPort/viewport.hpp"              
 #include "Layer/layer_stack.hpp"              
 #include "GUI/fungt_gui_headers.hpp"
+#include "SimpleGeometry/simple_geometry.hpp"
 #include <memory>
 #include <unordered_map>
 
@@ -41,14 +42,6 @@ class FunGT : public GraphicsTool{
      float m_lastXmouse; 
      float m_lastYmouse;
      bool  m_firstMouse;
-    
-
-    std::unique_ptr<Model> m_model; //Static model
-    std::unique_ptr<Primitive> cube; 
-    std::unique_ptr<Primitive> plane;
-   
-    
-    //Creates an animation:
     
     std::shared_ptr<SceneManager> m_sceneManager;
     // IMGUI LAYER SYSTEM
@@ -85,6 +78,6 @@ typedef std::shared_ptr<Animation> FunGTAnimation;
 typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
 typedef std::shared_ptr<SimpleModel> FunGTSModel;
-
+typedef std::shared_ptr<SimpleGeometry> FunGTSGeom;
 
 #endif // _FUNGT_H_

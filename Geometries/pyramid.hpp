@@ -8,13 +8,8 @@ class Pyramid : public Primitive{
 
 public:
     Pyramid();
-    Pyramid(glm::vec3 pos); 
-    Pyramid(float x, float y, float z); 
     ~Pyramid();
-
-
     void draw() override;
-    void create(const std::string &path) override; 
     void setData() override;
     glm::mat4 getModelMatrix() const override; 
     void setPosition(glm::vec3 pos) override; 

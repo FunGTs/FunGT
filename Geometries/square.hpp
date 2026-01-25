@@ -3,16 +3,11 @@
 #include "primitives.hpp"
 class Square : public Primitive{
 
-public: 
+public:
     Square();
-    Square(const std::string  &path);
     ~Square();
-
-    void draw();
-
-
-
-
+    void draw() override;
+    void setData() override;
 };
 
 
