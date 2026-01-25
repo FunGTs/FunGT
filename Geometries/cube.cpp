@@ -106,7 +106,7 @@ void Cube::setData()
     this->set(vertices,nOfvertices);
 }
 
-glm::mat4 Cube::getModelMatrix()
+glm::mat4 Cube::getModelMatrix() const
 {
     return this->m_ShapeModelMatrix;
 }

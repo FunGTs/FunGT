@@ -12,7 +12,7 @@ class Renderable{ //Abstract class
         //Pure virtual functions
         virtual void draw() = 0;
         virtual Shader& getShader() = 0;
-        virtual glm::mat4 getModelMatrix(){
+        virtual glm::mat4 getModelMatrix() const {
             return glm::mat4(0.0);
         }
         virtual void updateModelMatrix(){

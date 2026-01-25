@@ -55,7 +55,7 @@ public:
         virtual void setData() = 0;
         virtual void create(const std::string &pathToTexture) = 0;
         virtual void draw() = 0;
-        virtual glm::mat4 getModelMatrix() = 0;
+        virtual glm::mat4 getModelMatrix() const = 0;
         virtual void setPosition(glm::vec3 pos) = 0;   //Position 
         virtual void setModelMatrix() = 0;
         virtual void updateModelMatrix(float zrot) = 0;

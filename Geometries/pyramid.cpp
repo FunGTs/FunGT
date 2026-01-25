@@ -78,7 +78,7 @@ void Pyramid::setData()
     this->set(vertices,nOfvertices);
 }
 
-glm::mat4 Pyramid::getModelMatrix()
+glm::mat4 Pyramid::getModelMatrix() const
 {
      return this->m_ShapeModelMatrix;
 }

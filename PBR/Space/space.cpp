@@ -192,7 +192,9 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
     }
     std::cout << "Total triangles to create: " << totalTriangles << std::endl;
     m_triangles.reserve(totalTriangles);
-
+    // Get transformation matrix from SimpleModel
+    glm::mat4 modelMatrix = Simplemodel.getModelMatrix();
+    glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelMatrix)));
     for (auto& meshPtr : meshes) {
         std::cout << " ********* Processing Mesh *********** : " << meshPtr->m_index.size() << std::endl;
         const auto& vertices = meshPtr->m_vertex;
@@ -249,20 +251,22 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
             const funGTVERTEX& v1 = meshPtr->m_vertex[meshPtr->m_index[i + 1]];
             const funGTVERTEX& v2 = meshPtr->m_vertex[meshPtr->m_index[i + 2]];
             Triangle tri;
+            
+            glm::vec4 p0 = modelMatrix * glm::vec4(v0.position, 1.0f);
+            glm::vec4 p1 = modelMatrix * glm::vec4(v1.position, 1.0f);
+            glm::vec4 p2 = modelMatrix * glm::vec4(v2.position, 1.0f);
 
-            tri.v0 = fungt::toFungtVec3(v0.position);
-            tri.v1 = fungt::toFungtVec3(v1.position);
-            tri.v2 = fungt::toFungtVec3(v2.position);
-
-            // Flat face normal (correct for path tracing)
-            // fungt::Vec3 e1 = tri.v1 - tri.v0;
-            // fungt::Vec3 e2 = tri.v2 - tri.v0;
-            // tri.normal = e1.cross(e2).normalize();
-
+            tri.v0 = fungt::Vec3(p0.x, p0.y, p0.z);
+            tri.v1 = fungt::Vec3(p1.x, p1.y, p1.z);
+            tri.v2 = fungt::Vec3(p2.x, p2.y, p2.z);
+            // Transform normals
+            glm::vec3 n0 = normalMatrix * v0.normal;
+            glm::vec3 n1 = normalMatrix * v1.normal;
+            glm::vec3 n2 = normalMatrix * v2.normal;
             // Per-vertex normals (for smooth shading!)
-            tri.n0 = fungt::toFungtVec3(v0.normal);
-            tri.n1 = fungt::toFungtVec3(v1.normal);
-            tri.n2 = fungt::toFungtVec3(v2.normal);
+            tri.n0 = fungt::toFungtVec3(glm::normalize(n0));
+            tri.n1 = fungt::toFungtVec3(glm::normalize(n1));
+            tri.n2 = fungt::toFungtVec3(glm::normalize(n2));
 
             tri.uvs[0][0] = v0.texcoord.x;
             tri.uvs[0][1] = v0.texcoord.y;
