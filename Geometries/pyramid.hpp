@@ -11,6 +11,13 @@ public:
     ~Pyramid();
     void draw() override;
     void setData() override;
+    glm::mat4 getModelMatrix() const override; 
+    void setPosition(glm::vec3 pos) override; 
+    void setModelMatrix() override;
+    void updateModelMatrix(float zrot) override;    
+
+
+
 };
 
 #endif // _PYRAMID_H_

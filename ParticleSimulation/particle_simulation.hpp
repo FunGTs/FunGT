@@ -47,7 +47,7 @@ class ParticleSimulation : public Renderable {
         void setViewMatrix(const glm::mat4 &viewMatrix) override;
         glm::mat4 getViewMatrix() override;
         void updateModelMatrix() override;
-        glm::mat4 getModelMatrix() override;
+        glm::mat4 getModelMatrix() const override;
         
 
 

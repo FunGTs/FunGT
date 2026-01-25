@@ -30,7 +30,7 @@ public:
     glm::mat4 getViewMatrix() override {
         return m_viewMatrix;
     }
-    glm::mat4 getModelMatrix() override {
+    glm::mat4 getModelMatrix() const override {
         return glm::mat4(1.0f);  // ← Identity = no transformation
     }
     void setProjectionMatrix(const glm::mat4& projMatrix) {

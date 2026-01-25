@@ -55,9 +55,11 @@ public:
 
         // Pure virtual draw method
         virtual void draw() = 0;
-        virtual void IntancedDraw(Shader &shader, int instanceCount){
-
-        }
+        virtual glm::mat4 getModelMatrix() const = 0;
+        virtual void setPosition(glm::vec3 pos) = 0;   //Position 
+        virtual void setModelMatrix() = 0;
+        virtual void updateModelMatrix(float zrot) = 0;
+        virtual void setScale(glm::vec3 scale) = 0;   
 
 
 }; 

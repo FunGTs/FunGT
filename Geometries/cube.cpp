@@ -65,7 +65,9 @@ void Cube::setData()
 
     unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
 
-    this->set(vertices,nOfvertices);
+glm::mat4 Cube::getModelMatrix() const
+{
+    return this->m_ShapeModelMatrix;
 }
 
 void Cube::IntancedDraw(Shader& shader, int instanceCount)

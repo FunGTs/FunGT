@@ -43,7 +43,7 @@ public:
     void setViewMatrix(const glm::mat4 &viewMatrix) override;
     void updateModelMatrix() override;
     glm::mat4 getProjectionMatrix() override;
-    glm::mat4 getModelMatrix() override;
+    glm::mat4 getModelMatrix() const override;
     std::vector<Triangle> getTriangleList();
     const std::vector<std::unique_ptr<Mesh>>& getMeshes() const {
         return m_model->getMeshes();
