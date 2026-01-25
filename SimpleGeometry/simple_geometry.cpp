@@ -83,7 +83,7 @@ glm::mat4 SimpleGeometry::getProjectionMatrix() {
     return m_ProjectionMatrix;
 }
 
-glm::mat4 SimpleGeometry::getModelMatrix() {
+glm::mat4 SimpleGeometry::getModelMatrix() const {
     return m_ModelMatrix;
 }
 

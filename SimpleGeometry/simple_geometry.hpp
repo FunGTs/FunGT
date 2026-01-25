@@ -56,7 +56,7 @@ public:
     void setViewMatrix(const glm::mat4 &viewMatrix) override;
     void updateModelMatrix() override;
     glm::mat4 getProjectionMatrix() override;
-    glm::mat4 getModelMatrix() override;
+    glm::mat4 getModelMatrix() const override;
 
     // Static factory method (like SimpleModel)
     static std::shared_ptr<SimpleGeometry> create(Geometry geomType);
