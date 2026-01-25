@@ -79,7 +79,7 @@ void geometry::Box::setData() {
     this->set(vertices, nOfvertices);
 }
 
-void geometry::Box::IntancedDraw(Shader& shader, int instanceCount)
+void geometry::Box::InstancedDraw(Shader& shader, int instanceCount)
 {
     shader.setUniformVec3f(glm::vec3(0.4f, 0.4f, 0.4f), "u_color");
     //glEnable(GL_CULL_FACE);

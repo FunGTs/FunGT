@@ -31,16 +31,20 @@ int main() {
     FunGTSModel pixarBall = SimpleModel::create();
 
     pixarBall->load(model_ball);
-    pixarBall->position(0.f, 0.f, 10.f);
+    pixarBall->position(0.f, 2.3f, 10.f);
     pixarBall->rotation(0.f, 0.f, 0.f);
     pixarBall->scale(2.3);
 
+    FunGTSGeom ground = SimpleGeometry::create(Geometry::Plane);
+    ground->load(getAssetPath("img/floor.png"));
+    ground->position(0.0,0.0,0.0);
     //std::string ps_vs = getAssetPath("resources/particle.vs");
     //std::string ps_fs = getAssetPath("resources/particle.fs");
     //std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000, ps_vs, ps_fs);
     myGame->set([&]() { // Sets up all the scenes in your game
         // Adds the renderable objects to the SceneManager
                 // Adds the renderable objects to the SceneManager
+        scene_manager->addRenderableObj(ground);
         scene_manager->addRenderableObj(pixarLamp);
         scene_manager->addRenderableObj(pixarBall);
         });

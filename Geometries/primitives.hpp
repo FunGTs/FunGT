@@ -45,23 +45,19 @@ public:
         long unsigned sizeOfIndices();
         void setAttribs();
         void unsetAttribs();
-
+        const std::vector<PrimitiveVertex>& getVertices() const;
+        const std::vector<unsigned int>& getIndices() const;
         // Geometry-specific virtuals
         virtual void setData() = 0;
 
         // Graphics initialization
         void setTexture(const std::string &pathToTexture);
         void InitGraphics();
+        virtual void InstancedDraw(Shader& shader, int instanceCount) {
 
+        }
         // Pure virtual draw method
         virtual void draw() = 0;
-        virtual glm::mat4 getModelMatrix() const = 0;
-        virtual void setPosition(glm::vec3 pos) = 0;   //Position 
-        virtual void setModelMatrix() = 0;
-        virtual void updateModelMatrix(float zrot) = 0;
-        virtual void setScale(glm::vec3 scale) = 0;   
-
-
 }; 
 
 

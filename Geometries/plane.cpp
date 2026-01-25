@@ -1,85 +1,42 @@
 #include "plane.hpp"
 
-Plane::Plane()
-: Primitive(){
-    printf("Plane default constructor\n");
+Plane::Plane(float width, float depth)
+    : Primitive(), m_width(width), m_depth(depth) {
+    printf("Plane constructor: %.2f x %.2f\n", width, depth);
 }
 
-Plane::~Plane()
-{
+Plane::~Plane() {
     printf("USING Plane DESTRUCTOR\n");
 }
 
-void Plane::draw()
-{
+void Plane::draw() {
     texture.active();
     texture.bind();
     m_vao.bind();
-    glDrawArrays(GL_TRIANGLES, 0, this->getNumOfVertices());
-}
-
-void Plane::setData()
-{
-    //     Vertex vertices[] = {
-    //     // Positions          // Texture coordinates
-    //     glm::vec3(1.0f, 0.0f, 1.0f),     glm::vec3(0.f, 0.f, 0.f), glm::vec2(1.0f, 0.0f), // Top-right
-    //     glm::vec3(1.0f, 0.0f, -1.0f),    glm::vec3(0.f, 0.f, 0.f), glm::vec2(1.0f, 1.0f), // Bottom-right
-    //     glm::vec3(-1.0f, 0.0f, -1.0f),   glm::vec3(0.f, 0.f, 0.f), glm::vec2(0.0f, 1.0f), // Bottom-left
-    //     glm::vec3(-1.0f, 0.0f, 1.0f),   glm::vec3(0.f, 0.f, 0.f), glm::vec2( 0.0f, 0.0f)  // Top-left
-    // };
-    PrimitiveVertex vertices[] = {
-    // Positions             // Texture Coords
-    glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(0.0f, 1.0f) ,
-    glm::vec3(-1.0f, -1.0f, 0.0f),glm::vec3(0.f, 0.f, 0.f), glm::vec2(0.0f, 0.0f),
-    glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(1.0f, 0.0f),
-
-    glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(0.0f, 1.0f) ,
-    glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(1.0f, 0.0f) ,
-     glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.f, 0.f, 0.f),glm::vec2(1.0f, 1.0f) 
-};
-    unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
-    // GLuint indices[] = {
-    //     0, 1, 3, // First triangle
-    //     1, 2, 3  // Second triangle
-    // };
-        GLuint indices[] = {
-
-        0, 1, 2,
-        0 , 2, 3
-    };
-    unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
-    this->set(vertices,nOfvertices);
-}
-glm::mat4 Plane::getModelMatrix() const
-{
-    return this->m_ShapeModelMatrix;
-}
-
-void Plane::setPosition(glm::vec3 pos)
-{
-
-    m_ShapePos = pos; 
-
-}
-
-void Plane::setModelMatrix()
-{
-    //std::cout<<"pos : "<<m_ShapePos.x << ", " <<m_ShapePos.y<<", "<<m_ShapePos.z<<std::endl; 
-    m_ShapeModelMatrix = glm::translate(m_ShapeModelMatrix, m_ShapePos);
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.x), glm::vec3(1.f, 0.f, 0.f));
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.y), glm::vec3(0.f, 1.f, 0.f)); 
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.z), glm::vec3(0.f, 0.f, 1.f));
-    m_ShapeModelMatrix = glm::scale(m_ShapeModelMatrix, m_ShapeScale);
+    glDrawElements(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0);
     
 }
 
-void Plane::updateModelMatrix(float zrot)
-{
-   
-    m_ShapeModelMatrix = glm::mat4(1.f); 
-    m_ShapeModelMatrix = glm::translate(m_ShapeModelMatrix, m_ShapePos);
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.x), glm::vec3(1.f, 0.f, 0.f));
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.y), glm::vec3(0.f, 1.f, 0.f)); 
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.z), glm::vec3(0.f, 0.f, 1.f));
-    m_ShapeModelMatrix = glm::scale(m_ShapeModelMatrix, m_ShapeScale);
+void Plane::setData() {
+    float halfWidth = m_width / 2.0f;
+    float halfDepth = m_depth / 2.0f;
+
+    PrimitiveVertex vertices[] = {
+        // Horizontal plane (XZ) with normals pointing up (+Y)
+        glm::vec3(-halfWidth, 0.0f,  halfDepth),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f), // Top-left
+        glm::vec3(halfWidth, 0.0f,  halfDepth),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f), // Top-right
+        glm::vec3(halfWidth, 0.0f, -halfDepth),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 1.0f), // Bottom-right
+        glm::vec3(-halfWidth, 0.0f, -halfDepth),  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 1.0f)  // Bottom-left
+    };
+
+    unsigned nOfVertices = sizeof(vertices) / sizeof(PrimitiveVertex);
+
+    GLuint indices[] = {
+        0, 1, 2,  // First triangle
+        0, 2, 3   // Second triangle
+    };
+
+    unsigned nOfIndices = sizeof(indices) / sizeof(GLuint);
+
+    this->set(vertices, nOfVertices, indices, nOfIndices);
 }

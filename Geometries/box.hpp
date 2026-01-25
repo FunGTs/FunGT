@@ -17,7 +17,7 @@ public:
 
     void draw() override;
     void setData() override;
-    void IntancedDraw(Shader &shader, int instanceCount) override;
+    void InstancedDraw(Shader &shader, int instanceCount) override;
 };
 
 }

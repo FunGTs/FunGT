@@ -24,7 +24,21 @@ void geometry::Sphere::draw() {
     int triangleCount = m_sectorCount * m_stackCount * 2;
     glDrawArrays(GL_TRIANGLES, 0, triangleCount * 3);
 }
+void geometry::Sphere::InstancedDraw(Shader& shader, int instanceCount)
+{
 
+    texture.active();
+    texture.bind();
+    m_vao.bind();
+
+    // Get vertex count from primitive!
+    int vertexCount = getNumOfVertices();
+
+
+    glDrawArraysInstanced(GL_TRIANGLES, 0, vertexCount, instanceCount);
+
+    m_vao.unbind();
+}
 void geometry::Sphere::setData() {
     std::cout << "Calling Sphere::setData() " << std::endl;
     std::vector<PrimitiveVertex> vertices;
@@ -87,18 +101,3 @@ void geometry::Sphere::setData() {
     this->set(triangleVertices.data(), nOfvertices);
 }
 
-void geometry::Sphere::IntancedDraw(Shader &shader, int instanceCount)
-{
-
-    texture.active();
-    texture.bind();
-    m_vao.bind();
-
-    // Get vertex count from primitive!
-    int vertexCount = getNumOfVertices();
-
-
-    glDrawArraysInstanced(GL_TRIANGLES, 0, vertexCount, instanceCount);
-
-    m_vao.unbind();
-}

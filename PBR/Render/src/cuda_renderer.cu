@@ -76,8 +76,24 @@ fgt_device_gpu fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, curandSta
 fgt_device fungt::Vec3 skyColor(const fungt::Ray& ray) {
     float t = 0.5f * (ray.m_dir.y + 1.0f);
     //return (1.0f - t) * fungt::Vec3(1.0f, 1.0f, 1.0f) + t * fungt::Vec3(0.5f, 0.7f, 1.0f)*3.0f;
-    return fungt::Vec3(0.4, 0.4f, 0.4); // Bright blu
+    return fungt::Vec3(0.0f, 0.0f, 0.0f); // Bright blu
     //return (t * fungt::Vec3(2.0f, 2.0f, 2.0f) + (1.0f - t) * fungt::Vec3(0.3f, 0.5f, 1.0f));
+
+    // float t = 0.5f * (ray.m_dir.y + 1.0f);
+    // fungt::Vec3 bottomColor(0.03f, 0.03f, 0.03f);  // Dark neutral gray
+    // fungt::Vec3 topColor(0.1f, 0.1f, 0.1f);        // Medium gray
+    // return (1.0f - t) * bottomColor + t * topColor;
+
+    // // Deep space with subtle blue tint
+    // float t = 0.5f * (ray.m_dir.y + 1.0f);
+    // fungt::Vec3 bottomColor(0.01f, 0.01f, 0.02f);  // Very dark blue-black
+    // fungt::Vec3 topColor(0.05f, 0.08f, 0.12f);     // Slightly lighter dark blue
+    // return (1.0f - t) * bottomColor + t * topColor;
+
+    // float t = 0.5f * (ray.m_dir.y + 1.0f);
+    // fungt::Vec3 bottomColor(0.02f, 0.015f, 0.01f);  // Dark warm brown
+    // fungt::Vec3 topColor(0.08f, 0.06f, 0.05f);      // Lighter warm gray
+    // return (1.0f - t) * bottomColor + t * topColor;
 }
 fgt_device_gpu fungt::Vec3 pathTracer(const fungt::Ray& initialRay, const Triangle* tris,const Light *lights, int numOfTriangles,int numOfLights, curandState* rng) {
     fungt::Vec3 color(1.0f,1.0f,1.0f);
@@ -90,10 +106,10 @@ fgt_device_gpu fungt::Vec3 pathTracer(const fungt::Ray& initialRay, const Triang
         HitData hit;
         bool hitAny = traceRay(currRay, tris, numOfTriangles,nullptr, hit);
 
-            if (!hitAny) {
-                accumulated = accumulated + color * skyColor(currRay);
-                break;
-            }
+        if (!hitAny) {
+            accumulated = accumulated + color * skyColor(currRay);
+            break;
+        }
         fungt::Vec3 hitColor(0.0f);
         for(int l = 0; l<numOfLights; l++){
             fungt::Vec3 toLight = lights[l].m_pos - hit.point;
