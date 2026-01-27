@@ -74,6 +74,18 @@ void Primitive::unsetAttribs()
     glDisableVertexAttribArray(2);
 }
 
+const std::vector<PrimitiveVertex>& Primitive::getVertices() const
+{
+    // TODO: insert return statement here
+    return m_vertex;
+}
+
+const std::vector<unsigned int>& Primitive::getIndices() const
+{
+    // TODO: insert return statement here
+    return m_index;
+}
+
 // Graphics initialization
 void Primitive::setTexture(const std::string &pathToTexture)
 {
@@ -95,7 +107,16 @@ void Primitive::InitGraphics()
 
     this->setAttribs();
 
+    // Upload index data if indices exist
+    if (this->getNumOfIndices() > 0) {
+        m_vi.bind();
+        m_vi.indexData(this->getIndices(), this->sizeOfIndices());
+    }
+
     m_vao.unbind();
     this->unsetAttribs();
     m_vb.unbind();
+    if (this->getNumOfIndices() > 0) {
+        m_vi.unbind();
+    }
 }

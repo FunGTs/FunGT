@@ -3,23 +3,17 @@
 
 #include "primitives.hpp"
 
-class Plane : public Primitive{
+class Plane : public Primitive {
+private:
+        float m_width;
+        float m_depth;
 
 public:
-        Plane();
+        Plane(float width = 2.0f, float depth = 2.0f);
         ~Plane();
+
         void draw() override;
         void setData() override;
-        glm::mat4 getModelMatrix() const override; 
-        void setPosition(glm::vec3 pos) override; 
-        void setModelMatrix() override;
-        void updateModelMatrix(float zrot) override;
-
-
-
 };
-
-
-
 
 #endif // _PLANE_H_

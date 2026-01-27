@@ -61,9 +61,11 @@ set(FUNGT_INCLUDES
     ${FUNGT_BASE_DIR}/Shader
     ${FUNGT_BASE_DIR}/Random
     ${FUNGT_BASE_DIR}/SimpleModel
+    ${FUNGT_BASE_DIR}/SimpleGeometry
     ${FUNGT_BASE_DIR}/Model
     ${FUNGT_BASE_DIR}/Mesh
     ${FUNGT_BASE_DIR}/Path_Manager
+    ${FUNGT_BASE_DIR}/Geometries
     ${FUNGT_BASE_DIR}/PBR/PBRCamera
     ${FUNGT_BASE_DIR}/PBR/Ray
     ${FUNGT_BASE_DIR}/PBR/HitData
@@ -94,7 +96,17 @@ set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
+    ${FUNGT_BASE_DIR}/Geometries/cube.cpp
+    ${FUNGT_BASE_DIR}/Geometries/plane.cpp
+    ${FUNGT_BASE_DIR}/Geometries/primitives.cpp
+    ${FUNGT_BASE_DIR}/Geometries/pyramid.cpp
+    ${FUNGT_BASE_DIR}/Geometries/shape.cpp
+    ${FUNGT_BASE_DIR}/Geometries/inf_grid.cpp
+    ${FUNGT_BASE_DIR}/Geometries/square.cpp
+    ${FUNGT_BASE_DIR}/Geometries/sphere.cpp
+    ${FUNGT_BASE_DIR}/Geometries/box.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
+    ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Model/model.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp

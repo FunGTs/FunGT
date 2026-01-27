@@ -18,6 +18,7 @@
 
 #include "PBR/TextureManager/cpu_texture.hpp"
 #include "PBR/BVH/bvh_builder.hpp"
+#include "SimpleGeometry/simple_geometry.hpp"
 #include <algorithm>
 
 // Conditional includes - only include backend headers when enabled
@@ -54,6 +55,7 @@ class Space {
        
         void InitComputeRenderBackend();
         void LoadModelToRender(const SimpleModel& model);
+        void LoadGeometryToRender(const SimpleGeometry& geometry);
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
         void BuildBVH();
         void setSamples(int numOfSamples);

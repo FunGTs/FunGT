@@ -13,6 +13,13 @@ void SimpleGeometry::setPrimitive(std::shared_ptr<Primitive> primitive) {
     m_primitive = primitive;
 }
 
+void SimpleGeometry::setMaterial(const glm::vec3& baseColor, float roughness, float metallic)
+{
+    m_material.baseColor = baseColor;
+    m_material.roughness = roughness;
+    m_material.metallic = metallic;
+}
+
 void SimpleGeometry::setShaderPaths(const std::string &vs_path, const std::string &fs_path) {
     m_vs_path = vs_path;
     m_fs_path = fs_path;
@@ -25,7 +32,10 @@ void SimpleGeometry::load(const std::string &pathToTexture) {
 
     m_primitive->setData();
     m_Shader.create(m_vs_path, m_fs_path);
-    m_primitive->setTexture(pathToTexture);
+    if(!pathToTexture.empty()){
+        m_primitive->setTexture(pathToTexture);
+        m_isTexturized = true;
+    }
     m_primitive->InitGraphics();
 }
 
@@ -113,6 +123,12 @@ std::shared_ptr<SimpleGeometry> SimpleGeometry::create(Geometry geomType) {
             simpleGeom->m_fs_path = getAssetPath("resources/box_fs.glsl");
             break;
         }
+        case Geometry::Plane:{
+            simpleGeom->setPrimitive(std::make_shared<Plane>(40.0f, 40.0f)); // 10x10 ground
+            simpleGeom->m_vs_path = getAssetPath("shaders/primitive_vs.glsl");
+            simpleGeom->m_fs_path = getAssetPath("shaders/primitive_fs.glsl");
+            break;
+        }   
         default:
             throw std::runtime_error("Unknown geometry type");
     }

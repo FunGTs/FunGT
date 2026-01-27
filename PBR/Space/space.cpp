@@ -290,7 +290,74 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
 
     sendTexturesToRender();
 }
+void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
+    auto primitive = geometry.getPrimitive();
+    if (!primitive) {
+        throw std::runtime_error("Space::LoadGeometryToRender() - Geometry has no primitive set!");
+    }
 
+    const Primitive* constPrimitive = primitive.get();
+    const std::vector<PrimitiveVertex>& vertices = constPrimitive->getVertices();
+    const std::vector<unsigned int>& indices = constPrimitive->getIndices();
+
+    glm::mat4 modelMatrix = geometry.getModelMatrix();
+    glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelMatrix)));
+
+    const auto& material = geometry.getMaterial();
+
+    std::cout << "Loading geometry with " << indices.size() / 3 << " triangles" << std::endl;
+    int baseColorTexId = -1;
+    if (geometry.isTexturized() && m_textureManager != nullptr) {
+        std::string texPath = constPrimitive->texture.getPath();
+        std::cout << "  Loading texture: " << texPath << std::endl;
+        baseColorTexId = m_textureManager->loadTexture(texPath);
+    }
+    else {
+        std::cout << "  No texture (using base color)" << std::endl;
+    }
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        const PrimitiveVertex& v0 = vertices[indices[i]];
+        const PrimitiveVertex& v1 = vertices[indices[i + 1]];
+        const PrimitiveVertex& v2 = vertices[indices[i + 2]];
+
+        Triangle tri;
+
+        glm::vec4 p0 = modelMatrix * glm::vec4(v0.position, 1.0f);
+        glm::vec4 p1 = modelMatrix * glm::vec4(v1.position, 1.0f);
+        glm::vec4 p2 = modelMatrix * glm::vec4(v2.position, 1.0f);
+
+        tri.v0 = fungt::Vec3(p0.x, p0.y, p0.z);
+        tri.v1 = fungt::Vec3(p1.x, p1.y, p1.z);
+        tri.v2 = fungt::Vec3(p2.x, p2.y, p2.z);
+
+        glm::vec3 n0 = glm::normalize(normalMatrix * v0.normal);
+        glm::vec3 n1 = glm::normalize(normalMatrix * v1.normal);
+        glm::vec3 n2 = glm::normalize(normalMatrix * v2.normal);
+
+        tri.n0 = fungt::Vec3(n0.x, n0.y, n0.z);
+        tri.n1 = fungt::Vec3(n1.x, n1.y, n1.z);
+        tri.n2 = fungt::Vec3(n2.x, n2.y, n2.z);
+
+        tri.uvs[0][0] = v0.texcoord.x;
+        tri.uvs[0][1] = v0.texcoord.y;
+        tri.uvs[1][0] = v1.texcoord.x;
+        tri.uvs[1][1] = v1.texcoord.y;
+        tri.uvs[2][0] = v2.texcoord.x;
+        tri.uvs[2][1] = v2.texcoord.y;
+
+        tri.material.baseColor[0] = material.baseColor.x;
+        tri.material.baseColor[1] = material.baseColor.y;
+        tri.material.baseColor[2] = material.baseColor.z;
+        tri.material.roughness = material.roughness;
+        tri.material.metallic = material.metallic;
+        tri.material.baseColorTexIdx = baseColorTexId;
+
+        m_triangles.push_back(tri);
+    }
+
+    std::cout << "Geometry loaded. Total triangles in scene: " << m_triangles.size() << std::endl;
+    sendTexturesToRender();
+}
 void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height)
 {
     std::vector<unsigned char> pixels(width * height * 3);
