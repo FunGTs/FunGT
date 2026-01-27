@@ -238,6 +238,7 @@ private:
             const auto& objects = m_sceneManager->getRenderable();
 
             int modelCount = 0;
+            int geometryCount = 0;
             for (auto& obj : objects) {
                 // Try to cast to SimpleModel
                 auto simpleModel = std::dynamic_pointer_cast<SimpleModel>(obj);
@@ -245,11 +246,19 @@ private:
                     std::cout << "Loading model " << (modelCount + 1) << " to PBR scene..." << std::endl;
                     space.LoadModelToRender(*simpleModel);
                     modelCount++;
+                    continue;
+                }
+                auto simpleGeometry = std::dynamic_pointer_cast<SimpleGeometry>(obj);
+                if (simpleGeometry) {
+                    std::cout << "Loading geometry " << (geometryCount + 1) << " to PBR scene..." << std::endl;
+                    space.LoadGeometryToRender(*simpleGeometry);
+                    geometryCount++;
                 }
             }
-
-            if (modelCount == 0) {
-                std::cerr << " No models found in scene!" << std::endl;
+            // Try to cast to SimpleGeometry
+            
+            if (modelCount == 0 && geometryCount == 0) {
+                std::cerr << "No models or geometries found in scene!" << std::endl;
                 m_isRendering = false;
                 return;
             }
