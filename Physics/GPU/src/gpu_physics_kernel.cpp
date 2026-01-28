@@ -18,7 +18,12 @@ gpu::PhysicsKernel::PhysicsKernel()
 gpu::PhysicsKernel::~PhysicsKernel() {
     cleanup();
 }
-
+void gpu::PhysicsKernel::debugVelocity(int bodyId) {
+    float velY;
+    std::cout<<" debug vel "<<std::endl;
+    m_queue.memcpy(&velY, &m_data.y_vel[bodyId], sizeof(float)).wait();
+    std::cout << "Body " << bodyId << " velY: " << velY << std::endl;
+}
 void gpu::PhysicsKernel::init(int maxBodies) {
     m_capacity = maxBodies;
     m_numBodies = 0;
@@ -33,7 +38,14 @@ void gpu::PhysicsKernel::init(int maxBodies) {
         << std::endl;
 
     std::cout << "Allocating GPU memory for " << maxBodies << " bodies..." << std::endl;
-  
+    m_maxManifolds = maxBodies * 4;  // worst case: each body touches 4 others
+    m_hashTableSize = m_maxManifolds * 2;  // keep hash table sparse
+    
+    m_manifolds = sycl::malloc_device<GPUManifold>(m_maxManifolds, m_queue);
+    m_numManifolds = sycl::malloc_device<int>(1, m_queue);
+    m_pairToManifold = sycl::malloc_device<int>(m_hashTableSize, m_queue);
+
+
     //Allocate shape data:
     m_data.shapeType   = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = sphere, 1 = box
     m_data.bodyMode    = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = STATIC, 1 = DYNAMIC
@@ -72,7 +84,13 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     m_data.invMass = sycl::malloc_device<float>(maxBodies, m_queue);
     m_data.invInertiaTensor = sycl::malloc_device<float>(maxBodies * 9, m_queue);
 
+    m_data.restitution = sycl::malloc_device<float>(maxBodies, m_queue);
+    m_data.friction = sycl::malloc_device<float>(maxBodies, m_queue);
     // Initialize all to zero
+    int pairToManifold = -1;
+    m_queue.memset(m_numManifolds, 0, sizeof(int)).wait();
+    m_queue.fill(m_pairToManifold, pairToManifold, m_hashTableSize).wait(); 
+
     m_queue.memset(m_data.x_pos, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.y_pos, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.z_pos, 0, maxBodies * sizeof(float)).wait();
@@ -105,6 +123,10 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     m_queue.memset(m_data.halfExtentX, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.halfExtentY, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.halfExtentZ, 0, maxBodies * sizeof(float)).wait();
+
+    m_queue.memset(m_data.restitution,0,maxBodies*sizeof(float)).wait();
+    m_queue.memset(m_data.friction, 0, maxBodies * sizeof(float)).wait();
+
 
     // Create OpenGL SSBO for model matrices
     std::cout << "Creating OpenGL SSBO for model matrices..." << std::endl;
@@ -171,7 +193,7 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
     }
 
     int id = m_numBodies++;
-
+    
     // Upload position
     m_queue.memcpy(&m_data.x_pos[id], &x, sizeof(float)).wait();
     m_queue.memcpy(&m_data.y_pos[id], &y, sizeof(float)).wait();
@@ -216,12 +238,16 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], inertiaTensor, 9 * sizeof(float)).wait();
 
     // Set shape type and geometry
-    int shapeType = 1;  // sphere
+    int shapeType = 0;  // sphere
     int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;
     m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
     m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();
     m_queue.memcpy(&m_data.radius[id], &radius, sizeof(float)).wait();
 
+    float restitution = 0.8;
+    float friction    = 0.3;
+    m_queue.memcpy(&m_data.restitution[id], &restitution,sizeof(float)).wait();
+    m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
     // === DEBUG ===
     float readback_invMass;
     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
@@ -281,7 +307,9 @@ int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float hei
     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], invInertia, 9 * sizeof(float)).wait();
 
     // Set shape type and geometry
-    int shapeType = 2;  // box
+    int shapeType = 1;  // box
+    int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;  // ADD THIS LINE
+    m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();  // ADD THIS LINE
     m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
     float halfX = width * 0.5f;
     float halfY = height * 0.5f;
@@ -292,6 +320,11 @@ int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float hei
 
     float readback_invMass;
     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
+
+    float restitution = 0.5;
+    float friction = 0.3;
+    m_queue.memcpy(&m_data.restitution[id], &restitution, sizeof(float)).wait();
+    m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
     std::cout << "addBox: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
     return id;
 }
@@ -439,8 +472,51 @@ void gpu::PhysicsKernel::narrowPhase() {
     std::cout << "narrowPhase() - TODO" << std::endl;
 }
 
-void gpu::PhysicsKernel::solve() {
-    std::cout << "solve() - TODO" << std::endl;
+void gpu::PhysicsKernel::solveImpulses(float dt) {
+    DeviceData data = m_data;
+    GPUManifold* manifolds = m_manifolds;
+    int* numManifolds = m_numManifolds;
+
+    constexpr float ERP = 0.2f;
+    constexpr int ITERATIONS = 1;
+
+    int manifoldCount;
+    m_queue.memcpy(&manifoldCount, numManifolds, sizeof(int)).wait();
+    //std::cout << "=== SOLVE IMPULSES ===" << std::endl;
+    //std::cout << "manifoldCount: " << manifoldCount << std::endl;
+
+    if (manifoldCount == 0) {
+       
+       // std::cout << "No manifolds to solve!" << std::endl;
+        return;
+    }
+    // DEBUG: Read body velocities before solve
+
+    
+    std::size_t xdim = 32;
+    std::size_t ydim = (manifoldCount + xdim - 1) / xdim;
+    std::size_t n = static_cast<std::size_t>(manifoldCount);
+
+    for (int iter = 0; iter < ITERATIONS; iter++) {
+        m_queue.submit([data, manifolds, n, xdim,ydim, dt, ERP](sycl::handler& h) {
+            h.parallel_for(sycl::range<2>(ydim, xdim), [data, manifolds, n, xdim, dt, ERP](sycl::item<2> item) {
+                std::size_t i = item[0] * xdim + item[1];
+                if (i >= n) return;
+
+                GPUManifold* m = &manifolds[i];
+                int bodyA = m->bodyA;
+                int bodyB = m->bodyB;
+
+                for (int p = 0; p < m->numPoints; p++) {
+                    //data.y_vel[bodyB] = -999.0f;
+                    solveContactImpulse(&m->points[p], data, bodyA, bodyB, dt, ERP);
+                    //data.y_vel[bodyB] = 4.0f;
+                }
+            });
+        }).wait();
+
+    }
+
 }
 
 void gpu::PhysicsKernel::buildMatrices() {
@@ -553,68 +629,42 @@ void gpu::PhysicsKernel::buildMatrices() {
     // Release OpenCL memory object
     clReleaseMemObject(clbuffer);
 }
-int gpu::PhysicsKernel::findManifold(int bodyA, int bodyB)
-{
-    int key = gpu::makePairKey(bodyA, bodyB);
-    int hashIndex = key % m_hashTableSize;
-
-    // Linear probing - check this slot and next ones
-    for (int i = 0; i < m_hashTableSize; i++) {
-        int slot = (hashIndex + i) % m_hashTableSize;
-        int manifoldIdx = m_pairToManifold[slot];
-
-        if (manifoldIdx == -1) {
-            // Empty slot - pair doesn't exist
-            return -1;
-        }
-
-        // Check if this manifold matches our pair
-        GPUManifold& m = m_manifolds[manifoldIdx];
-        if ((m.bodyA == bodyA && m.bodyB == bodyB) ||
-            (m.bodyA == bodyB && m.bodyB == bodyA)) {
-            return manifoldIdx;
-        }
-
-        // Collision - different pair in this slot, keep probing
-    }
-
-    // Table full, not found
-    return -1;
+void gpu::PhysicsKernel::clearManiFolds() {
+    m_queue.memset(m_numManifolds, 0, sizeof(int)).wait();
+    m_queue.fill(m_pairToManifold, -1, m_hashTableSize).wait();
 }
+void gpu::PhysicsKernel::debugManifolds() {
+    int manifoldCount;
+    m_queue.memcpy(&manifoldCount, m_numManifolds, sizeof(int)).wait();
 
-int gpu::PhysicsKernel::createManifold(int bodyA, int bodyB)
-{
-    // Get next available manifold slot
-    int manifoldIdx = (*m_numManifolds)++;
+    std::cout << "=== MANIFOLD DEBUG ===" << std::endl;
+    std::cout << "Manifold count: " << manifoldCount << std::endl;
 
-    if (manifoldIdx >= m_maxManifolds) {
-        (*m_numManifolds)--;  // rollback
-        return -1;  // full
+    if (manifoldCount == 0) {
+        std::cout << "NO COLLISIONS DETECTED!" << std::endl;
+        return;
     }
 
-    // Initialize manifold
-    GPUManifold& m = m_manifolds[manifoldIdx];
-    m.bodyA = bodyA;
-    m.bodyB = bodyB;
-    m.numPoints = 0;
+    // Copy manifolds to host
+    GPUManifold* hostManifolds = new GPUManifold[manifoldCount];
+    m_queue.memcpy(hostManifolds, m_manifolds, manifoldCount * sizeof(GPUManifold)).wait();
 
-    // Insert into hash table
-    int key = gpu::makePairKey(bodyA, bodyB);
-    int hashIndex = key % m_hashTableSize;
+    for (int i = 0; i < manifoldCount; i++) {
+        GPUManifold& m = hostManifolds[i];
+        std::cout << "Manifold " << i << ": bodyA=" << m.bodyA
+            << " bodyB=" << m.bodyB
+            << " numPoints=" << m.numPoints << std::endl;
 
-    // Linear probing - find empty slot
-    for (int i = 0; i < m_hashTableSize; i++) {
-        int slot = (hashIndex + i) % m_hashTableSize;
-
-        if (m_pairToManifold[slot] == -1) {
-            m_pairToManifold[slot] = manifoldIdx;
-            return manifoldIdx;
+        for (int p = 0; p < m.numPoints; p++) {
+            GPUContactPoint& cp = m.points[p];
+            std::cout << "  Point " << p << ": normal=("
+                << cp.normalX << "," << cp.normalY << "," << cp.normalZ
+                << ") pen=" << cp.penetration
+                << " impulse=" << cp.normalImpulse << std::endl;
         }
     }
 
-    // Hash table full - shouldn't happen if sized correctly
-    (*m_numManifolds)--;  // rollback
-    return -1;
+    delete[] hostManifolds;
 }
 void gpu::PhysicsKernel::detectStaticVsDynamic() {
     DeviceData data = m_data;
@@ -623,58 +673,71 @@ void gpu::PhysicsKernel::detectStaticVsDynamic() {
     int* numManifolds = m_numManifolds;
     int hashTableSize = m_hashTableSize;
     int maxManifolds = m_maxManifolds;
-    int n = m_numBodies;
+    std::size_t n = static_cast<std::size_t>(m_numBodies);
 
     std::size_t xdim = 32;
     std::size_t ydim = (n + xdim - 1) / xdim;
+    // BEFORE kernel - print body info
+   //std::cout << "=== detectStaticVsDynamic ===" << std::endl;
+   // std::cout << "numBodies: " << m_numBodies << std::endl;
 
-    m_queue.parallel_for(sycl::range<2>(ydim, xdim), [=](sycl::item<2> item) {
-        std::size_t i = item[0] * xdim + item[1];
-        if (i >= n) return;
+    // Check body modes on CPU
+    int* hostBodyMode = new int[m_numBodies];
+    int* hostShapeType = new int[m_numBodies];
+    m_queue.memcpy(hostBodyMode, m_data.bodyMode, m_numBodies * sizeof(int)).wait();
+    m_queue.memcpy(hostShapeType, m_data.shapeType, m_numBodies * sizeof(int)).wait();
 
-        // Skip if static
-        if (data.bodyMode[i] == 0) return;
+    // for (int i = 0; i < m_numBodies; i++) {
+    //     std::cout << "Body " << i << ": mode=" << hostBodyMode[i]
+    //         << " shape=" << hostShapeType[i] << std::endl;
+    // }
+    delete[] hostBodyMode;
+    delete[] hostShapeType;
+    m_queue.submit([data, manifolds, pairToManifold, numManifolds, hashTableSize, maxManifolds, n, xdim,ydim](sycl::handler& h) {
+        h.parallel_for(sycl::range<2>(ydim, xdim), [data, manifolds, pairToManifold, numManifolds, hashTableSize, maxManifolds, n, xdim](sycl::item<2> item) {
+            std::size_t i = item[0] * xdim + item[1];
+            if (i >= n) return;
 
-        // Check against all static bodies
-        for (std::size_t j = 0; j < n; j++) {
-            if (data.bodyMode[j] == 1) continue;  // skip dynamic
+            if (data.bodyMode[i] == 0) return;
 
-            // Sphere (i) vs Box (j)
-            if (data.shapeType[i] == 0 && data.shapeType[j] == 1) {
-                float nx, ny, nz, pen;
-                float wAx, wAy, wAz, wBx, wBy, wBz;
-                float lAx, lAy, lAz, lBx, lBy, lBz;
+            for (std::size_t j = 0; j < n; j++) {
+                if (data.bodyMode[j] == 1) continue;
 
-                bool hit = SphereBoxCollision(
-                    data.x_pos[i], data.y_pos[i], data.z_pos[i],
-                    data.radius[i],
-                    data.x_pos[j], data.y_pos[j], data.z_pos[j],
-                    data.halfExtentX[j], data.halfExtentY[j], data.halfExtentZ[j],
-                    true,  // box is static
-                    nx, ny, nz, pen,
-                    wAx, wAy, wAz, wBx, wBy, wBz,
-                    lAx, lAy, lAz, lBx, lBy, lBz
-                );
+                if (data.shapeType[i] == 0 && data.shapeType[j] == 1) {
+                    float nx, ny, nz, pen;
+                    float wAx, wAy, wAz, wBx, wBy, wBz;
+                    float lAx, lAy, lAz, lBx, lBy, lBz;
 
-                if (hit) {
-                    int manifoldIdx = findManifold(pairToManifold, manifolds,
-                        hashTableSize, j, i);
-                    if (manifoldIdx == -1) {
-                        manifoldIdx = createManifold(pairToManifold, manifolds,
-                            numManifolds, hashTableSize,
-                            maxManifolds, j, i);
-                    }
+                    bool hit = SphereBoxCollision(
+                        data.x_pos[i], data.y_pos[i], data.z_pos[i],
+                        data.radius[i],
+                        data.x_pos[j], data.y_pos[j], data.z_pos[j],
+                        data.halfExtentX[j], data.halfExtentY[j], data.halfExtentZ[j],
+                        true,
+                        nx, ny, nz, pen,
+                        wAx, wAy, wAz, wBx, wBy, wBz,
+                        lAx, lAy, lAz, lBx, lBy, lBz
+                    );
 
-                    if (manifoldIdx != -1) {
-                        addContactToManifold(manifolds, manifoldIdx,
-                            lAx, lAy, lAz,
-                            lBx, lBy, lBz,
-                            wAx, wAy, wAz,
-                            wBx, wBy, wBz,
-                            nx, ny, nz, pen);
+                    if (hit) {
+                        int manifoldIdx = findManifold(pairToManifold, manifolds, hashTableSize, j, i);
+                        if (manifoldIdx == -1) {
+                            manifoldIdx = createManifold(pairToManifold, manifolds, numManifolds, hashTableSize, maxManifolds, j, i);
+                        }
+                        if (manifoldIdx == -1) {
+                            data.y_vel[i] = -7777.0f;  // marker
+                        }
+                        else {
+                            addContactToManifold(manifolds, manifoldIdx,
+                                lAx, lAy, lAz,
+                                lBx, lBy, lBz,
+                                wAx, wAy, wAz,
+                                wBx, wBy, wBz,
+                                nx, ny, nz, pen);
+                        }
                     }
                 }
             }
-        }
+        });
     }).wait();
 }

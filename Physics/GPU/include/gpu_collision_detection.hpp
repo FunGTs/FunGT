@@ -3,7 +3,7 @@
 #if !defined(_GPU_COLLISION_DETECTION_HPP_)
 #define _GPU_COLLISION_DETECTION_HPP_
 
-#include "gpu_contact.hpp"
+#include "gpu_manifold_contacts.hpp"
 #include "gpu_device_data.hpp"
 
 namespace gpu {

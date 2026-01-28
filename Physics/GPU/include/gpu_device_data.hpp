@@ -33,6 +33,8 @@ namespace gpu
         float* orientZ;
         float* invMass;
         float* invInertiaTensor;
+        float* restitution;       // 
+        float* friction;          // 
     };
     
 } // namespace gpu

@@ -30,29 +30,43 @@ namespace gpu {
             try {
                 //std::cout << "Calling applyForces..." << std::endl;
                 m_kernel->applyForces(dt);
-               
+                m_kernel->clearManiFolds();
                 //std::cout << "applyForces OK" << std::endl;
             }
             catch (const sycl::exception& e) {
                 std::cerr << "ERROR in applyForces: " << e.what() << std::endl;
                 throw;
             }
-
+            try {
+                //std::cout << "Calling applyForces..." << std::endl;
+                m_kernel->detectStaticVsDynamic();
+                m_kernel->debugManifolds();
+                //std::cout << "applyForces OK" << std::endl;
+            }
+            catch (const sycl::exception& e) {
+                std::cerr << "ERROR in applyForces: " << e.what() << std::endl;
+                throw;
+            }
+            try {
+                //std::cout << "Calling applyForces..." << std::endl;
+                m_kernel->solveImpulses(dt);
+                m_kernel->debugVelocity(1);
+                //std::cout << "applyForces OK" << std::endl;
+            }
+            catch (const sycl::exception& e) {
+                std::cerr << "ERROR in applyForces: " << e.what() << std::endl;
+                throw;
+            }
             try {
                 //std::cout << "Calling integrate..." << std::endl;
                 m_kernel->integrate(dt);
-                
+                m_kernel->debugVelocity(1);
                 //std::cout << "integrate OK" << std::endl;
             }
             catch (const sycl::exception& e) {
                 std::cerr << "ERROR in integrate: " << e.what() << std::endl;
                 throw;
             }
-
-            // Comment out these for now
-            // m_kernel->broadPhase();
-            // m_kernel->narrowPhase();
-            // m_kernel->solve();
 
             try {
                 //std::cout << "Calling buildMatrices..." << std::endl;

@@ -40,9 +40,11 @@ int main() {
         << ", instanceCount=" << ground->getInstanceCount() << std::endl;
     // Balls
     gpuCollision->beginGroup();
-    for (int i = 0; i < 20; i++) {
-        float x = (rand() % 40) - 20.0f;
+    for (int i = 0; i < 10; i++) {
+       float x = (rand() % 10) - 5.0f;
+        //float x = 0.0;
         float y = 5.0f + i * 2.0f;
+        //float y = 5.0;
         float z = -15.f;
         gpuCollision->addSphere(x, y, z, 1.0f, 1.0f);
     }

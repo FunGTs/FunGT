@@ -7,6 +7,9 @@
 #include "gpu_device_data.hpp"
 #include "gpu_memory_utils.hpp"
 #include "gpu_manifold_contacts.hpp"
+#include "gpu_manifold_utils.hpp"
+#include "gpu_collision_detection.hpp"
+#include "gpu_impulse_solver.hpp"
 enum class MODE {
     STATIC,
     DYNAMIC
@@ -56,24 +59,22 @@ namespace gpu {
         void integrate(float dt);
         void broadPhase();          // TODO: spatial hashing
         void narrowPhase();         // TODO: collision detection
-        void solve();               // TODO: impulse solver
+        void solveImpulses(float dt);               // TODO: impulse solver
         void buildMatrices();       // Compute model matrices for rendering
 
         // Getters
         int getNumBodies() const { return m_numBodies; }
         unsigned int getModelMatrixSSBO() const { return m_modelMatrixSSBO; }
-
+        void clearManiFolds();
+        void debugManifolds();
         // Collision detection
         void detectStaticVsDynamic();   // spheres vs ground
-        void detectDynamicVsDynamic();  // spheres vs spheres (later, with grid)
-
-        // Manifold management
-        int  findManifold(int bodyA, int bodyB);      // returns index, or -1 if not found
-        int  createManifold(int bodyA, int bodyB);    // creates new, returns index
-        void refreshManifolds();        // update world positions from local
-        void pruneOldContacts();        // remove contacts that separated
+        //void detectDynamicVsDynamic();  // spheres vs spheres (later, with grid)
+        void debugVelocity(int bodyId);
+        //void refreshManifolds();        // update world positions from local
+        //void pruneOldContacts();        // remove contacts that separated
     };
 
 } // namespace gpu
 
-#endif // _GPU_PHYSICS_KERNEL_HPP_
+#endif // _GPU_PHYSICS_KERNEL_HPP_ 
