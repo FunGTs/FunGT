@@ -36,7 +36,7 @@ int main() {
     pixarBall->scale(2.3);
 
     FunGTSGeom ground = SimpleGeometry::create(Geometry::Plane);
-    ground->load(getAssetPath("img/floor.png"));
+    ground->load(getAssetPath("img/light_wood_floor.png"));
     ground->position(0.0,0.0,0.0);
     //std::string ps_vs = getAssetPath("resources/particle.vs");
     //std::string ps_fs = getAssetPath("resources/particle.fs");

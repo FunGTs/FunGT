@@ -39,6 +39,7 @@ class CUDA_Renderer : public IComputeRenderer{
             const std::vector<Triangle>& triangleList,
             const std::vector<BVHNode> &nodes,
             const std::vector<Light> &lightsList,
+            const std::vector<int>& emissiveTriIndices,
             const PBRCamera& camera,
             int samplesPerPixel
         );

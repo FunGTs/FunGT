@@ -41,7 +41,7 @@ class Space {
     std::shared_ptr<IDeviceTexture> m_textureManager;
     std::vector<BVHNode> m_bvh_nodes;
     std::vector<int>     m_bvh_indices;
-
+    std::vector<int> m_emissiveTriIndices;
     
     void sendTexturesToRender();
 

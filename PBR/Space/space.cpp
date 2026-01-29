@@ -81,7 +81,7 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
         << "  Framebuffer: " << frameMem / (1024.0 * 1024.0) << " MB\n"
         << "  Total:     " << totalMem / (1024.0 * 1024.0) << " MB\n";
     std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(
-        width, height, m_triangles, m_bvh_nodes, m_lights, m_camera, m_samplesPerPixel
+        width, height, m_triangles, m_bvh_nodes, m_lights,m_emissiveTriIndices, m_camera, m_samplesPerPixel
     );
 
     return frameBuffer;
@@ -398,6 +398,12 @@ void Space::BuildBVH()
         reordered[i] = m_triangles[m_bvh_indices[i]];
     }
     m_triangles = std::move(reordered);
+    for (size_t i = 0; i < m_triangles.size(); i++) {
+        if (m_triangles[i].material.emission > 0.0f) {
+            m_emissiveTriIndices.push_back(i);
+        }
+    }
+    std::cout << "Emissive triangles: " << m_emissiveTriIndices.size() << std::endl;
 }
 
 void Space::setSamples(int numOfSamples)

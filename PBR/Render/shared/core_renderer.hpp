@@ -8,6 +8,49 @@
 #include "PBR/TextureManager/sampler2d_texture.hpp"
 #include "PBR/HitData/hit_data.hpp"
 #include "PBR/Intersection/intersection.hpp"
+// Sample a random point on a random emissive triangle
+fgt_device_gpu void sampleEmissiveLight(
+    const Triangle* tris,
+    const int* emissiveTris,
+    int numEmissiveTris,
+    fungt::RNG& rng,
+    fungt::Vec3& lightPos,
+    fungt::Vec3& lightNormal,
+    fungt::Vec3& lightEmission,
+    float& pdf)
+{
+    if (numEmissiveTris == 0) {
+        pdf = 0.0f;
+        return;
+    }
+
+    // Pick random emissive triangle
+   // Pick random emissive triangle using integer RNG
+    uint32_t randInt = rng.nextU32();
+    int idx = randInt % numEmissiveTris;  // Modulo gives range [0, numEmissiveTris-1]
+    int triIdx = emissiveTris[idx];
+    const Triangle& tri = tris[triIdx];
+
+    // Sample random point on triangle using barycentric coordinates
+    float r1 = rng.nextFloat();
+    float r2 = rng.nextFloat();
+    if (r1 + r2 > 1.0f) {
+        r1 = 1.0f - r1;
+        r2 = 1.0f - r2;
+    }
+    float r3 = 1.0f - r1 - r2;
+
+    lightPos = tri.v0 * r1 + tri.v1 * r2 + tri.v2 * r3;
+    lightNormal = (tri.n0 * r1 + tri.n1 * r2 + tri.n2 * r3).normalize();
+    lightEmission = tri.material.emission;
+
+    // PDF = 1 / (numTriangles * triangleArea)
+    fungt::Vec3 edge1 = tri.v1 - tri.v0;
+    fungt::Vec3 edge2 = tri.v2 - tri.v0;
+    float area = 0.5f * edge1.cross(edge2).length();
+    if (area < 1e-8f) area = 1e-8f;
+    pdf = 1.0f / (numEmissiveTris * area);
+}
 fgt_device_gpu inline fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, fungt::RNG& fgtRNG) {
 
     float u = fgtRNG.nextFloat();

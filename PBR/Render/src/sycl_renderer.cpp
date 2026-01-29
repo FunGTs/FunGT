@@ -10,11 +10,13 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
     const Triangle* tris,
     const BVHNode* nodes,
     const Light* lights,
+    const int* emissiveTris,
     const syclexp::sampled_image_handle* textures,
     int numTextures,
     int numOfTriangles,
     int numOfNodes,
     int numOfLights,
+    int numEmissiveTris,
     fungt::RNG& rng)
 {
     fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
@@ -69,6 +71,45 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
         radiance += throughput * directLight;
 
+        //Emissive Triangles
+
+
+        if (numEmissiveTris > 0) {
+            fungt::Vec3 lightPos, lightNormal, lightEmission;
+            float lightPdf;
+
+            sampleEmissiveLight(tris, emissiveTris, numEmissiveTris, rng,
+                lightPos, lightNormal, lightEmission, lightPdf);
+
+            if (lightPdf > 0.0f) {
+                fungt::Vec3 toLight = lightPos - hit.point;
+                float distToLight = toLight.length();
+                fungt::Vec3 L = toLight / distToLight;
+
+                // Shadow ray to check visibility
+                fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
+                HitData shadowHit;
+                bool visible = !traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, shadowHit) ||
+                    shadowHit.dis > (distToLight - 0.001f);
+
+                if (visible) {
+                    float cosTheta = fmaxf(0.0f, N.dot(L));
+                    float cosLight = fmaxf(0.0f, lightNormal.dot(L * -1.0f));
+
+                    if (cosTheta > 0.0f && cosLight > 0.0f) {
+                        // Evaluate Cook-Torrance BRDF for this light direction
+                        fungt::Vec3 emissiveLight = lightEmission / (distToLight * distToLight + 1e-6f);
+                        fungt::Vec3 neeContribution = evaluateCookTorrance(N, V, L, hit.material, emissiveLight);
+
+                        // Geometric term for area light
+                        float geometryTerm = cosLight / lightPdf;
+
+                        radiance += throughput * neeContribution * geometryTerm;
+                    }
+                }
+            }
+        }
+
         fungt::Vec3 newDir = sampleHemisphere(N, rng);
 
         fungt::Vec3 avgF = F_Schlick(F0, fmaxf(V.dot(N), 0.0f));
@@ -93,6 +134,7 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
     const std::vector<Triangle>& triangleList,
     const std::vector<BVHNode>& nodes,
     const std::vector<Light>& lightsList,
+    const std::vector<int>& emissiveTriIndices,
     const PBRCamera& camera,
     int samplesPerPixel)
 {
@@ -102,6 +144,14 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
         << " with " << samplesPerPixel << " samples" << std::endl;
 
     // USM allocations
+
+    int* dev_emissiveTris = nullptr;
+    int numEmissiveTris = emissiveTriIndices.size();
+    if (numEmissiveTris > 0) {
+        dev_emissiveTris = sycl::malloc_device<int>(numEmissiveTris, m_queue);
+        m_queue.memcpy(dev_emissiveTris, emissiveTriIndices.data(), numEmissiveTris * sizeof(int));
+    }
+
     Triangle* dev_triList = sycl::malloc_device<Triangle>(triangleList.size(), m_queue);
     BVHNode* dev_bvhNode = sycl::malloc_device<BVHNode>(nodes.size(), m_queue);
     Light* dev_lights = sycl::malloc_device<Light>(lightsList.size(), m_queue);
@@ -148,11 +198,13 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
                                 dev_triList,
                                 dev_bvhNode,
                                 dev_lights,
+                                dev_emissiveTris,
                                 textureHandles,
                                 numTextures,
                                 numTriangles,
                                 numNodes,
                                 numLights,
+                                numEmissiveTris,
                                 rng);
                         }
 
@@ -165,7 +217,9 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
 
     m_queue.memcpy(framebuffer.data(), dev_buff, imageSize * sizeof(fungt::Vec3));
     m_queue.wait();
-
+    if (dev_emissiveTris) {
+        sycl::free(dev_emissiveTris, m_queue);
+    }
     sycl::free(dev_triList, m_queue);
     sycl::free(dev_bvhNode, m_queue);
     sycl::free(dev_lights, m_queue);
