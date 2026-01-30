@@ -1,9 +1,6 @@
-#if !defined(_PARTICLE_SIM_RTC_H_)
-#define _PARTICLE_SIM_RTC_H_
-#include <GL/glew.h>
+#pragma once
 #include <funlib/funlib.hpp>
 #include <string>
-#include <optional>
 #include <CL/cl_gl.h>
 namespace syclexp = sycl::ext::oneapi::experimental;
 
@@ -18,14 +15,12 @@ public:
     void execute(int numParticles, unsigned int vbo, float dt);
 
     // Check if device supports RTC
-    static bool isSupported();
+    static bool isSupported(const sycl::device& dev);
 
     bool hasKernel() const { return has_kernel_; }
 
 private:
     sycl::queue& queue_;
-    std::optional<sycl::kernel> compiled_kernel_;
+    sycl::kernel compiled_kernel_;
     bool has_kernel_ = false;
 };
-
-#endif // _PARTICLE_SIM_RTC_H_
