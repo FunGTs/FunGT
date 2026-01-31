@@ -5,7 +5,7 @@ gpu::PhysicsWorld::PhysicsWorld() {
     // Create kernel
     m_kernel = std::make_shared<gpu::PhysicsKernel>();
     m_kernel->init(100);
-
+    m_kernel->initUniformGrid();
     // Create collision manager (shares kernel ownership)
     m_collisionManager = std::make_shared<gpu::CollisionManager>(m_kernel);
 }

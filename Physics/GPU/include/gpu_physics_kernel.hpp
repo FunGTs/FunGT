@@ -10,6 +10,7 @@
 #include "gpu_manifold_utils.hpp"
 #include "gpu_collision_detection.hpp"
 #include "gpu_impulse_solver.hpp"
+#include "gpu_uniform_grid.hpp"
 enum class MODE {
     STATIC,
     DYNAMIC
@@ -25,7 +26,9 @@ namespace gpu {
 
         // Rendering (SYCL-OpenGL interop)
         unsigned int m_modelMatrixSSBO;
-
+        //Uniform Grid
+        UniformGridData m_gridData;
+        bool m_gridInitialized;
         // Manifold cache
         GPUManifold* m_manifolds;
         int* m_numManifolds;          // GPU counter
@@ -48,13 +51,15 @@ namespace gpu {
 
         // Initialization
         void init(int maxBodies);
+        void initUniformGrid();
         void cleanup();
 
         // Body management
         int addSphere(float x, float y, float z, float radius, float mass, MODE mode); //Mode dynamic by default
         int addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode);
 
-        // Physics pipeline (no parameters needed - uses member data!)
+        // Physics pipeline (no parameters needed - uses member data)
+        void computeCellHashes();
         void applyForces(float dt);
         void integrate(float dt);
         void broadPhase();          // TODO: spatial hashing
