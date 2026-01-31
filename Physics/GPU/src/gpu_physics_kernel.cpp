@@ -201,9 +201,12 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
 
     // Initialize velocities/forces to zero
     float zero = 0.0f;
-    m_queue.memcpy(&m_data.x_vel[id], &zero, sizeof(float)).wait();
+    // Random lateral velocity for natural spin on impact
+    float lateralVelX = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
+    float lateralVelZ = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
+    m_queue.memcpy(&m_data.x_vel[id], &lateralVelX, sizeof(float)).wait();
     m_queue.memcpy(&m_data.y_vel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_vel[id], &zero, sizeof(float)).wait();
+    m_queue.memcpy(&m_data.z_vel[id], &lateralVelZ, sizeof(float)).wait();
     m_queue.memcpy(&m_data.x_force[id], &zero, sizeof(float)).wait();
     m_queue.memcpy(&m_data.y_force[id], &zero, sizeof(float)).wait();
     m_queue.memcpy(&m_data.z_force[id], &zero, sizeof(float)).wait();
