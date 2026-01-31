@@ -3,16 +3,7 @@
 Primitive::Primitive(){
 
 }
-Primitive::Primitive(glm::vec3 shapePos)
-{
-    m_ShapePos = shapePos; 
-}
-Primitive::Primitive(float xpos, float ypos, float zpos)
-{
-    m_ShapePos.x = xpos; 
-    m_ShapePos.y = ypos; 
-    m_ShapePos.z = zpos; 
-}
+
 Primitive::~Primitive()
 {
 }
@@ -83,39 +74,28 @@ void Primitive::unsetAttribs()
     glDisableVertexAttribArray(2);
 }
 
-// Renderable interface implementations
-Shader& Primitive::getShader()
+// Graphics initialization
+void Primitive::setTexture(const std::string &pathToTexture)
 {
-    return m_Shader;
+    texture.genTexture(pathToTexture);
+    texture.active();
+    texture.bind();
 }
 
-glm::mat4 Primitive::getModelMatrix()
+void Primitive::InitGraphics()
 {
-    return m_ShapeModelMatrix;
-}
+    m_vao.genVAO();
+    m_vb.genVB();
+    m_vi.genVI();
 
-void Primitive::updateModelMatrix()
-{
-    m_ShapeModelMatrix = glm::mat4(1.f);
-    m_ShapeModelMatrix = glm::translate(m_ShapeModelMatrix, m_ShapePos);
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.x), glm::vec3(1.f, 0.f, 0.f));
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.y), glm::vec3(0.f, 1.f, 0.f));
-    m_ShapeModelMatrix = glm::rotate(m_ShapeModelMatrix, glm::radians(m_ShapeRot.z), glm::vec3(0.f, 0.f, 1.f));
-    m_ShapeModelMatrix = glm::scale(m_ShapeModelMatrix, m_ShapeScale);
-}
+    m_vao.bind();
 
-// Transform setters
-void Primitive::setPosition(glm::vec3 pos)
-{
-    m_ShapePos = pos;
-}
+    m_vb.bind();
+    m_vb.bufferData(this->getVertices(), this->sizeOfVertices());
 
-void Primitive::setRotation(glm::vec3 rot)
-{
-    m_ShapeRot = rot;
-}
+    this->setAttribs();
 
-void Primitive::setScale(glm::vec3 scale)
-{
-    m_ShapeScale = scale;
+    m_vao.unbind();
+    this->unsetAttribs();
+    m_vb.unbind();
 }

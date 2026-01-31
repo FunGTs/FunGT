@@ -8,7 +8,8 @@
 #include "../Path_Manager/path_manager.hpp"
 #include "../InfoWindow/infowindow.hpp"
 #include "../Physics/Clothing/clothing.hpp"
-#include <memory> 
+#include "../SimpleGeometry/simple_geometry.hpp"
+#include <memory>
 #include <unordered_map>
 
 
@@ -41,12 +42,6 @@ class FunGT : public GraphicsTool<FunGT>{
      float m_lastYmouse;
      bool  m_firstMouse;
     
-
-    std::unique_ptr<Model> m_model; //Static model
-    std::unique_ptr<Primitive> cube; 
-    std::unique_ptr<Primitive> plane;
-   
-    
     //Creates an animation:
     
     std::shared_ptr<SceneManager> m_sceneManager;
@@ -69,7 +64,6 @@ class FunGT : public GraphicsTool<FunGT>{
         static void mouse_callback(GLFWwindow *window, double xpos, double ypos); 
         void setBackgroundColor(float red, float green, float blue, float alfa);
         void setBackgroundColor(float color = 0.f);
-        void addShader();
         Camera getCamera(); 
       
         std::shared_ptr<SceneManager> getSceneManager();
@@ -84,6 +78,8 @@ typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
 typedef std::shared_ptr<GUI> FunGTInfoWindow;
 typedef std::shared_ptr<SimpleModel> FunGTSModel;
+typedef std::shared_ptr<SimpleGeometry> FunGTSGeom;
+
 
 
 #endif // _FUNGT_H_
