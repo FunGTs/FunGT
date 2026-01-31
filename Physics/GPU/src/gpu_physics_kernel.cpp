@@ -146,7 +146,35 @@ void gpu::PhysicsKernel::init(int maxBodies) {
 
     std::cout << "GPU Physics Kernel initialization complete!" << std::endl;
 }
+void gpu::PhysicsKernel::initUniformGrid(){
 
+    // Grid parameters - tune these based on your world
+    float worldSize = 100.0f;  // Adjust based on your simulation bounds
+    float maxSphereRadius = 1.0f;  // Your largest sphere
+
+    m_gridData.cellSize = 2.0f * maxSphereRadius;
+    m_gridData.invCellSize = 1.0f / m_gridData.cellSize;
+
+    m_gridData.gridDimX = static_cast<int>(worldSize / m_gridData.cellSize);
+    m_gridData.gridDimY = static_cast<int>(worldSize / m_gridData.cellSize);
+    m_gridData.gridDimZ = static_cast<int>(worldSize / m_gridData.cellSize);
+
+    m_gridData.totalCells = m_gridData.gridDimX * m_gridData.gridDimY * m_gridData.gridDimZ;
+
+    // Allocate device memory
+    m_gridData.cellHash = sycl::malloc_device<int>(m_maxBodies, m_queue);
+    m_gridData.bodyIndex = sycl::malloc_device<int>(m_maxBodies, m_queue);
+    m_gridData.cellStart = sycl::malloc_device<int>(m_gridData.totalCells, m_queue);
+    m_gridData.cellEnd = sycl::malloc_device<int>(m_gridData.totalCells, m_queue);
+
+    m_gridInitialized = true;
+
+    std::cout << "Uniform grid initialized: "
+        << m_gridData.gridDimX << "x"
+        << m_gridData.gridDimY << "x"
+        << m_gridData.gridDimZ
+        << " = " << m_gridData.totalCells << " cells\n";
+}
 void gpu::PhysicsKernel::cleanup() {
     // Free GPU memory
     if (m_data.shapeType) sycl::free(m_data.shapeType, m_queue);
@@ -176,7 +204,13 @@ void gpu::PhysicsKernel::cleanup() {
     if (m_data.orientZ) sycl::free(m_data.orientZ, m_queue);
     if (m_data.invMass) sycl::free(m_data.invMass, m_queue);
     if (m_data.invInertiaTensor) sycl::free(m_data.invInertiaTensor, m_queue);
-
+    // NEW: Free grid memory
+    if (m_gridInitialized) {
+        sycl::free(m_gridData.cellHash, m_queue);
+        sycl::free(m_gridData.bodyIndex, m_queue);
+        sycl::free(m_gridData.cellStart, m_queue);
+        sycl::free(m_gridData.cellEnd, m_queue);
+    }
     // Delete OpenGL buffer
     if (m_modelMatrixSSBO) {
         glDeleteBuffers(1, &m_modelMatrixSSBO);
@@ -331,7 +365,49 @@ int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float hei
     std::cout << "addBox: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
     return id;
 }
+void gpu::PhysicsKernel::computeCellHashes() {
+    DeviceData data = m_data;
+    UniformGridData grid = m_gridData;
+    int n = m_numBodies;
 
+    std::size_t xdim = 32;
+    std::size_t ydim = (n + xdim - 1) / xdim;
+
+    m_queue.submit([&](sycl::handler& cgh) {
+        cgh.parallel_for(sycl::range<2>(ydim, xdim), [=](sycl::item<2> item) {
+            std::size_t i = item[0] * xdim + item[1];
+            if (i >= n) return;
+
+            // Skip static bodies (they don't go in the grid)
+            if (data.bodyMode[i] == 0) {
+                grid.cellHash[i] = -1;
+                grid.bodyIndex[i] = i;
+                return;
+            }
+
+            // Get body position
+            float px = data.x_pos[i];
+            float py = data.y_pos[i];
+            float pz = data.z_pos[i];
+
+            // Compute grid cell coordinates
+            int cellX = static_cast<int>(sycl::floor(px * grid.invCellSize));
+            int cellY = static_cast<int>(sycl::floor(py * grid.invCellSize));
+            int cellZ = static_cast<int>(sycl::floor(pz * grid.invCellSize));
+
+            // Clamp to grid bounds
+            cellX = sycl::clamp(cellX, 0, grid.gridDimX - 1);
+            cellY = sycl::clamp(cellY, 0, grid.gridDimY - 1);
+            cellZ = sycl::clamp(cellZ, 0, grid.gridDimZ - 1);
+
+            // Compute 1D cell hash
+            int cellHash = cellX + cellY * grid.gridDimX + cellZ * grid.gridDimX * grid.gridDimY;
+
+                grid.cellHash[i] = cellHash;
+                grid.bodyIndex[i] = i;
+            });
+        }).wait();
+}
 void gpu::PhysicsKernel::applyForces(float dt) {
     if (m_numBodies == 0) return;
    
