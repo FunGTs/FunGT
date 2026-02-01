@@ -1,11 +1,11 @@
 
 #include "sycl_renderer.hpp"
-fgt_device inline fungt::Vec3 skyColor(const fungt::Ray& ray) {
-    return fungt::Vec3(0.4, 0.4f, 0.4);
-}
+// fgt_device inline fungt::Vec3 skyColor(const fungt::Ray& ray) {
+//     return fungt::Vec3(0.4, 0.4f, 0.4);
+// }
 
 
-fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
+fgt_device_gpu fungt::Vec3 pathTracer_CookTorranceSYCL(
     const fungt::Ray& initialRay,
     const Triangle* tris,
     const BVHNode* nodes,
@@ -168,55 +168,84 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
     int numTextures = m_numTextures;
     auto textureHandles = m_textureHandles;
 
-    // Tiled rendering
-    const int tileSize = 64;  // Adjust if still too heavy (try 32) or too slow (try 128)
+    //  Progressive loop OUTSIDE
+    const int tileSize = 64;
+    const sycl::range<2> workGroupSize{ 16, 16 };
+    for (int sample = 0; sample < samplesPerPixel; sample++) {
 
-    for (int tileY = 0; tileY < height; tileY += tileSize) {
-        for (int tileX = 0; tileX < width; tileX += tileSize) {
-            int tileW = std::min(tileSize, width - tileX);
-            int tileH = std::min(tileSize, height - tileY);
+        int tileCount = 0;
 
-            m_queue.submit([&](sycl::handler& h) {
-                h.parallel_for(
-                    sycl::range<2>{static_cast<size_t>(tileW), static_cast<size_t>(tileH)},
-                    [=](sycl::id<2> idx) {
-                        int x = tileX + idx[0];
-                        int y = tileY + idx[1];
-                        int pixelIdx = x + y * width;
+        for (int tileY = 0; tileY < height; tileY += tileSize) {
+            for (int tileX = 0; tileX < width; tileX += tileSize) {
+                int tileW = std::min(tileSize, width - tileX);
+                int tileH = std::min(tileSize, height - tileY);
 
-                        fungt::RNG rng(pixelIdx * 1337ULL + 123ULL);
+                int paddedW = ((tileW + 15) / 16) * 16;
+                int paddedH = ((tileH + 15) / 16) * 16;
 
-                        fungt::Vec3 pixel(0.0f);
-                        for (int s = 0; s < samplesPerPixel; s++) {
+                m_queue.submit([&](sycl::handler& h) {
+                    h.parallel_for(
+                        sycl::nd_range<2>{
+                        sycl::range<2>{static_cast<size_t>(paddedW), static_cast<size_t>(paddedH)},
+                            workGroupSize
+                    },
+                        [=](sycl::nd_item<2> item) {
+                            int localX = item.get_global_id(0);
+                            int localY = item.get_global_id(1);
+
+                            if (localX >= tileW || localY >= tileH) return;
+
+                            int x = tileX + localX;
+                            int y = tileY + localY;
+                            int pixelIdx = x + y * width;
+
+                            fungt::RNG rng(pixelIdx * 1337ULL + sample * 7919ULL);
+
+                            // ONE SAMPLE per kernel launch
                             float u = (x + rng.nextFloat()) / (width - 1);
                             float v = (y + rng.nextFloat()) / (height - 1);
-
                             fungt::Ray ray = camera.getRay(u, v);
 
-                            pixel += pathTracer_CookTorrance(
-                                ray,
-                                dev_triList,
-                                dev_bvhNode,
-                                dev_lights,
-                                dev_emissiveTris,
-                                textureHandles,
-                                numTextures,
-                                numTriangles,
-                                numNodes,
-                                numLights,
-                                numEmissiveTris,
-                                rng);
-                        }
+                            fungt::Vec3 contribution = pathTracer_CookTorrance(
+                                ray, dev_triList, dev_bvhNode, dev_lights,
+                                dev_emissiveTris, textureHandles, numTextures,
+                                numTriangles, numNodes, numLights,
+                                numEmissiveTris, rng
+                            );
 
-                        pixel = pixel / float(samplesPerPixel);
-                        dev_buff[pixelIdx] = pixel;
-                    });
-                }).wait();  // Wait after each tile - lets system breathe
+                            // ACCUMULATE
+                            dev_buff[pixelIdx] = dev_buff[pixelIdx] + contribution;
+                        });
+                    });  // NO .wait() here! WATCHDOG 
+
+                tileCount++;
+
+                // Wait every 50 tiles to let GPU breathe
+                if (tileCount % 32 == 0) {
+                    m_queue.wait();
+                }
+            }
+        }
+
+        // Wait after each sample completes
+        m_queue.wait();
+
+        if (sample % 10 == 0) {
+            std::cout << "Sample " << sample << "/" << samplesPerPixel << std::endl;
         }
     }
 
-    m_queue.memcpy(framebuffer.data(), dev_buff, imageSize * sizeof(fungt::Vec3));
+    // Final wait before finalize
     m_queue.wait();
+
+    // Finalize
+    m_queue.submit([&](sycl::handler& h) {
+        h.parallel_for(sycl::range<1>(imageSize), [=](sycl::id<1> idx) {
+            dev_buff[idx] = dev_buff[idx] / float(samplesPerPixel);
+            });
+        }).wait();
+
+    m_queue.memcpy(framebuffer.data(), dev_buff, imageSize * sizeof(fungt::Vec3)).wait();
     if (dev_emissiveTris) {
         sycl::free(dev_emissiveTris, m_queue);
     }
