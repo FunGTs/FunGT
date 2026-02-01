@@ -180,7 +180,6 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
     int numOfTriangles,
     int numOfNodes,
     int numOfLights,
-    curandState* rng,
     fungt::RNG &fgtRng)
 {
     fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
@@ -269,7 +268,19 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
     return radiance;
 }
+fgt_global void finalize_kernel(
+    fungt::Vec3* framebuffer,
+    int width,
+    int height,
+    int totalSamples
+) {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x >= width || y >= height) return;
 
+    int idx = y * width + x;
+    framebuffer[idx] = framebuffer[idx] / float(totalSamples);
+}
 fgt_global void render_kernel(
     fungt::Vec3* framebuffer,
     const Triangle* triangles,
@@ -293,9 +304,10 @@ fgt_global void render_kernel(
     int idx = y * width + x;
 
     fungt::RNG rng(idx * 1337ULL + 123ULL);
+    //fungt::RNG rng(idx * 1337ULL + samplesPerPixel * 7919ULL);
 
-    curandState randomState;
-    curand_init(seed + idx, 0, 0, &randomState);
+    //curandState randomState;
+    //curand_init(seed + idx, 0, 0, &randomState);
 
     //fungt::Vec3 pixelColor(0.0f, 0.0f, 0.0f);
 
@@ -338,13 +350,12 @@ fgt_global void render_kernel(
 
         pixel += pathTracer_CookTorrance(ray, triangles,nodes, lights,
                                         textures,numTextures, numOfTriangles,
-                                        numOfNodes, numOfLights, &randomState,rng);
+                                        numOfNodes, numOfLights,rng);
     }
 
     pixel = pixel / float(samplesPerPixel);
+    //framebuffer[idx] = framebuffer[idx] + pixel;
     framebuffer[idx] = fungt::Vec3(pixel.x, pixel.y, pixel.z);
-
-
 
 }
 std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
@@ -399,25 +410,27 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
         std::cout << "WARNING: CUDA Textures ptr is NUL " << std::endl;
     }
     
+    //for (int sample = 0; sample<samplesPerPixel; sample++){
+        render_kernel << <grid, block >> > (
+            device_buff,
+            device_Tlist,
+            device_bvhNode,
+            device_lights,
+            m_textureObj,
+            m_numTextures,
+            int(triangleList.size()),
+            int(nodes.size()),
+            int(lightsList.size()),
+            width,
+            height,
+            camera,
+            samplesPerPixel,
+            seed
+        );
 
-    render_kernel << <grid, block >> > (
-        device_buff,
-        device_Tlist,
-        device_bvhNode,
-        device_lights,
-        m_textureObj,
-        m_numTextures,
-        int(triangleList.size()),
-        int(nodes.size()),
-        int(lightsList.size()),
-        width,
-        height,
-        camera,
-        samplesPerPixel,
-        seed
-    );
-
-
+    //}
+    //(cudaDeviceSynchronize()); //Wait for all samples
+    //finalize_kernel << <grid, block >> > (device_buff, width, height, samplesPerPixel);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
