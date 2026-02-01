@@ -21,10 +21,12 @@ class CPU_Renderer : public IComputeRenderer{
 
         }
         std::vector<fungt::Vec3> RenderScene(
-            int width, int height,
+            int width, 
+            int height,
             const std::vector<Triangle>& triangleList,
             const std::vector<BVHNode> &nodes,
             const std::vector<Light> &lightsList,
+            const std::vector<int>& emissiveTriIndices,
             const PBRCamera& camera,
             int samplesPerPixel
         );

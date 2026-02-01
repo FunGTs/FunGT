@@ -73,28 +73,7 @@ fgt_device_gpu fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, curandSta
 
 
 }
-fgt_device fungt::Vec3 skyColor(const fungt::Ray& ray) {
-    float t = 0.5f * (ray.m_dir.y + 1.0f);
-    //return (1.0f - t) * fungt::Vec3(1.0f, 1.0f, 1.0f) + t * fungt::Vec3(0.5f, 0.7f, 1.0f)*3.0f;
-    return fungt::Vec3(0.0f, 0.0f, 0.0f); // Bright blu
-    //return (t * fungt::Vec3(2.0f, 2.0f, 2.0f) + (1.0f - t) * fungt::Vec3(0.3f, 0.5f, 1.0f));
 
-    // float t = 0.5f * (ray.m_dir.y + 1.0f);
-    // fungt::Vec3 bottomColor(0.03f, 0.03f, 0.03f);  // Dark neutral gray
-    // fungt::Vec3 topColor(0.1f, 0.1f, 0.1f);        // Medium gray
-    // return (1.0f - t) * bottomColor + t * topColor;
-
-    // // Deep space with subtle blue tint
-    // float t = 0.5f * (ray.m_dir.y + 1.0f);
-    // fungt::Vec3 bottomColor(0.01f, 0.01f, 0.02f);  // Very dark blue-black
-    // fungt::Vec3 topColor(0.05f, 0.08f, 0.12f);     // Slightly lighter dark blue
-    // return (1.0f - t) * bottomColor + t * topColor;
-
-    // float t = 0.5f * (ray.m_dir.y + 1.0f);
-    // fungt::Vec3 bottomColor(0.02f, 0.015f, 0.01f);  // Dark warm brown
-    // fungt::Vec3 topColor(0.08f, 0.06f, 0.05f);      // Lighter warm gray
-    // return (1.0f - t) * bottomColor + t * topColor;
-}
 fgt_device_gpu fungt::Vec3 pathTracer(const fungt::Ray& initialRay, const Triangle* tris,const Light *lights, int numOfTriangles,int numOfLights, curandState* rng) {
     fungt::Vec3 color(1.0f,1.0f,1.0f);
     fungt::Vec3 accumulated(0.0f, 0.f,0.f);
@@ -170,116 +149,18 @@ fgt_device fungt::Vec3 shadeNormal(const fungt::Vec3& normal) {
         0.2f + 0.6f * intensity);
 
 }
-fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
-    const fungt::Ray& initialRay,
-    const Triangle* tris,
-    const BVHNode *nodes,
-    const Light* lights,
-    cudaTextureObject_t* textures,
-    int numOfTextures,  
-    int numOfTriangles,
-    int numOfNodes,
-    int numOfLights,
-    curandState* rng,
-    fungt::RNG &fgtRng)
-{
-    fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
-    fungt::Vec3 radiance(0.0f, 0.0f, 0.0f);
-    fungt::Ray currRay = initialRay;
-
-    for (int bounce = 0; bounce < 6; ++bounce) {
-        HitData hit;
-        //bool hitAny = traceRay(currRay, tris, numOfTriangles,textures, hit);
-        bool hitAny = traceRayBVH(currRay,tris,nodes,numOfNodes,textures,hit);
-
-        if (!hitAny) {
-            radiance += throughput * skyColor(currRay);
-            break;
-        }
-
-        fungt::Vec3 N = hit.normal.normalize();
-        fungt::Vec3 V = (currRay.m_dir * (-1.0f)).normalize();
-
-        // Extract material properties
-        fungt::Vec3 baseColor = fungt::Vec3(hit.material.baseColor[0],
-            hit.material.baseColor[1],
-            hit.material.baseColor[2]);
-        float metallic = fmaxf(0.0f, fminf(hit.material.metallic, 1.0f));
-        float roughness = fmaxf(0.05f, fminf(hit.material.roughness, 1.0f));
-        fungt::Vec3 dielectricF0 = fungt::Vec3(hit.material.reflectance,
-            hit.material.reflectance,
-            hit.material.reflectance);
-        fungt::Vec3 F0 = lerp(dielectricF0, baseColor, metallic);
-
-        // Add emission if any
-        if (hit.material.emission > 0.0f) {
-            radiance += throughput * baseColor * hit.material.emission;
-        }
-
-        // Direct lighting from all lights
-        fungt::Vec3 directLight(0.0f);
-        for (int l = 0; l < numOfLights; ++l) {
-            fungt::Vec3 toLight = lights[l].m_pos - hit.point;
-            float dist = toLight.length();
-            fungt::Vec3 L = toLight / dist;
-
-            // Shadow test
-            fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
-            HitData temp;
-            //bool occluded = traceRay(shadowRay, tris, numOfTriangles,textures, temp) && temp.dis < dist;
-            bool occluded = traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, temp) && temp.dis < dist;
-            if (occluded) continue;
-
-            // Light intensity with inverse square falloff
-            fungt::Vec3 lightRadiance = lights[l].m_intensity / (dist * dist + 1e-6f);
-
-            // Evaluate BRDF
-            directLight += evaluateCookTorrance(N, V, L, hit.material, lightRadiance);
-        }
-
-        radiance += throughput * directLight;
-
-        // Prepare indirect bounce - sample diffuse hemisphere
-        fungt::Vec3 newDir = sampleHemisphere(N,fgtRng);
-        //fungt::Vec3 newDir = sampleHemisphere(N, rng);
-        //float cosTheta = fmaxf(newDir.dot(N), 0.0f);
-
-        // Update throughput for next bounce
-        // kD is the diffuse component (energy NOT reflected by Fresnel)
-        fungt::Vec3 avgF = F_Schlick(F0, fmaxf(V.dot(N), 0.0f));
-        fungt::Vec3 kD = (fungt::Vec3(1.0f, 1.0f, 1.0f) - avgF) * (1.0f - metallic);
-
-        // For diffuse sampling: BRDF = kD * baseColor / PI
-        // PDF = cosTheta / PI
-        // throughput *= BRDF * cosTheta / PDF = (kD * baseColor / PI) * cosTheta / (cosTheta / PI)
-        // Simplifies to: throughput *= kD * baseColor
-        throughput = throughput * (kD * baseColor);
-
-        currRay = fungt::Ray(hit.point + N * 0.001f, newDir);
-
-        // Russian roulette termination
-        if (bounce > 2) {
-            float maxComponent = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
-            float p = fminf(0.95f, maxComponent);
-            //if (randomFloat(rng) > p) break;
-            if (fgtRng.nextFloat() > p) break;
-            throughput = throughput / p;
-        }
-    }
-
-    return radiance;
-}
-
 fgt_global void render_kernel(
     fungt::Vec3* framebuffer,
     const Triangle* triangles,
     const BVHNode * nodes,
     const Light *lights,
+    const int *emissiveTris,
     cudaTextureObject_t* textures,
     int numTextures,
     int numOfTriangles,
     int numOfNodes,
     int numOfLights,
+    int numOfEmissiveTris,
     int width,
     int height,
     PBRCamera cam,
@@ -294,40 +175,6 @@ fgt_global void render_kernel(
 
     fungt::RNG rng(idx * 1337ULL + 123ULL);
 
-    curandState randomState;
-    curand_init(seed + idx, 0, 0, &randomState);
-
-    //fungt::Vec3 pixelColor(0.0f, 0.0f, 0.0f);
-
-    // for (int s = 0; s < samplesPerPixel; s++) {
-    //     float u = (x + randomFloat(&randomState)) / (width - 1);
-    //     float v = (y + randomFloat(&randomState)) / (height - 1);
-
-    //     fungt::Ray ray = cam.getRay(u, v);
-    //     HitData hit_data;
-    //     bool isHit = false;
-    //     float closest = FLT_MAX;
-
-    //     for (int i = 0; i < numOfTriangles; i++) {
-    //         HitData tempData;
-    //         if (Intersection::MollerTrumbore(ray, triangles[i], 0.001f, closest, tempData)) {
-    //             isHit = true;
-    //             closest = tempData.dis;
-    //             hit_data = tempData;
-    //         }
-    //     }
-
-    //     if (isHit)
-    //         pixelColor += shadeNormal(hit_data.normal);
-    //     else
-    //         pixelColor += fungt::Vec3(0.5f, 0.5f, 0.5f); // background
-
-    // }
-
-    // pixelColor = pixelColor / float(samplesPerPixel);
-    // pixelColor = fungt::Vec3(sqrtf(pixelColor.x), sqrtf(pixelColor.y), sqrtf(pixelColor.z));
-    // framebuffer[idx] = pixelColor;
-
     fungt::Vec3 pixel(0.0f);
     for (int s = 0; s < samplesPerPixel; s++) {
         //float u = (x + randomFloat(&randomState)) / (width - 1);
@@ -336,15 +183,13 @@ fgt_global void render_kernel(
         float v = (y + rng.nextFloat()) / (height - 1);
         fungt::Ray ray = cam.getRay(u, v);
 
-        pixel += pathTracer_CookTorrance(ray, triangles,nodes, lights,
+        pixel += pathTracer_CookTorrance(ray, triangles,nodes, lights, emissiveTris,
                                         textures,numTextures, numOfTriangles,
-                                        numOfNodes, numOfLights, &randomState,rng);
+                                        numOfNodes, numOfLights,numOfEmissiveTris,rng);
     }
 
     pixel = pixel / float(samplesPerPixel);
     framebuffer[idx] = fungt::Vec3(pixel.x, pixel.y, pixel.z);
-
-
 
 }
 std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
@@ -352,6 +197,7 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     const std::vector<Triangle>& triangleList,
     const std::vector<BVHNode> &nodes,
     const std::vector<Light> &lightsList,
+    const std::vector<int>& emissiveTriIndices,
     const PBRCamera& camera,
     int samplesPerPixel
 ) {
@@ -367,6 +213,14 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     unsigned int gridy = (height + block_y - 1) / block_y;
     std::cout << "Grid dimensions : (" << gridx << " , " << gridy << ")" << std::endl;
     dim3 grid(gridx, gridy);
+
+    int* device_emissiveTris = nullptr;
+    int numEmissiveTris = emissiveTriIndices.size();
+    if (numEmissiveTris > 0) {
+        size_t emissiveLightsSize = numEmissiveTris*sizeof(int);
+        CUDA_CHECK(cudaMalloc(&device_emissiveTris, emissiveLightsSize));
+        CUDA_CHECK(cudaMemcpy(device_emissiveTris, emissiveTriIndices.data(), emissiveLightsSize, cudaMemcpyHostToDevice));
+    }
 
     Triangle* device_Tlist = nullptr;
     size_t TlistSize = triangleList.size() * sizeof(Triangle);
@@ -405,11 +259,13 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
         device_Tlist,
         device_bvhNode,
         device_lights,
+        device_emissiveTris,
         m_textureObj,
         m_numTextures,
         int(triangleList.size()),
         int(nodes.size()),
         int(lightsList.size()),
+        numEmissiveTris,
         width,
         height,
         camera,
@@ -421,7 +277,12 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
+    //Get buffer data
     CUDA_CHECK(cudaMemcpy(framebuffer.data(), device_buff, imageSize * sizeof(fungt::Vec3), cudaMemcpyDeviceToHost));
+
+    if (device_emissiveTris) {
+        CUDA_CHECK(cudaFree(device_emissiveTris));
+    }
     CUDA_CHECK(cudaFree(device_buff));
     CUDA_CHECK(cudaFree(device_Tlist));
     CUDA_CHECK(cudaFree(device_bvhNode));

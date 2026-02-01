@@ -67,7 +67,8 @@ fgt_device_forceinline fungt::Vec3 evaluateCookTorrance(
 
     if (NoL <= 0.0f || NoV <= 0.0f) return fungt::Vec3(0.0f);
 
-    float D = D_GGX(NoH, roughness);
+    //float D = D_GGX(NoH, roughness);
+    float D = fminf(D_GGX(NoH, roughness), 100.0f);
     float G = G_Smith(NoV, NoL, roughness);
     fungt::Vec3 F = F_Schlick(F0, VoH);
 
@@ -75,7 +76,7 @@ fgt_device_forceinline fungt::Vec3 evaluateCookTorrance(
     fungt::Vec3 numerator = F * (D * G);
     float denom = 4.0f * NoV * NoL + 1e-6f;
     fungt::Vec3 specular = numerator / denom;
-
+    
     // Diffuse (Lambert) scaled by (1 - F) and (1 - metallic)
     fungt::Vec3 kS = F;
     fungt::Vec3 kD = (fungt::Vec3(1.0f, 1.0f, 1.0f) - kS) * (1.0f - metallic);
@@ -84,9 +85,9 @@ fgt_device_forceinline fungt::Vec3 evaluateCookTorrance(
     fungt::Vec3 Lo = (kD * diffuse + specular) * radiance * NoL;
 
     // Add emission (if any) from material (emission is scalar intensity)
-    if (mat.emission > 0.0f) {
-        Lo += baseColor * mat.emission;
-    }
+    // if (mat.emission > 0.0f) {
+    //     Lo += baseColor * mat.emission;
+    // }
 
     return Lo;
 }
