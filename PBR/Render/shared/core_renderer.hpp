@@ -28,6 +28,104 @@ fgt_device_gpu inline fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, fu
 
 
 }
+fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
+    const fungt::Ray& initialRay,
+    const Triangle* tris,
+    const BVHNode* nodes,
+    const Light* lights,
+    const TextureDeviceObject* textures,
+    int numOfTextures,
+    int numOfTriangles,
+    int numOfNodes,
+    int numOfLights,
+    fungt::RNG& fgtRng)
+{
+    fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
+    fungt::Vec3 radiance(0.0f, 0.0f, 0.0f);
+    fungt::Ray currRay = initialRay;
+
+    for (int bounce = 0; bounce < 6; ++bounce) {
+        HitData hit;
+        //bool hitAny = traceRay(currRay, tris, numOfTriangles,textures, hit);
+        bool hitAny = traceRayBVH(currRay, tris, nodes, numOfNodes, textures, hit);
+
+        if (!hitAny) {
+            radiance += throughput * skyColor(currRay);
+            break;
+        }
+
+        fungt::Vec3 N = hit.normal.normalize();
+        fungt::Vec3 V = (currRay.m_dir * (-1.0f)).normalize();
+
+        // Extract material properties
+        fungt::Vec3 baseColor = fungt::Vec3(hit.material.baseColor[0],
+            hit.material.baseColor[1],
+            hit.material.baseColor[2]);
+        float metallic = fmaxf(0.0f, fminf(hit.material.metallic, 1.0f));
+        float roughness = fmaxf(0.05f, fminf(hit.material.roughness, 1.0f));
+        fungt::Vec3 dielectricF0 = fungt::Vec3(hit.material.reflectance,
+            hit.material.reflectance,
+            hit.material.reflectance);
+        fungt::Vec3 F0 = lerp(dielectricF0, baseColor, metallic);
+
+        // Add emission if any
+        if (hit.material.emission > 0.0f) {
+            radiance += throughput * baseColor * hit.material.emission;
+        }
+
+        // Direct lighting from all lights
+        fungt::Vec3 directLight(0.0f);
+        for (int l = 0; l < numOfLights; ++l) {
+            fungt::Vec3 toLight = lights[l].m_pos - hit.point;
+            float dist = toLight.length();
+            fungt::Vec3 L = toLight / dist;
+
+            // Shadow test
+            fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
+            HitData temp;
+            //bool occluded = traceRay(shadowRay, tris, numOfTriangles,textures, temp) && temp.dis < dist;
+            bool occluded = traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, temp) && temp.dis < dist;
+            if (occluded) continue;
+
+            // Light intensity with inverse square falloff
+            fungt::Vec3 lightRadiance = lights[l].m_intensity / (dist * dist + 1e-6f);
+
+            // Evaluate BRDF
+            directLight += evaluateCookTorrance(N, V, L, hit.material, lightRadiance);
+        }
+
+        radiance += throughput * directLight;
+
+        // Prepare indirect bounce - sample diffuse hemisphere
+        fungt::Vec3 newDir = sampleHemisphere(N, fgtRng);
+        //fungt::Vec3 newDir = sampleHemisphere(N, rng);
+        //float cosTheta = fmaxf(newDir.dot(N), 0.0f);
+
+        // Update throughput for next bounce
+        // kD is the diffuse component (energy NOT reflected by Fresnel)
+        fungt::Vec3 avgF = F_Schlick(F0, fmaxf(V.dot(N), 0.0f));
+        fungt::Vec3 kD = (fungt::Vec3(1.0f, 1.0f, 1.0f) - avgF) * (1.0f - metallic);
+
+        // For diffuse sampling: BRDF = kD * baseColor / PI
+        // PDF = cosTheta / PI
+        // throughput *= BRDF * cosTheta / PDF = (kD * baseColor / PI) * cosTheta / (cosTheta / PI)
+        // Simplifies to: throughput *= kD * baseColor
+        throughput = throughput * (kD * baseColor);
+
+        currRay = fungt::Ray(hit.point + N * 0.001f, newDir);
+
+        // Russian roulette termination
+        if (bounce > 2) {
+            float maxComponent = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
+            float p = fminf(0.95f, maxComponent);
+            //if (randomFloat(rng) > p) break;
+            if (fgtRng.nextFloat() > p) break;
+            throughput = throughput / p;
+        }
+    }
+
+    return radiance;
+}
 fgt_device_gpu bool inline traceRayBVH(
     const fungt::Ray& ray,
     const Triangle* tris,
