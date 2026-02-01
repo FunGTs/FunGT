@@ -124,7 +124,7 @@ std::shared_ptr<SimpleGeometry> SimpleGeometry::create(Geometry geomType) {
             break;
         }
         case Geometry::Plane:{
-            simpleGeom->setPrimitive(std::make_shared<Plane>(40.0f, 40.0f)); // 10x10 ground
+            simpleGeom->setPrimitive(std::make_shared<Plane>(80.0f, 80.0f)); // 10x10 ground
             simpleGeom->m_vs_path = getAssetPath("shaders/primitive_vs.glsl");
             simpleGeom->m_fs_path = getAssetPath("shaders/primitive_fs.glsl");
             break;
