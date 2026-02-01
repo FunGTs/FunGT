@@ -71,6 +71,50 @@ fgt_device_gpu inline fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, fu
 
 
 }
+// =============================================================================
+// Add this function in core_renderer.hpp, right after traceRayBVH()
+// =============================================================================
+
+// Shadow ray traversal - returns TRUE if anything blocks the ray
+// Unlike traceRayBVH, this exits immediately on ANY hit (no closest hit needed)
+fgt_device_gpu bool traceShadowRayBVH(
+    const fungt::Ray& ray,
+    const Triangle* tris,
+    const BVHNode* bvhNodes,
+    int numNodes,
+    float maxDist)  // Only check hits closer than this (distance to light)
+{
+    int stack[64];
+    int stackPtr = 0;
+    stack[stackPtr++] = 0;  // Start with root
+
+    while (stackPtr > 0) {
+        int nodeIdx = stack[--stackPtr];
+        const BVHNode& node = bvhNodes[nodeIdx];
+
+        // Test AABB with maxDist as upper bound
+        if (!Intersection::intersectAABB(ray, node.m_boundingBox, 0.001f, maxDist)) {
+            continue;
+        }
+
+        if (node.isLeaf()) {
+            // Test triangles - return immediately on ANY hit
+            for (int i = 0; i < node.triCount; i++) {
+                int triIdx = node.firstTriIdx + i;
+                HitData temp;
+                if (Intersection::MollerTrumbore(ray, tris[triIdx], 0.001f, maxDist, temp)) {
+                    return true;  // BLOCKED - early exit
+                }
+            }
+        }
+        else {
+            stack[stackPtr++] = node.leftChild;
+            stack[stackPtr++] = node.rightChild;
+        }
+    }
+
+    return false;  // Nothing blocked the ray
+}
 fgt_device_gpu bool inline traceRayBVH(
     const fungt::Ray& ray,
     const Triangle* tris,

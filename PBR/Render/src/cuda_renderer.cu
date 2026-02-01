@@ -170,20 +170,161 @@ fgt_device fungt::Vec3 shadeNormal(const fungt::Vec3& normal) {
         0.2f + 0.6f * intensity);
 
 }
+// fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
+//     const fungt::Ray& initialRay,
+//     const Triangle* tris,
+//     const BVHNode *nodes,
+//     const Light* lights,
+//     const int* emissiveTris,
+//     cudaTextureObject_t* textures,
+//     int numOfTextures,  
+//     int numOfTriangles,
+//     int numOfNodes,
+//     int numOfLights,
+//     int numOfEmissiveTris,
+//     fungt::RNG &fgtRng)
+// {
+//     fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
+//     fungt::Vec3 radiance(0.0f, 0.0f, 0.0f);
+//     fungt::Ray currRay = initialRay;
+
+//     for (int bounce = 0; bounce < 6; ++bounce) {
+//         HitData hit;
+//         //bool hitAny = traceRay(currRay, tris, numOfTriangles,textures, hit);
+//         bool hitAny = traceRayBVH(currRay,tris,nodes,numOfNodes,textures,hit);
+
+//         if (!hitAny) {
+//             radiance += throughput * skyColor(currRay);
+//             break;
+//         }
+
+//         fungt::Vec3 N = hit.normal.normalize();
+//         fungt::Vec3 V = (currRay.m_dir * (-1.0f)).normalize();
+
+//         // Extract material properties
+//         fungt::Vec3 baseColor = fungt::Vec3(hit.material.baseColor[0],
+//             hit.material.baseColor[1],
+//             hit.material.baseColor[2]);
+//         float metallic = fmaxf(0.0f, fminf(hit.material.metallic, 1.0f));
+//         float roughness = fmaxf(0.05f, fminf(hit.material.roughness, 1.0f));
+//         fungt::Vec3 dielectricF0 = fungt::Vec3(hit.material.reflectance,
+//             hit.material.reflectance,
+//             hit.material.reflectance);
+//         fungt::Vec3 F0 = lerp(dielectricF0, baseColor, metallic);
+
+//         // Add emission if any
+//         if (hit.material.emission > 0.0f) {
+//             radiance += throughput * baseColor * hit.material.emission;
+//         }
+
+//         // Direct lighting from all lights
+//         fungt::Vec3 directLight(0.0f);
+//         for (int l = 0; l < numOfLights; ++l) {
+//             fungt::Vec3 toLight = lights[l].m_pos - hit.point;
+//             float dist = toLight.length();
+//             fungt::Vec3 L = toLight / dist;
+
+//             // Shadow test
+//             fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
+//             HitData temp;
+//             //bool occluded = traceRay(shadowRay, tris, numOfTriangles,textures, temp) && temp.dis < dist;
+//             bool occluded = traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, temp) && temp.dis < dist;
+//             if (occluded) continue;
+
+//             // Light intensity with inverse square falloff
+//             fungt::Vec3 lightRadiance = lights[l].m_intensity / (dist * dist + 1e-6f);
+
+//             // Evaluate BRDF
+//             directLight += evaluateCookTorrance(N, V, L, hit.material, lightRadiance);
+//         }
+
+//         radiance += throughput * directLight;
+//         // ============================================
+//         // === NEE FOR EMISSIVE TRIANGLES HERE ===
+//         // ============================================
+//         if (numOfEmissiveTris > 0) {
+//             fungt::Vec3 lightPos, lightNormal, lightEmission;
+//             float lightPdf;
+
+//             sampleEmissiveLight(tris, emissiveTris, numOfEmissiveTris, fgtRng,
+//                 lightPos, lightNormal, lightEmission, lightPdf);
+
+//             if (lightPdf > 0.0f) {
+//                 fungt::Vec3 toLight = lightPos - hit.point;
+//                 float distToLight = toLight.length();
+//                 fungt::Vec3 L = toLight / distToLight;
+
+//                 // Shadow ray to check visibility
+//                 fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
+//                 HitData shadowHit;
+//                 bool visible = !traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, shadowHit) ||
+//                     shadowHit.dis > (distToLight - 0.001f);
+
+//                 if (visible) {
+//                     float cosTheta = fmaxf(0.0f, N.dot(L));
+//                     float cosLight = fmaxf(0.0f, lightNormal.dot(L * -1.0f));
+
+//                     if (cosTheta > 0.0f && cosLight > 0.0f) {
+//                         // Evaluate Cook-Torrance BRDF for this light direction
+//                         // fungt::Vec3 emissiveLight = lightEmission / (distToLight * distToLight + 1e-6f);
+//                         fungt::Vec3 emissiveLight = lightEmission;
+//                         fungt::Vec3 neeContribution = evaluateCookTorrance(N, V, L, hit.material, emissiveLight);
+
+//                         // Geometric term for area light
+//                         float geometryTerm = cosLight / (distToLight * distToLight);
+
+//                         radiance += throughput * neeContribution * geometryTerm * cosTheta / lightPdf;
+//                         // radiance.x = fminf(radiance.x, 10.0f);
+//                         // radiance.y = fminf(radiance.y, 10.0f);
+//                         // radiance.z = fminf(radiance.z, 10.0f);
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Prepare indirect bounce - sample diffuse hemisphere
+//         fungt::Vec3 newDir = sampleHemisphere(N,fgtRng);
+//         //fungt::Vec3 newDir = sampleHemisphere(N, rng);
+//         //float cosTheta = fmaxf(newDir.dot(N), 0.0f);
+
+//         // Update throughput for next bounce
+//         // kD is the diffuse component (energy NOT reflected by Fresnel)
+//         fungt::Vec3 avgF = F_Schlick(F0, fmaxf(V.dot(N), 0.0f));
+//         fungt::Vec3 kD = (fungt::Vec3(1.0f, 1.0f, 1.0f) - avgF) * (1.0f - metallic);
+
+//         // For diffuse sampling: BRDF = kD * baseColor / PI
+//         // PDF = cosTheta / PI
+//         // throughput *= BRDF * cosTheta / PDF = (kD * baseColor / PI) * cosTheta / (cosTheta / PI)
+//         // Simplifies to: throughput *= kD * baseColor
+//         throughput = throughput * (kD * baseColor);
+
+//         currRay = fungt::Ray(hit.point + N * 0.001f, newDir);
+
+//         // Russian roulette termination
+//         if (bounce > 2) {
+//             float maxComponent = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
+//             float p = fminf(0.95f, maxComponent);
+//             //if (randomFloat(rng) > p) break;
+//             if (fgtRng.nextFloat() > p) break;
+//             throughput = throughput / p;
+//         }
+//     }
+
+//     return radiance;
+// }
 fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
     const fungt::Ray& initialRay,
     const Triangle* tris,
-    const BVHNode *nodes,
+    const BVHNode* nodes,
     const Light* lights,
     const int* emissiveTris,
     cudaTextureObject_t* textures,
-    int numOfTextures,  
+    int numOfTextures,
     int numOfTriangles,
     int numOfNodes,
     int numOfLights,
     int numOfEmissiveTris,
-    curandState* rng,
-    fungt::RNG &fgtRng)
+    fungt::RNG& fgtRng)
 {
     fungt::Vec3 throughput(1.0f, 1.0f, 1.0f);
     fungt::Vec3 radiance(0.0f, 0.0f, 0.0f);
@@ -191,8 +332,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
     for (int bounce = 0; bounce < 6; ++bounce) {
         HitData hit;
-        //bool hitAny = traceRay(currRay, tris, numOfTriangles,textures, hit);
-        bool hitAny = traceRayBVH(currRay,tris,nodes,numOfNodes,textures,hit);
+        bool hitAny = traceRayBVH(currRay, tris, nodes, numOfNodes, textures, hit);
 
         if (!hitAny) {
             radiance += throughput * skyColor(currRay);
@@ -202,48 +342,43 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
         fungt::Vec3 N = hit.normal.normalize();
         fungt::Vec3 V = (currRay.m_dir * (-1.0f)).normalize();
 
-        // Extract material properties
-        fungt::Vec3 baseColor = fungt::Vec3(hit.material.baseColor[0],
+        fungt::Vec3 baseColor = fungt::Vec3(
+            hit.material.baseColor[0],
             hit.material.baseColor[1],
             hit.material.baseColor[2]);
         float metallic = fmaxf(0.0f, fminf(hit.material.metallic, 1.0f));
         float roughness = fmaxf(0.05f, fminf(hit.material.roughness, 1.0f));
-        fungt::Vec3 dielectricF0 = fungt::Vec3(hit.material.reflectance,
+        fungt::Vec3 dielectricF0 = fungt::Vec3(
+            hit.material.reflectance,
             hit.material.reflectance,
             hit.material.reflectance);
         fungt::Vec3 F0 = lerp(dielectricF0, baseColor, metallic);
 
-        // Add emission if any
+        // Emission
         if (hit.material.emission > 0.0f) {
             radiance += throughput * baseColor * hit.material.emission;
         }
 
-        // Direct lighting from all lights
+        // Direct lighting from point lights
         fungt::Vec3 directLight(0.0f);
         for (int l = 0; l < numOfLights; ++l) {
             fungt::Vec3 toLight = lights[l].m_pos - hit.point;
             float dist = toLight.length();
             fungt::Vec3 L = toLight / dist;
 
-            // Shadow test
+            // OPTIMIZED: Early-exit shadow ray
             fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
-            HitData temp;
-            //bool occluded = traceRay(shadowRay, tris, numOfTriangles,textures, temp) && temp.dis < dist;
-            bool occluded = traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, temp) && temp.dis < dist;
-            if (occluded) continue;
+            if (traceShadowRayBVH(shadowRay, tris, nodes, numOfNodes, dist)) {
+                continue;  // Blocked
+            }
 
-            // Light intensity with inverse square falloff
             fungt::Vec3 lightRadiance = lights[l].m_intensity / (dist * dist + 1e-6f);
-
-            // Evaluate BRDF
             directLight += evaluateCookTorrance(N, V, L, hit.material, lightRadiance);
         }
-
         radiance += throughput * directLight;
-        // ============================================
-        // === NEE FOR EMISSIVE TRIANGLES HERE ===
-        // ============================================
-        if (numOfEmissiveTris > 0) {
+
+        // NEE for emissive triangles (only first 3 bounces)
+        if (numOfEmissiveTris > 0 && bounce < 3) {
             fungt::Vec3 lightPos, lightNormal, lightEmission;
             float lightPdf;
 
@@ -255,57 +390,40 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
                 float distToLight = toLight.length();
                 fungt::Vec3 L = toLight / distToLight;
 
-                // Shadow ray to check visibility
-                fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
-                HitData shadowHit;
-                bool visible = !traceRayBVH(shadowRay, tris, nodes, numOfNodes, textures, shadowHit) ||
-                    shadowHit.dis > (distToLight - 0.001f);
+                float cosTheta = N.dot(L);
+                float cosLight = lightNormal.dot(L * -1.0f);
 
-                if (visible) {
-                    float cosTheta = fmaxf(0.0f, N.dot(L));
-                    float cosLight = fmaxf(0.0f, lightNormal.dot(L * -1.0f));
+                // Skip if facing away (before shooting shadow ray)
+                if (cosTheta > 0.0f && cosLight > 0.0f) {
 
-                    if (cosTheta > 0.0f && cosLight > 0.0f) {
-                        // Evaluate Cook-Torrance BRDF for this light direction
-                        // fungt::Vec3 emissiveLight = lightEmission / (distToLight * distToLight + 1e-6f);
-                        fungt::Vec3 emissiveLight = lightEmission;
-                        fungt::Vec3 neeContribution = evaluateCookTorrance(N, V, L, hit.material, emissiveLight);
+                    // OPTIMIZED: Early-exit shadow ray
+                    fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
+                    bool occluded = traceShadowRayBVH(shadowRay, tris, nodes, numOfNodes,
+                        distToLight - 0.001f);
 
-                        // Geometric term for area light
+                    if (!occluded) {
+                        fungt::Vec3 neeContribution = evaluateCookTorrance(N, V, L,
+                            hit.material,
+                            lightEmission);
                         float geometryTerm = cosLight / (distToLight * distToLight);
-
                         radiance += throughput * neeContribution * geometryTerm * cosTheta / lightPdf;
-                        // radiance.x = fminf(radiance.x, 10.0f);
-                        // radiance.y = fminf(radiance.y, 10.0f);
-                        // radiance.z = fminf(radiance.z, 10.0f);
                     }
                 }
             }
         }
 
-        // Prepare indirect bounce - sample diffuse hemisphere
-        fungt::Vec3 newDir = sampleHemisphere(N,fgtRng);
-        //fungt::Vec3 newDir = sampleHemisphere(N, rng);
-        //float cosTheta = fmaxf(newDir.dot(N), 0.0f);
-
-        // Update throughput for next bounce
-        // kD is the diffuse component (energy NOT reflected by Fresnel)
+        // Indirect bounce
+        fungt::Vec3 newDir = sampleHemisphere(N, fgtRng);
         fungt::Vec3 avgF = F_Schlick(F0, fmaxf(V.dot(N), 0.0f));
         fungt::Vec3 kD = (fungt::Vec3(1.0f, 1.0f, 1.0f) - avgF) * (1.0f - metallic);
-
-        // For diffuse sampling: BRDF = kD * baseColor / PI
-        // PDF = cosTheta / PI
-        // throughput *= BRDF * cosTheta / PDF = (kD * baseColor / PI) * cosTheta / (cosTheta / PI)
-        // Simplifies to: throughput *= kD * baseColor
         throughput = throughput * (kD * baseColor);
 
         currRay = fungt::Ray(hit.point + N * 0.001f, newDir);
 
-        // Russian roulette termination
+        // Russian roulette
         if (bounce > 2) {
             float maxComponent = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
             float p = fminf(0.95f, maxComponent);
-            //if (randomFloat(rng) > p) break;
             if (fgtRng.nextFloat() > p) break;
             throughput = throughput / p;
         }
@@ -313,6 +431,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
     return radiance;
 }
+
 fgt_global void render_kernel(
     fungt::Vec3* framebuffer,
     const Triangle* triangles,
@@ -339,10 +458,6 @@ fgt_global void render_kernel(
 
     fungt::RNG rng(idx * 1337ULL + 123ULL);
 
-    curandState randomState;
-    curand_init(seed + idx, 0, 0, &randomState);
-
-
     fungt::Vec3 pixel(0.0f);
     for (int s = 0; s < samplesPerPixel; s++) {
         //float u = (x + randomFloat(&randomState)) / (width - 1);
@@ -353,7 +468,7 @@ fgt_global void render_kernel(
 
         pixel += pathTracer_CookTorrance(ray, triangles,nodes, lights, emissiveTris,
                                         textures,numTextures, numOfTriangles,
-                                        numOfNodes, numOfLights,numOfEmissiveTris, &randomState,rng);
+                                        numOfNodes, numOfLights,numOfEmissiveTris,rng);
     }
 
     pixel = pixel / float(samplesPerPixel);
