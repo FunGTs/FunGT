@@ -11,6 +11,7 @@
 #include "gpu_collision_detection.hpp"
 #include "gpu_impulse_solver.hpp"
 #include "gpu_uniform_grid.hpp"
+#include "gpu_radix_sort.hpp"
 enum class MODE {
     STATIC,
     DYNAMIC
@@ -38,7 +39,8 @@ namespace gpu {
         int* m_pairToManifold;
         int m_hashTableSize;          // should be prime, larger than maxManifolds
                 
-
+        // NEW: RadixSort instance
+        std::unique_ptr<RadixSort> m_radixSort;
         // Metadata
         int m_numBodies;
         int m_capacity;
@@ -51,6 +53,7 @@ namespace gpu {
 
         // Initialization
         void init(int maxBodies);
+        void initMemoryAllocations(int maxBodies);
         void initUniformGrid();
         void cleanup();
 

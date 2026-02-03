@@ -1,6 +1,7 @@
 #include "../include/gpu_physics_kernel.hpp"
 #include <iostream>
 #include <cmath>
+#include "gpu_physics_kernel.hpp"
 
 
 gpu::PhysicsKernel::PhysicsKernel()
@@ -13,6 +14,7 @@ gpu::PhysicsKernel::PhysicsKernel()
            nullptr, nullptr, nullptr,
            nullptr, nullptr, nullptr, nullptr},
     m_modelMatrixSSBO(0) {
+    m_radixSort = std::make_unique<RadixSort>(m_queue);
 }
 
 gpu::PhysicsKernel::~PhysicsKernel() {
@@ -25,6 +27,18 @@ void gpu::PhysicsKernel::debugVelocity(int bodyId) {
     std::cout << "Body " << bodyId << " velY: " << velY << std::endl;
 }
 void gpu::PhysicsKernel::init(int maxBodies) {
+    
+    //Kernel memory allocations
+    initMemoryAllocations(maxBodies);
+   
+    if(m_radixSort){
+        m_radixSort->init(maxBodies);
+    }
+   
+}
+
+void gpu::PhysicsKernel::initMemoryAllocations(int maxBodies)
+{
     m_capacity = maxBodies;
     m_numBodies = 0;
 
@@ -40,16 +54,16 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     std::cout << "Allocating GPU memory for " << maxBodies << " bodies..." << std::endl;
     m_maxManifolds = maxBodies * 4;  // worst case: each body touches 4 others
     m_hashTableSize = m_maxManifolds * 2;  // keep hash table sparse
-    
+
     m_manifolds = sycl::malloc_device<GPUManifold>(m_maxManifolds, m_queue);
     m_numManifolds = sycl::malloc_device<int>(1, m_queue);
     m_pairToManifold = sycl::malloc_device<int>(m_hashTableSize, m_queue);
 
 
     //Allocate shape data:
-    m_data.shapeType   = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = sphere, 1 = box
-    m_data.bodyMode    = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = STATIC, 1 = DYNAMIC
-    m_data.radius      = sycl::malloc_device<float>(maxBodies, m_queue);       // for spheres
+    m_data.shapeType = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = sphere, 1 = box
+    m_data.bodyMode = sycl::malloc_device<int>(maxBodies, m_queue);      // 0 = STATIC, 1 = DYNAMIC
+    m_data.radius = sycl::malloc_device<float>(maxBodies, m_queue);       // for spheres
     m_data.halfExtentX = sycl::malloc_device<float>(maxBodies, m_queue);  // for boxes
     m_data.halfExtentY = sycl::malloc_device<float>(maxBodies, m_queue);
     m_data.halfExtentZ = sycl::malloc_device<float>(maxBodies, m_queue);
@@ -89,7 +103,7 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     // Initialize all to zero
     int pairToManifold = -1;
     m_queue.memset(m_numManifolds, 0, sizeof(int)).wait();
-    m_queue.fill(m_pairToManifold, pairToManifold, m_hashTableSize).wait(); 
+    m_queue.fill(m_pairToManifold, pairToManifold, m_hashTableSize).wait();
 
     m_queue.memset(m_data.x_pos, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.y_pos, 0, maxBodies * sizeof(float)).wait();
@@ -124,7 +138,7 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     m_queue.memset(m_data.halfExtentY, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.halfExtentZ, 0, maxBodies * sizeof(float)).wait();
 
-    m_queue.memset(m_data.restitution,0,maxBodies*sizeof(float)).wait();
+    m_queue.memset(m_data.restitution, 0, maxBodies * sizeof(float)).wait();
     m_queue.memset(m_data.friction, 0, maxBodies * sizeof(float)).wait();
 
 
@@ -143,10 +157,9 @@ void gpu::PhysicsKernel::init(int maxBodies) {
         std::cerr << "OpenGL error creating SSBO: " << err << std::endl;
         return;
     }
-
     std::cout << "GPU Physics Kernel initialization complete!" << std::endl;
 }
-void gpu::PhysicsKernel::initUniformGrid(){
+oid gpu::PhysicsKernel::initUniformGrid(){
 
     // Grid parameters - tune these based on your world
     float worldSize = 100.0f;  // Adjust based on your simulation bounds
@@ -162,8 +175,8 @@ void gpu::PhysicsKernel::initUniformGrid(){
     m_gridData.totalCells = m_gridData.gridDimX * m_gridData.gridDimY * m_gridData.gridDimZ;
 
     // Allocate device memory
-    m_gridData.cellHash = sycl::malloc_device<int>(m_maxBodies, m_queue);
-    m_gridData.bodyIndex = sycl::malloc_device<int>(m_maxBodies, m_queue);
+    m_gridData.cellHash = sycl::malloc_device<int>(m_capacity, m_queue); //m_capacity = maxBodies
+    m_gridData.bodyIndex = sycl::malloc_device<int>(m_capacity, m_queue);
     m_gridData.cellStart = sycl::malloc_device<int>(m_gridData.totalCells, m_queue);
     m_gridData.cellEnd = sycl::malloc_device<int>(m_gridData.totalCells, m_queue);
 
