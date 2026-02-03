@@ -57,7 +57,18 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 - GLM
 - stb_image
 - CUDA Toolkit (for CUDA backend)
-- Intel LLVM SYCL compiler (for SYCL backend)
+- Intel LLVM SYCL compiler (you can use the provided via FunGT GitHub Releases for the SYCL backend)
+
+### SYCL Toolchain Installation (Optional)
+
+FunGT provides a prebuilt Intel DPC++/SYCL toolchain for convenience.
+
+To install it:
+
+```bash
+make fungt-deps
+```
+This will download and install the toolchain from the official FunGT GitHub Releases.
 
 ### Linux Installation
 
@@ -127,10 +138,12 @@ Advanced physics simulation and particle systems are available in the `experimen
 
 FunGT welcomes contributions! Whether it's bug reports, feature requests, or code contributions, please feel free to open an issue or submit a pull request.
 
-## License
+## License & Attribution
 
-See [LICENSE](LICENSE) file for details.
+FunGT is licensed under the Apache License 2.0.
 
-## Contact
+FunGT uses the Intel DPC++/SYCL compiler to enable GPU acceleration on Intel integrated graphics.
+The Intel DPC++ toolchain is distributed as a prebuilt binary package via GitHub Releases
+and is not stored in the FunGT Git repository.
 
-*[Add your contact/social links here]*
+See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for complete third-party license and attribution information.

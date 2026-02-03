@@ -37,6 +37,64 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ════════════════════════════════════════════════════════════════════════════
+# SYCL TOOLCHAIN DETECTION
+# ════════════════════════════════════════════════════════════════════════════
+# Priority:
+# 1. User-provided SYCL_COMPILER_PATH (cmake -DSYCL_COMPILER_PATH=...)
+# 2. Bundled SYCL toolchain in lib/linux_x64/dpcpp/
+# 3. Error - user must provide SYCL compiler
+
+if(UNIX)
+    if(DEFINED SYCL_COMPILER_PATH)
+        # User provided their own SYCL compiler
+        if(NOT EXISTS "${SYCL_COMPILER_PATH}")
+            message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
+        endif()
+        set(CMAKE_CXX_COMPILER ${SYCL_COMPILER_PATH})
+        message(STATUS "Using user-provided SYCL compiler: ${SYCL_COMPILER_PATH}")
+    else()
+        # Try bundled SYCL toolchain
+        set(BUNDLED_SYCL_DIR "${FUNGT_BASE_DIR}/toolchain/sycl/linux_x64/dpcpp")
+        set(BUNDLED_SYCL_COMPILER "${BUNDLED_SYCL_DIR}/bin/clang++")
+        
+        if(EXISTS "${BUNDLED_SYCL_COMPILER}")
+            set(CMAKE_CXX_COMPILER ${BUNDLED_SYCL_COMPILER})
+            message(STATUS "Using bundled SYCL compiler: ${BUNDLED_SYCL_COMPILER}")
+        else()
+            message(FATAL_ERROR 
+                "SYCL compiler not found!\n"
+                "Please either:\n"
+                "  1. Use bundled toolchain (should be at ${BUNDLED_SYCL_DIR})\n"
+                "  2. Provide your own: cmake -DSYCL_COMPILER_PATH=/path/to/clang++ ..\n")
+        endif()
+    endif()
+elseif(WIN32)
+    if(DEFINED SYCL_COMPILER_PATH)
+        # User provided their own SYCL compiler
+        if(NOT EXISTS "${SYCL_COMPILER_PATH}")
+            message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
+        endif()
+        set(CMAKE_CXX_COMPILER ${SYCL_COMPILER_PATH})
+        message(STATUS "Using user-provided SYCL compiler: ${SYCL_COMPILER_PATH}")
+    else()
+        # Try bundled SYCL toolchain
+        set(BUNDLED_SYCL_DIR "${FUNGT_BASE_DIR}/lib/windows_x64/dpcpp")
+        set(BUNDLED_SYCL_COMPILER "${BUNDLED_SYCL_DIR}/bin/clang++.exe")
+        
+        if(EXISTS "${BUNDLED_SYCL_COMPILER}")
+            set(CMAKE_CXX_COMPILER ${BUNDLED_SYCL_COMPILER})
+            message(STATUS "Using bundled SYCL compiler: ${BUNDLED_SYCL_COMPILER}")
+        else()
+            message(FATAL_ERROR 
+                "SYCL compiler not found!\n"
+                "Please either:\n"
+                "  1. Use bundled toolchain (should be at ${BUNDLED_SYCL_DIR})\n"
+                "  2. Provide your own: cmake -DSYCL_COMPILER_PATH=C:/path/to/clang++.exe ..\n")
+        endif()
+    endif()
+endif()
+
+# ════════════════════════════════════════════════════════════════════════════
 # PBR RENDERER LIBRARIES - PREBUILT FROM PBR/main/build
 # ════════════════════════════════════════════════════════════════════════════
 set(PBR_LIB_DIR ${FUNGT_BASE_DIR}/PBR/main/build)
@@ -47,7 +105,7 @@ if(UNIX)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
     
     # ALWAYS use SYCL compiler (required for funlib)
-    set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++)
+    # set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/FunGT/toolchain/sycl/linux_x64/dpcpp/bin/clang++)
     
     # Add the prebuilt ImGui library
     add_library(imgui STATIC IMPORTED)
