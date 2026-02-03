@@ -2,6 +2,10 @@
 # Build directories
 build/
 release/
+# toolchain
+toolchain/
 # Build directories (recursive)
 **/build/
 **/release/
+# toolchain recursive
+**/toolchain/

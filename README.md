@@ -59,16 +59,21 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 - CUDA Toolkit (for CUDA backend)
 - Intel LLVM SYCL compiler (you can use the provided via FunGT GitHub Releases for the SYCL backend)
 
-### SYCL Toolchain Installation (Optional)
+### SYCL Toolchain (Required)
 
-FunGT provides a prebuilt Intel DPC++/SYCL toolchain for convenience.
+FunGT uses the Intel DPC++ / SYCL compiler for GPU acceleration on Intel hardware.
 
-To install it:
+The toolchain is **not stored in the Git repository** due to size constraints.
+Instead, it is downloaded automatically.
+
+From the FunGT root directory:
 
 ```bash
 make fungt-deps
 ```
-This will download and install the toolchain from the official FunGT GitHub Releases.
+This will download and install the toolchain from the official FunGT GitHub Releases under:
+
+`toolchain/sycl/linux_x64/dpcpp`
 
 ### Linux Installation
 
