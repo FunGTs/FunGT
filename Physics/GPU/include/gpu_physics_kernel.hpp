@@ -46,14 +46,14 @@ namespace gpu {
         int m_capacity;
         float m_worldSize = 200.f;
         float m_cellSize = 5.0f;
-
+        void initMemoryAllocations(int maxBodies);
     public:
         PhysicsKernel();
         ~PhysicsKernel();
 
         // Initialization
         void init(int maxBodies);
-        void initMemoryAllocations(int maxBodies);
+       
         void initUniformGrid();
         void cleanup();
 
