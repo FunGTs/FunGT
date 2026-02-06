@@ -121,26 +121,15 @@ FunGT includes a growing set of interactive demos used to validate
 performance, correctness, and scalability.
 </p>
 
-<div class="demo">
-  <h3>GPU Particle Simulation</h3>
 
-  <p>
-  Real-time particle simulation accelerated on the GPU using SYCL.
-  Particles are spatially partitioned using a uniform grid to enable
-  efficient collision detection and neighborhood queries.
-  </p>
-
-  <ul>
-    <li>GPU-based integration</li>
-    <li>Uniform grid spatial hashing</li>
-    <li>CPU ↔ GPU comparison modes</li>
-  </ul>
-
-  <p><em>Demo video coming soon.</em></p>
-</div>
 
 <div class="demo">
   <h3>GPU Collision Detection</h3>
+
+  <video controls muted autoplay loop width="100%">
+    <source src="assets/gpu_physics.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
 
   <p>
   Broad-phase collision detection implemented entirely on the GPU,
@@ -152,9 +141,8 @@ performance, correctness, and scalability.
     <li>Parallel cell occupancy tracking</li>
     <li>Designed for thousands of bodies</li>
   </ul>
-
-  <p><em>Work in progress.</em></p>
 </div>
+
 
 <div class="demo">
   <h3>Path Tracer (CPU / GPU)</h3>
