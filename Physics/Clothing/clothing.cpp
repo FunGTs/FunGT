@@ -314,7 +314,7 @@ void Clothing::updateModelMatrix()
     m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
 }
 
-glm::mat4 Clothing::getModelMatrix() const
+glm::mat4 Clothing::getModelMatrix()
 {
     return m_ModelMatrix;
 }
