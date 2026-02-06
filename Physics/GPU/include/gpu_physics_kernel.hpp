@@ -1,9 +1,7 @@
 #if !defined(_GPU_PHYSICS_KERNEL_HPP_)
 #define _GPU_PHYSICS_KERNEL_HPP_
 
-#include <GL/glew.h>
-#include <funlib/funlib.hpp>
-#include <CL/opencl.h>
+#include "gpu_includes.hpp"
 #include "gpu_device_data.hpp"
 #include "gpu_memory_utils.hpp"
 #include "gpu_manifold_contacts.hpp"
@@ -56,7 +54,10 @@ namespace gpu {
        
         void initUniformGrid();
         void cleanup();
-
+        //Sorting:
+        void sortBodiesByCell();
+        void findCellBoundaries();
+        void debugGrid();
         // Body management
         int addSphere(float x, float y, float z, float radius, float mass, MODE mode); //Mode dynamic by default
         int addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode);
@@ -77,7 +78,7 @@ namespace gpu {
         void debugManifolds();
         // Collision detection
         void detectStaticVsDynamic();   // spheres vs ground
-        //void detectDynamicVsDynamic();  // spheres vs spheres (later, with grid)
+        void detectDynamicVsDynamic();  // spheres vs spheres (later, with grid)
         void debugVelocity(int bodyId);
         //void refreshManifolds();        // update world positions from local
         //void pruneOldContacts();        // remove contacts that separated

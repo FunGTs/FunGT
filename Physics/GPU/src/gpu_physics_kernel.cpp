@@ -1,4 +1,3 @@
-#include "../include/gpu_physics_kernel.hpp"
 #include <iostream>
 #include <cmath>
 #include "gpu_physics_kernel.hpp"
@@ -14,7 +13,7 @@ gpu::PhysicsKernel::PhysicsKernel()
            nullptr, nullptr, nullptr,
            nullptr, nullptr, nullptr, nullptr},
     m_modelMatrixSSBO(0) {
-    m_radixSort = std::make_unique<RadixSort>(m_queue);
+   
 }
 
 gpu::PhysicsKernel::~PhysicsKernel() {
@@ -30,7 +29,9 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     
     //Kernel memory allocations
     initMemoryAllocations(maxBodies);
-   
+    initUniformGrid( );
+    //Initialize RadixSort
+    m_radixSort = std::make_unique<RadixSort>(m_queue);    
     if(m_radixSort){
         m_radixSort->init(maxBodies);
     }
@@ -159,7 +160,7 @@ void gpu::PhysicsKernel::initMemoryAllocations(int maxBodies)
     }
     std::cout << "GPU Physics Kernel initialization complete!" << std::endl;
 }
-oid gpu::PhysicsKernel::initUniformGrid(){
+void gpu::PhysicsKernel::initUniformGrid(){
 
     // Grid parameters - tune these based on your world
     float worldSize = 100.0f;  // Adjust based on your simulation bounds
@@ -231,6 +232,77 @@ void gpu::PhysicsKernel::cleanup() {
     }
 
     std::cout << "GPU Physics Kernel cleaned up" << std::endl;
+}
+
+void gpu::PhysicsKernel::sortBodiesByCell()
+{
+    m_radixSort->sort(m_gridData.cellHash, m_gridData.bodyIndex, m_numBodies);
+}
+
+void gpu::PhysicsKernel::findCellBoundaries()
+{
+    UniformGridData grid = m_gridData;
+    int n = m_numBodies;
+
+    // Reset all cells to empty
+    m_queue.fill(grid.cellStart, -1, grid.totalCells).wait();
+    m_queue.fill(grid.cellEnd, -1, grid.totalCells).wait();
+
+    std::size_t xdim = 32;
+    std::size_t ydim = (n + xdim - 1) / xdim;
+
+    m_queue.submit([&](sycl::handler& cgh) {
+        cgh.parallel_for(sycl::range<2>(ydim, xdim), [=](sycl::item<2> item) {
+            std::size_t i = item[0] * xdim + item[1];
+            if (i >= n) return;
+
+            int cellHash = grid.cellHash[i];
+            if (cellHash < 0) return;  // Skip static bodies
+
+            // Check if this is the start of a new cell
+            if (i == 0 || grid.cellHash[i - 1] != cellHash) {
+                grid.cellStart[cellHash] = i;
+            }
+
+            // Check if this is the end of a cell
+            if (i == n - 1 || grid.cellHash[i + 1] != cellHash) {
+                grid.cellEnd[cellHash] = i + 1;
+            }
+            });
+    }).wait();
+}
+
+void gpu::PhysicsKernel::debugGrid()
+{
+    std::cout << "\n========== GRID DEBUG ==========\n";
+
+    // Copy cell hashes and body indices to host
+    std::vector<int> cellHash_host(m_numBodies);
+    std::vector<int> bodyIndex_host(m_numBodies);
+    std::vector<float> x_pos_host(m_numBodies);
+    std::vector<float> y_pos_host(m_numBodies);
+    std::vector<int> bodyMode_host(m_numBodies);
+
+    m_queue.memcpy(cellHash_host.data(), m_gridData.cellHash, m_numBodies * sizeof(int)).wait();
+    m_queue.memcpy(bodyIndex_host.data(), m_gridData.bodyIndex, m_numBodies * sizeof(int)).wait();
+    m_queue.memcpy(x_pos_host.data(), m_data.x_pos, m_numBodies * sizeof(float)).wait();
+    m_queue.memcpy(y_pos_host.data(), m_data.y_pos, m_numBodies * sizeof(float)).wait();
+    m_queue.memcpy(bodyMode_host.data(), m_data.bodyMode, m_numBodies * sizeof(int)).wait();
+
+    std::cout << "Total bodies: " << m_numBodies << "\n";
+    std::cout << "Grid: " << m_gridData.gridDimX << "x" << m_gridData.gridDimY << "x" << m_gridData.gridDimZ << "\n";
+    std::cout << "Cell size: " << m_gridData.cellSize << "\n\n";
+
+    // Print first 11 bodies (ground + 10 balls)
+    for (int i = 0; i < std::min(11, m_numBodies); i++) {
+        int originalIdx = bodyIndex_host[i];
+        std::cout << "Index[" << i << "]: "
+            << "bodyID=" << originalIdx << " "
+            << "mode=" << (bodyMode_host[originalIdx] == 0 ? "STATIC" : "DYNAMIC") << " "
+            << "pos=(" << x_pos_host[originalIdx] << "," << y_pos_host[originalIdx] << ") "
+            << "cellHash=" << cellHash_host[i] << "\n";
+    }
+    std::cout << "================================\n\n";
 }
 
 int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass, MODE mode) {
@@ -832,4 +904,155 @@ void gpu::PhysicsKernel::detectStaticVsDynamic() {
             }
         });
     }).wait();
+}
+
+void gpu::PhysicsKernel::detectDynamicVsDynamic()
+{
+
+    DeviceData data = m_data;
+    UniformGridData grid = m_gridData;
+    GPUManifold* manifolds = m_manifolds;
+    int* pairToManifold = m_pairToManifold;
+    int* numManifolds = m_numManifolds;
+    int hashTableSize = m_hashTableSize;
+    int maxManifolds = m_maxManifolds;
+    int n = m_numBodies;
+
+    std::size_t xdim = 32;
+    std::size_t ydim = (n + xdim - 1) / xdim;
+
+    m_queue.submit([&](sycl::handler& cgh) {
+        cgh.parallel_for(sycl::range<2>(ydim, xdim), [=](sycl::item<2> item) {
+            std::size_t i = item[0] * xdim + item[1];
+            if (i >= n) return;
+
+            // Get original body index
+            int bodyA = grid.bodyIndex[i];
+
+            // Skip if static
+            if (data.bodyMode[bodyA] == 0) return;
+
+            // Get body A's cell
+            int cellHash = grid.cellHash[i];
+            if (cellHash < 0) return;
+
+            // Compute 3D cell coordinates
+            int gridDimX = grid.gridDimX;
+            int gridDimY = grid.gridDimY;
+            int gridDimZ = grid.gridDimZ;
+            
+            int cellX = cellHash % gridDimX;
+            int cellY = (cellHash / gridDimX) % gridDimY;
+            int cellZ = cellHash / (gridDimX * gridDimY);
+
+            // Check 27 neighboring cells (3x3x3)
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int nx = cellX + dx;
+                        int ny = cellY + dy;
+                        int nz = cellZ + dz;
+
+                        // Bounds check
+                        if (nx < 0 || nx >= gridDimX) continue;
+                        if (ny < 0 || ny >= gridDimY) continue;
+                        if (nz < 0 || nz >= gridDimZ) continue;
+
+                        // Compute neighbor cell hash
+                        int neighborHash = nx + ny * gridDimX + nz * gridDimX * gridDimY;
+
+                        // Get bodies in this cell
+                        int start = grid.cellStart[neighborHash];
+                        int end = grid.cellEnd[neighborHash];
+
+                        if (start == -1) continue;  // Empty cell
+
+                        // Check all bodies in neighbor cell
+                        for (int j = start; j < end; j++) {
+                            int bodyB = grid.bodyIndex[j];
+
+                            // Skip self
+                            if (bodyA == bodyB) continue;
+
+                            // Skip if static
+                            if (data.bodyMode[bodyB] == 0) continue;
+
+                            // Avoid duplicate pairs (only check if bodyA < bodyB)
+                            if (bodyA >= bodyB) continue;
+
+                            // Both are spheres - do sphere-sphere collision
+                            if (data.shapeType[bodyA] == 0 && data.shapeType[bodyB] == 0) {
+                                // Sphere positions
+                                float ax = data.x_pos[bodyA];
+                                float ay = data.y_pos[bodyA];
+                                float az = data.z_pos[bodyA];
+                                float ar = data.radius[bodyA];
+
+                                float bx = data.x_pos[bodyB];
+                                float by = data.y_pos[bodyB];
+                                float bz = data.z_pos[bodyB];
+                                float br = data.radius[bodyB];
+
+                                // Distance check
+                                float dx_sphere = bx - ax;
+                                float dy_sphere = by - ay;
+                                float dz_sphere = bz - az;
+                                float dxSquare = dx_sphere*dx_sphere;
+                                float dySquare = dy_sphere*dy_sphere;
+                                float dzSquare = dz_sphere*dz_sphere;
+                                float distSq = dxSquare + dySquare + dzSquare;
+                                float combinedRadius = ar + br;
+
+                                if (distSq < combinedRadius * combinedRadius && distSq > 0.0001f) {
+                                    float dist = sycl::sqrt(distSq);
+                                    float penetration = combinedRadius - dist;
+
+                                    // Normal from A to B
+                                    float nx = dx_sphere / dist;
+                                    float ny = dy_sphere / dist;
+                                    float nz = dz_sphere / dist;
+
+                                    // Contact points
+                                    float worldAx = ax + nx * ar;
+                                    float worldAy = ay + ny * ar;
+                                    float worldAz = az + nz * ar;
+
+                                    float worldBx = bx - nx * br;
+                                    float worldBy = by - ny * br;
+                                    float worldBz = bz - nz * br;
+
+                                    float localAx = nx * ar;
+                                    float localAy = ny * ar;
+                                    float localAz = nz * ar;
+
+                                    float localBx = -nx * br;
+                                    float localBy = -ny * br;
+                                    float localBz = -nz * br;
+
+                                    // Create/update manifold
+                                    int manifoldIdx = findManifold(pairToManifold, manifolds,
+                                        hashTableSize, bodyA, bodyB);
+                                    if (manifoldIdx == -1) {
+                                        manifoldIdx = createManifold(pairToManifold, manifolds,
+                                            numManifolds, hashTableSize,
+                                            maxManifolds, bodyA, bodyB);
+                                    }
+
+                                    if (manifoldIdx != -1) {
+                                        addContactToManifold(manifolds, manifoldIdx,
+                                            localAx, localAy, localAz,
+                                            localBx, localBy, localBz,
+                                            worldAx, worldAy, worldAz,
+                                            worldBx, worldBy, worldBz,
+                                            nx, ny, nz, penetration);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            });
+        }).wait();
+
 }

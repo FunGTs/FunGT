@@ -1,7 +1,6 @@
 #if !defined(_GPU_RADIX_SORT_H_)
 #define _GPU_RADIX_SORT_H_
-#include <funlib/funlib.hpp>
-
+#include "gpu_includes.hpp"
 namespace gpu {
 
     struct RadixSortData {

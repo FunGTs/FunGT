@@ -149,6 +149,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
     ${FUNGT_BASE_DIR}/Physics/GPU/src/gpu_physics_kernel.cpp
     ${FUNGT_BASE_DIR}/Physics/GPU/src/gpu_physics_world.cpp
+    ${FUNGT_BASE_DIR}/Physics/GPU/src/gpu_radix_sort.cpp
     ${FUNGT_BASE_DIR}/Physics/GPU/src/gpu_renderable_geometry.cpp
 )
 
