@@ -40,7 +40,7 @@ int main() {
         << ", instanceCount=" << ground->getInstanceCount() << std::endl;
     // Balls
     gpuCollision->beginGroup();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 100; i++) {
        float x = (rand() % 10) - 5.0f;
         //float x = 0.0;
         float y = 5.0f + i * 2.0f;
@@ -63,7 +63,7 @@ int main() {
    
 
     auto balls = GPUGeometry::create(gpuCollision, GPUGeometryType::Sphere);
-    balls->load(getAssetPath("img/moon.jpg"));
+    balls->load(getAssetPath("img/BeachBallColor.jpg"));
     std::cout << "BALLS: startIndex=" << balls->getStartIndex()
         << ", instanceCount=" << balls->getInstanceCount() << std::endl;
     FunGTSceneManager scene_manager = myGame->getSceneManager();
