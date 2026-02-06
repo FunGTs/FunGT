@@ -2,54 +2,207 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FunGT</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FunGT — GPU Physics & Graphics Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       background: #0b0d10;
       color: #e6e6e6;
-      font-family: system-ui, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       max-width: 960px;
       margin: auto;
-      padding: 2rem;
-      line-height: 1.6;
+      padding: 2.5rem;
+      line-height: 1.65;
     }
-    h1, h2 { color: #4fc3f7; }
-    a { color: #4fc3f7; text-decoration: none; }
+
+    h1, h2, h3 {
+      color: #4fc3f7;
+      margin-top: 2rem;
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      margin-top: 0;
+    }
+
+    a {
+      color: #4fc3f7;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    code, pre {
+      background: #151820;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
     .tag {
+      display: inline-block;
       background: #1e222d;
       padding: 0.25em 0.6em;
       border-radius: 999px;
-      margin-right: 0.5em;
+      margin: 0.2em 0.3em 0.2em 0;
       font-size: 0.85em;
-      display: inline-block;
+    }
+
+    .demo {
+      background: #12151c;
+      padding: 1.2rem;
+      border-radius: 10px;
+      margin-top: 1.2rem;
+    }
+
+    footer {
+      margin-top: 4rem;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      text-align: center;
     }
   </style>
 </head>
+
 <body>
 
 <h1>FunGT</h1>
 
 <p>
-<strong>FunGT</strong> is a C++ GPU-focused engine for physics simulation and graphics,
-designed for performance, learning, and experimentation.
+<strong>FunGT</strong> is an experimental <strong>C++ GPU-first engine</strong> focused on
+<strong>physics simulation</strong>, <strong>graphics rendering</strong>, and
+<strong>high-performance compute</strong>.
 </p>
 
 <p>
-<span class="tag">C++</span>
-<span class="tag">SYCL</span>
-<span class="tag">GPU</span>
+It is designed as a <em>learning-driven engine</em> with real performance constraints:
+algorithms are implemented from first principles and progressively accelerated using
+modern GPU techniques.
+</p>
+
+<p>
+<span class="tag">C++20</span>
+<span class="tag">SYCL / DPC++</span>
+<span class="tag">GPU Compute</span>
 <span class="tag">Physics</span>
 <span class="tag">OpenGL</span>
+<span class="tag">ImGui</span>
+<span class="tag">CMake</span>
 </p>
+
+<h2>Design Philosophy</h2>
+
+<ul>
+  <li><strong>GPU-first:</strong> algorithms are designed around massive parallelism</li>
+  <li><strong>Data-oriented:</strong> memory layout matters more than abstractions</li>
+  <li><strong>Modern C++:</strong> explicit ownership and predictable lifetimes</li>
+  <li><strong>Engine as a lab:</strong> correctness → optimization → scalability</li>
+</ul>
+
+<h2>Demos</h2>
+
+<p>
+FunGT includes a growing set of interactive demos used to validate
+performance, correctness, and scalability.
+</p>
+
+<div class="demo">
+  <h3>GPU Particle Simulation</h3>
+
+  <p>
+  Real-time particle simulation accelerated on the GPU using SYCL.
+  Particles are spatially partitioned using a uniform grid to enable
+  efficient collision detection and neighborhood queries.
+  </p>
+
+  <ul>
+    <li>GPU-based integration</li>
+    <li>Uniform grid spatial hashing</li>
+    <li>CPU ↔ GPU comparison modes</li>
+  </ul>
+
+  <p><em>Demo video coming soon.</em></p>
+</div>
+
+<div class="demo">
+  <h3>GPU Collision Detection</h3>
+
+  <p>
+  Broad-phase collision detection implemented entirely on the GPU,
+  using uniform grids and parallel prefix-sum-based compaction.
+  </p>
+
+  <ul>
+    <li>Dynamic object support</li>
+    <li>Parallel cell occupancy tracking</li>
+    <li>Designed for thousands of bodies</li>
+  </ul>
+
+  <p><em>Work in progress.</em></p>
+</div>
+
+<div class="demo">
+  <h3>Path Tracer (CPU / GPU)</h3>
+
+  <p>
+  A physically based path tracer supporting both CPU and GPU execution.
+  The same algorithmic structure is used across backends to study
+  performance trade-offs.
+  </p>
+
+  <ul>
+    <li>Area lights & emissive geometry</li>
+    <li>PBR materials</li>
+    <li>Hot / cold data layout optimization</li>
+  </ul>
+
+  <p><em>Experimental.</em></p>
+</div>
+
+<h2>Build</h2>
+
+<pre><code>
+git clone https://github.com/FunGTs/FunGT.git
+cd FunGT
+cmake -B build
+cmake --build build
+</code></pre>
+
+<h2>Roadmap</h2>
+
+<ul>
+  <li>GPU-only physics pipeline</li>
+  <li>Advanced constraint solvers</li>
+  <li>SYCL-based rendering backend</li>
+  <li>Technical documentation & deep dives</li>
+</ul>
 
 <h2>Repository</h2>
+
 <p>
-<a href="https://github.com/FunGTs/FunGT">github.com/FunGTs/FunGT</a>
+<a href="https://github.com/FunGTs/FunGT">
+https://github.com/FunGTs/FunGT
+</a>
 </p>
 
-<h2>Status</h2>
-<p>🚧 Actively developed. Expect breaking changes.</p>
+<footer>
+  FunGT — Experimental GPU Engine • Actively developed
+</footer>
 
 </body>
 </html>
