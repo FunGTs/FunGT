@@ -46,7 +46,9 @@ class FunGT : public GraphicsTool{
     std::shared_ptr<SceneManager> m_sceneManager;
     // IMGUI LAYER SYSTEM
     std::unique_ptr<ViewPort> m_ViewPortLayer;     
-    std::unique_ptr<ImGuiLayer> m_imguiLayer;      
+    std::unique_ptr<ImGuiLayer> m_imguiLayer;
+    std::shared_ptr<fungt::SimulationController> m_simController;
+    std::unique_ptr<PhysicsDebugLayer> m_physicsDebugLayer;
     LayerStack m_layerStack;                       
 
     std::shared_ptr<InfiniteGrid> m_grid;  // ← ADD (shared_ptr for SceneManager)
@@ -65,6 +67,10 @@ class FunGT : public GraphicsTool{
         std::shared_ptr<SceneManager> getSceneManager();
         void set(const std::function<void()>& renderLambda);
         static std::unique_ptr<FunGT> createScene(int _width, int _height);
+        std::shared_ptr<fungt::SimulationController> getSimulationController() { return m_simController; }
+        PhysicsDebugLayer* getPhysicsDebugLayer() {
+            return m_physicsDebugLayer.get();
+        }
 
     protected:
         // Override virtual methods from GraphicsTool
@@ -79,5 +85,6 @@ typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
 typedef std::shared_ptr<SimpleModel> FunGTSModel;
 typedef std::shared_ptr<SimpleGeometry> FunGTSGeom;
+typedef std::shared_ptr<fungt::SimulationController> FunGTSimController;
 
 #endif // _FUNGT_H_
