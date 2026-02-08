@@ -13,7 +13,9 @@ FunGT::FunGT(int _width, int _height)
     m_sceneManager = std::make_shared<SceneManager>();
     m_ViewPortLayer = std::make_unique<ViewPort>();
     m_imguiLayer = std::make_unique<ImGuiLayer>();
-    //m_grid = std::make_shared<InfiniteGrid>();
+    // Create simulation controller
+    m_simController = std::make_shared<fungt::SimulationController>();
+    
 }
 FunGT::~FunGT(){
     std::cout<<"FunGT destructor"<<std::endl; 
@@ -91,8 +93,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
     std::string grid_fs = getAssetPath("shaders/grid_fs.glsl");
     m_grid->init(grid_vs,grid_fs);
     m_grid->setPlanes(nearPlane, farPlane);
-    //m_grid->setViewMatrix(m_camera.getViewMatrix());
-    //m_grid->setProjectionMatrix(ProjectionMatrix);
+
     m_sceneManager->addRenderableObj(m_grid);
     renderLambda();
     
@@ -107,7 +108,6 @@ void FunGT::set(const std::function<void()>& renderLambda){
 
     }
 
-
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
@@ -118,6 +118,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager,&m_camera));
        m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
+       m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
        m_layerStack.PushLayer(std::move(m_imguiLayer));
    }
 
@@ -128,7 +129,12 @@ void FunGT::set(const std::function<void()>& renderLambda){
         });
        m_layerStack.PushLayer(std::move(m_ViewPortLayer));
    }
-
+   // PUSH PHYSICS DEBUG LAYER LAST SO IT RENDERS ON TOP!
+   m_physicsDebugLayer = std::make_unique<PhysicsDebugLayer>(m_sceneManager, &m_camera);
+   if (m_physicsDebugLayer) {
+       m_physicsDebugLayer->setShowCollisionBoxes(true);
+       m_layerStack.PushLayer(std::move(m_physicsDebugLayer));  // ← AFTER VIEWPORT!
+   }
    // UPDATE PROJECTION MATRIX BASED ON VIEWPORT SIZE
    auto* view_port = m_layerStack.get<ViewPort>();
    if (view_port)
