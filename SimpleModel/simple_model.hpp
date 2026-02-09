@@ -12,7 +12,7 @@ class SimpleModel : public Renderable {
 
 
     std::shared_ptr<Model> m_model; // Pointer to the Model object
-    std::optional<std::shared_ptr<CollisionManager>> m_collisionM; // Optional RigidBody for physics
+    std::weak_ptr<RigidBody> m_physicsBody; 
     std::string m_path_fs;
     std::string m_path_vs;
     glm::mat4 m_ModelMatrix;
@@ -22,7 +22,6 @@ class SimpleModel : public Renderable {
     glm::vec3 m_rotation = glm::vec3(0.f);
     glm::vec3 m_scale    = glm::vec3(1.0); 
     std::vector<Triangle> m_triangles;
-
     SimpleModel();
 public:
   
@@ -35,7 +34,7 @@ public:
     void position(float x = 0.f, float y = 0.f, float z = 0.f);
     void rotation(float x = 0.f, float y = 0.f, float z = 0.f);
     void scale(float s = 1.f);
-    void addCollisionProperty(std::shared_ptr<CollisionManager> _collisionM);
+    void addCollisionProperty(std::shared_ptr<RigidBody> body);;
     //Override methods from Renderable
     void draw() override;
     Shader& getShader() override;
@@ -50,6 +49,11 @@ public:
     }
     Model&  getModel () const {
         return *m_model;
+    }
+    // Implement the virtual method for physics support
+      // Physics support - returns empty weak_ptr by default
+    std::weak_ptr<RigidBody> getRigidBody() const override{
+        return m_physicsBody;
     }
     static std::shared_ptr<SimpleModel> create() {
         // This works because create() is a MEMBER of SimpleModel

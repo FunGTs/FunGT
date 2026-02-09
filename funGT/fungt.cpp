@@ -129,12 +129,12 @@ void FunGT::set(const std::function<void()>& renderLambda){
         });
        m_layerStack.PushLayer(std::move(m_ViewPortLayer));
    }
-   // PUSH PHYSICS DEBUG LAYER LAST SO IT RENDERS ON TOP!
-   m_physicsDebugLayer = std::make_unique<PhysicsDebugLayer>(m_sceneManager, &m_camera);
-   if (m_physicsDebugLayer) {
-       m_physicsDebugLayer->setShowCollisionBoxes(true);
-       m_layerStack.PushLayer(std::move(m_physicsDebugLayer));  // ← AFTER VIEWPORT!
-   }
+//    // PUSH PHYSICS DEBUG LAYER LAST SO IT RENDERS ON TOP!
+//    m_physicsDebugLayer = std::make_unique<PhysicsDebugLayer>(m_sceneManager, &m_camera);
+//    if (m_physicsDebugLayer) {
+//        m_physicsDebugLayer->setShowCollisionBoxes(true);
+//        m_layerStack.PushLayer(std::move(m_physicsDebugLayer));  // ← AFTER VIEWPORT!
+//    }
    // UPDATE PROJECTION MATRIX BASED ON VIEWPORT SIZE
    auto* view_port = m_layerStack.get<ViewPort>();
    if (view_port)
