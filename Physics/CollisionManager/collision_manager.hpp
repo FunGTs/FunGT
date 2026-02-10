@@ -24,7 +24,7 @@ private:
     std::vector<std::shared_ptr<RigidBody>> m_collidableBodies;
     std::unique_ptr<UniformGrid> m_broadPhase;
     std::map<BodyPairKey, ContactManifold> m_manifoldCache;
-
+    bool m_showCollidableBodies = false;
     // Helper methods for collision manifold detection
     void warmStartManifold(ContactManifold& newManifold, const ContactManifold& existingManifold);
     void solveContactImpulse(ContactPoint& cp, std::shared_ptr<RigidBody> bodyA,
@@ -42,7 +42,8 @@ public:
     std::shared_ptr<RigidBody> getCollideBody(size_t index) const;
     const std::vector<std::shared_ptr<RigidBody>>& getCollidable() const;
     std::vector<std::shared_ptr<RigidBody>>& getCollidable();
-
+    void showCollidableBodies(bool show) { m_showCollidableBodies = show; }
+    bool isShowingCollidableBodies() const { return m_showCollidableBodies; }
     void detectCollisions();
     void detectCollisionsUg();
     void detectCollisionsEx();

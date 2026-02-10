@@ -107,7 +107,15 @@ void FunGT::set(const std::function<void()>& renderLambda){
        
 
     }
-
+   // CREATE PHYSICS DEBUG RENDERER (NOT a layer! Just a utility)
+   if (m_collisionManager) {
+      
+       if(m_collisionManager->isShowingCollidableBodies()) {
+           m_physicsDebugRenderer = std::make_unique<PhysicsDebugRenderer>(m_collisionManager, m_sceneManager, &m_camera);
+           m_physicsDebugRenderer->setShowCollisionBoxes(true);
+           std::cout << "Collidable bodies will be shown in debug renderer." << std::endl;
+       }
+   }
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
@@ -126,15 +134,14 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_ViewPortLayer->setRenderFunction([this]() {
            // Render all models managed by the SceneManager
                 m_sceneManager->renderScene();
+                // Second: Render wireframes ON TOP of scene (before ImGui!)
+                if (m_physicsDebugRenderer) {
+                    m_physicsDebugRenderer->render();
+                }
         });
        m_layerStack.PushLayer(std::move(m_ViewPortLayer));
    }
-//    // PUSH PHYSICS DEBUG LAYER LAST SO IT RENDERS ON TOP!
-//    m_physicsDebugLayer = std::make_unique<PhysicsDebugLayer>(m_sceneManager, &m_camera);
-//    if (m_physicsDebugLayer) {
-//        m_physicsDebugLayer->setShowCollisionBoxes(true);
-//        m_layerStack.PushLayer(std::move(m_physicsDebugLayer));  // ← AFTER VIEWPORT!
-//    }
+
    // UPDATE PROJECTION MATRIX BASED ON VIEWPORT SIZE
    auto* view_port = m_layerStack.get<ViewPort>();
    if (view_port)
@@ -156,12 +163,6 @@ std::unique_ptr<FunGT> FunGT::createScene(int _width, int _height)
 
 void FunGT::update(const std::function<void()> &renderLambda)
 {
-
-    float currentFrame = glfwGetTime();
-    deltaTime = currentFrame-lastFrame; 
-    lastFrame = currentFrame; 
-
-    m_sceneManager->setDeltaTime(deltaTime);
 
 
     processKeyBoardInput();
