@@ -35,6 +35,9 @@ class SceneManager{
         void addRenderableObj(std::shared_ptr<Renderable> node);
         void setDeltaTime(float deltaT); 
         float getDetaTime(); 
+        glm::mat4 getProjectionMatrix() const {
+            return m_ProjectionMatrix;
+        }
         // Getters for GUI editing
         glm::vec3& getLightPosition() { return m_lightPosition; }
         glm::vec3& getLightAmbient() { return m_lightAmbient; }

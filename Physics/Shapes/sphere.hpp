@@ -20,6 +20,10 @@ public:
         
         return inertia;
     }
+    virtual AABB getBoundingBox(const fungt::Vec3 &pos) const override{
+        fungt::Vec3 radius_vec(m_radius, m_radius, m_radius);
+        return AABB(pos - radius_vec, pos + radius_vec);
+    }
     float getVolume() const override{
 
         float volume = (3.0f/4.0f) * M_PI * (m_radius*m_radius*m_radius);
