@@ -12,6 +12,7 @@
 #include "Layer/layer_stack.hpp"              
 #include "GUI/fungt_gui_headers.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
+#include "Physics/PhysicsWorld/physics_world.hpp"
 #include <memory>
 #include <unordered_map>
 
@@ -46,10 +47,16 @@ class FunGT : public GraphicsTool{
     std::shared_ptr<SceneManager> m_sceneManager;
     // IMGUI LAYER SYSTEM
     std::unique_ptr<ViewPort> m_ViewPortLayer;     
-    std::unique_ptr<ImGuiLayer> m_imguiLayer;      
-    LayerStack m_layerStack;                       
+    std::unique_ptr<ImGuiLayer> m_imguiLayer;
+    std::shared_ptr<fungt::SimulationController> m_simController;
+    std::unique_ptr<PhysicsDebugRenderer> m_physicsDebugRenderer;   
+    LayerStack m_layerStack;
 
     std::shared_ptr<InfiniteGrid> m_grid;  // ← ADD (shared_ptr for SceneManager)
+
+    //Collisions
+    spCollisionManager m_collisionManager;
+    std::shared_ptr<PhysicsWorld> m_physicsWorld;
 
     public: 
         FunGT(int _width, int _height); 
@@ -65,7 +72,28 @@ class FunGT : public GraphicsTool{
         std::shared_ptr<SceneManager> getSceneManager();
         void set(const std::function<void()>& renderLambda);
         static std::unique_ptr<FunGT> createScene(int _width, int _height);
-
+        std::shared_ptr<fungt::SimulationController> getSimulationController() { return m_simController; }
+        std::shared_ptr<CollisionManager> getCollisionManager() {
+            if(!m_collisionManager) {
+                std::cerr << "Warning: CollisionManager not initialized!" << std::endl;
+                return nullptr;
+            }
+            return m_collisionManager;
+        }
+        void createPhysicsWorld() {
+            m_physicsWorld = std::make_shared<PhysicsWorld>();
+            if(m_physicsWorld) {
+                m_collisionManager = m_physicsWorld->getCollisionManager();
+            }
+            //m_collisionManager = m_physicsWorld->getCollisionManager();
+        }
+        std::shared_ptr<PhysicsWorld> getPhysicsWorld() {
+            if(!m_physicsWorld) {
+                std::cerr << "Warning: PhysicsWorld not initialized!" << std::endl;
+                return nullptr;
+            }
+            return m_physicsWorld;
+        }
     protected:
         // Override virtual methods from GraphicsTool
         void onMouseMove(double xpos, double ypos) override;
@@ -79,5 +107,7 @@ typedef std::unique_ptr<FunGT> FunGTScene;
 typedef std::shared_ptr<SceneManager> FunGTSceneManager; //returns a shared pointer
 typedef std::shared_ptr<SimpleModel> FunGTSModel;
 typedef std::shared_ptr<SimpleGeometry> FunGTSGeom;
+typedef std::shared_ptr<fungt::SimulationController> FunGTSimController;
+typedef std::shared_ptr<PhysicsWorld> FunGTPhysicsWorld;
 
 #endif // _FUNGT_H_

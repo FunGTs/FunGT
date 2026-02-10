@@ -5,9 +5,13 @@
 class Box : public Shape {
 public:
     fungt::Vec3 size; // width, height, depth
-    
+    float m_width, m_height, m_depth; // For easier access
     Box(float width, float height, float depth) 
-        : Shape(ShapeType::BOX), size(width, height, depth) {}
+        : Shape(ShapeType::BOX), size(width, height, depth) {
+            m_width = width;
+            m_height = height; 
+            m_depth = depth; 
+        }
     
      fungt::Matrix3f getInertiaMatrix(float mass) const override {
         fungt::Matrix3f inertia;
@@ -21,7 +25,10 @@ public:
         
         return inertia;
     }
-    
+    AABB getBoundingBox(const fungt::Vec3& position) const override {
+         fungt::Vec3 halfSize = size * 0.5f;
+         return AABB(position - halfSize, position + halfSize);
+    }
     float getVolume() const override {
         return size.x * size.y * size.z;
     }

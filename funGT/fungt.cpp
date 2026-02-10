@@ -13,7 +13,9 @@ FunGT::FunGT(int _width, int _height)
     m_sceneManager = std::make_shared<SceneManager>();
     m_ViewPortLayer = std::make_unique<ViewPort>();
     m_imguiLayer = std::make_unique<ImGuiLayer>();
-    //m_grid = std::make_shared<InfiniteGrid>();
+    // Create simulation controller
+    m_simController = std::make_shared<fungt::SimulationController>();
+    
 }
 FunGT::~FunGT(){
     std::cout<<"FunGT destructor"<<std::endl; 
@@ -91,8 +93,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
     std::string grid_fs = getAssetPath("shaders/grid_fs.glsl");
     m_grid->init(grid_vs,grid_fs);
     m_grid->setPlanes(nearPlane, farPlane);
-    //m_grid->setViewMatrix(m_camera.getViewMatrix());
-    //m_grid->setProjectionMatrix(ProjectionMatrix);
+
     m_sceneManager->addRenderableObj(m_grid);
     renderLambda();
     
@@ -106,8 +107,15 @@ void FunGT::set(const std::function<void()>& renderLambda){
        
 
     }
-
-
+   // CREATE PHYSICS DEBUG RENDERER (NOT a layer! Just a utility)
+   if (m_collisionManager) {
+      
+       if(m_collisionManager->isShowingCollidableBodies()) {
+           m_physicsDebugRenderer = std::make_unique<PhysicsDebugRenderer>(m_collisionManager, m_sceneManager, &m_camera);
+           m_physicsDebugRenderer->setShowCollisionBoxes(true);
+           std::cout << "Collidable bodies will be shown in debug renderer." << std::endl;
+       }
+   }
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
@@ -118,6 +126,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager,&m_camera));
        m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
+       m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
        m_layerStack.PushLayer(std::move(m_imguiLayer));
    }
 
@@ -125,6 +134,10 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_ViewPortLayer->setRenderFunction([this]() {
            // Render all models managed by the SceneManager
                 m_sceneManager->renderScene();
+                // Second: Render wireframes ON TOP of scene (before ImGui!)
+                if (m_physicsDebugRenderer) {
+                    m_physicsDebugRenderer->render();
+                }
         });
        m_layerStack.PushLayer(std::move(m_ViewPortLayer));
    }
@@ -150,12 +163,6 @@ std::unique_ptr<FunGT> FunGT::createScene(int _width, int _height)
 
 void FunGT::update(const std::function<void()> &renderLambda)
 {
-
-    float currentFrame = glfwGetTime();
-    deltaTime = currentFrame-lastFrame; 
-    lastFrame = currentFrame; 
-
-    m_sceneManager->setDeltaTime(deltaTime);
 
 
     processKeyBoardInput();
