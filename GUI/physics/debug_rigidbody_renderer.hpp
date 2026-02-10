@@ -28,7 +28,12 @@ public:
         const fungt::Vec3& size,
         const fungt::Vec3& color = fungt::Vec3(1.0f, 0.0f, 0.0f)
     );
-
+    void drawWireframeSphere(
+        const fungt::Vec3& center,
+        float radius,
+        const fungt::Vec3& color = fungt::Vec3(1.0f, 0.0f, 0.0f),
+        int segments = 20
+    );
     // Render all queued lines
     void render(const glm::mat4& view, const glm::mat4& projection);
 

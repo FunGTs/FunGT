@@ -92,6 +92,97 @@ void DebugRenderer::drawWireframeBox(
     }
 }
 
+void DebugRenderer::drawWireframeSphere(const fungt::Vec3& center, float radius, const fungt::Vec3& color, int segments)
+{
+    // Draw 3 great circles: XY plane, XZ plane, YZ plane
+
+  // Circle 1: XY plane (around Z axis)
+    for (int i = 0; i < segments; i++) {
+        float angle1 = (float)i / segments * 2.0f * M_PI;
+        float angle2 = (float)(i + 1) / segments * 2.0f * M_PI;
+
+        float x1 = center.x + radius * cos(angle1);
+        float y1 = center.y + radius * sin(angle1);
+        float z1 = center.z;
+
+        float x2 = center.x + radius * cos(angle2);
+        float y2 = center.y + radius * sin(angle2);
+        float z2 = center.z;
+
+        // Start vertex
+        m_vertices.push_back(x1);
+        m_vertices.push_back(y1);
+        m_vertices.push_back(z1);
+        m_vertices.push_back(color.x);
+        m_vertices.push_back(color.y);
+        m_vertices.push_back(color.z);
+
+        // End vertex
+        m_vertices.push_back(x2);
+        m_vertices.push_back(y2);
+        m_vertices.push_back(z2);
+        m_vertices.push_back(color.x);
+        m_vertices.push_back(color.y);
+        m_vertices.push_back(color.z);
+    }
+
+    // Circle 2: XZ plane (around Y axis)
+    for (int i = 0; i < segments; i++) {
+        float angle1 = (float)i / segments * 2.0f * M_PI;
+        float angle2 = (float)(i + 1) / segments * 2.0f * M_PI;
+
+        float x1 = center.x + radius * cos(angle1);
+        float y1 = center.y;
+        float z1 = center.z + radius * sin(angle1);
+
+        float x2 = center.x + radius * cos(angle2);
+        float y2 = center.y;
+        float z2 = center.z + radius * sin(angle2);
+
+        m_vertices.push_back(x1);
+        m_vertices.push_back(y1);
+        m_vertices.push_back(z1);
+        m_vertices.push_back(color.x);
+        m_vertices.push_back(color.y);
+        m_vertices.push_back(color.z);
+
+        m_vertices.push_back(x2);
+        m_vertices.push_back(y2);
+        m_vertices.push_back(z2);
+        m_vertices.push_back(color.x);
+        m_vertices.push_back(color.y);
+        m_vertices.push_back(color.z);
+    }
+
+    // Circle 3: YZ plane (around X axis)
+    for (int i = 0; i < segments; i++) {
+        float angle1 = (float)i / segments * 2.0f * M_PI;
+        float angle2 = (float)(i + 1) / segments * 2.0f * M_PI;
+
+        float x1 = center.x;
+        float y1 = center.y + radius * cos(angle1);
+        float z1 = center.z + radius * sin(angle1);
+
+        float x2 = center.x;
+        float y2 = center.y + radius * cos(angle2);
+        float z2 = center.z + radius * sin(angle2);
+
+        m_vertices.push_back(x1);
+        m_vertices.push_back(y1);
+        m_vertices.push_back(z1);
+        m_vertices.push_back(color.x);
+        m_vertices.push_back(color.y);
+        m_vertices.push_back(color.z);
+
+        m_vertices.push_back(x2);
+        m_vertices.push_back(y2);
+        m_vertices.push_back(z2);
+        m_vertices.push_back(color.x);
+        m_vertices.push_back(color.y);
+        m_vertices.push_back(color.z);
+    }
+}
+
 void DebugRenderer::render(const glm::mat4& view, const glm::mat4& projection) {
     if (!m_initialized || m_vertices.empty()) return;
 
@@ -110,7 +201,7 @@ void DebugRenderer::render(const glm::mat4& view, const glm::mat4& projection) {
     glBindVertexArray(m_vao);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_DYNAMIC_DRAW);
-    std::cout << "DREW " << (m_vertices.size() / 6) << " VERTICES!" << std::endl;  // ← ADD THIS
+    //std::cout << "DREW " << (m_vertices.size() / 6) << " VERTICES!" << std::endl;  // ← ADD THIS
     // Draw lines
     glDrawArrays(GL_LINES, 0, m_vertices.size() / 6);
 
