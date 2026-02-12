@@ -59,6 +59,47 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 - CUDA Toolkit (for CUDA backend)
 - Intel LLVM SYCL compiler (you can use the provided via FunGT GitHub Releases for the SYCL backend)
 
+
+# Linux Installation
+
+Install dependencies on Debian-based systems:
+
+```bash
+sudo apt-get update
+sudo apt-get install build-essential cmake libgl1-mesa-dev \
+    libassimp-dev libglfw3-dev libglad-dev libglm-dev
+sudo apt install ocl-icd-libopencl1
+sudo apt-get install libstdc++-12-dev
+
+```
+
+## Clone the repository
+
+```bash
+
+git clone https://github.com/juanchuletas/FunGT.git
+cd FunGT
+
+```
+
+
+#### Installing dependencies for SYCL toolchain:
+
+In order to avoid issues first install the OpenCL GPU runtime:
+
+```bash
+
+    ./install_intel_opencl_gpu.sh
+
+```
+Then run the script for the OpenCL CPU Runtime
+
+```bash
+
+    ./install_intel_opencl_cpu.sh
+
+```
+
 ### SYCL Toolchain (Required)
 
 FunGT uses the Intel DPC++ / SYCL compiler for GPU acceleration on Intel hardware.
@@ -71,30 +112,19 @@ From the FunGT root directory:
 ```bash
 make fungt-deps
 ```
-This will download and install the toolchain from the official FunGT GitHub Releases under:
+This will download and add the toolchain from the official FunGT GitHub Releases under:
 
 `toolchain/sycl/linux_x64/dpcpp`
 
-### Linux Installation
-
-Install dependencies on Debian-based systems:
-```bash
-sudo apt-get update
-sudo apt-get install build-essential cmake libgl1-mesa-dev \
-    libassimp-dev libglfw3-dev libglad-dev libglm-dev
-```
-
 ### Build Instructions
 ```bash
-# Clone the repository
-git clone https://github.com/juanchuletas/FunGT.git
-cd FunGT
 
-# Create build directory
+
+# Go to the Samples folder and create a build directory inside one of the available directories:
 mkdir build && cd build
 
-# Configure and build
-cmake ..
+# Configure and build: Use path of  FunGT 
+cmake -DFUNGT_BASE_DIR=/path/to/FunGT ..
 make
 
 # Run FunGT
