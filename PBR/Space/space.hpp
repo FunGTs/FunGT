@@ -59,6 +59,12 @@ class Space {
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
         void BuildBVH();
         void setSamples(int numOfSamples);
+        void LoadTrianglesToRender(const std::vector<Triangle>& triangles) {
+            m_triangles = triangles;
+        }
+        std::shared_ptr<IDeviceTexture> getTextureManager() const {
+            return m_textureManager;
+        }
 
 
 };
