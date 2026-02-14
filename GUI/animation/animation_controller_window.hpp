@@ -2,7 +2,7 @@
 #define _ANIMATION_CONTROL_WINDOW_H_
 
 #include "GUI/imgui_window.hpp"
-#include "Physics/Animation/AnimationController.hpp"
+#include "Physics/AnimationCreator/animation_controller.hpp"
 #include "SceneManager/scene_manager.hpp"
 #include <memory>
 
@@ -11,22 +11,29 @@ private:
     std::shared_ptr<fungt::AnimationController> m_animController;
     std::shared_ptr<SceneManager> m_sceneManager;
 
-    // Baking settings per object
     std::map<std::string, bool> m_bakingEnabled;
     bool m_initialized;
+
+    // MODE CONTROL
+    enum Mode { PHYSICS_RECORDING, ANIMATION_PLAYBACK };
+    Mode m_currentMode;
 
 public:
     AnimationControlWindow(std::shared_ptr<fungt::AnimationController> animController,
         std::shared_ptr<SceneManager> sceneManager)
-        : ImGuiWindow("Animation Control")
-        , m_animController(animController)
+        : m_animController(animController)
         , m_sceneManager(sceneManager)
         , m_initialized(false)
+        , m_currentMode(PHYSICS_RECORDING)
     {
     }
 
-    void render() override {
-        ImGui::Begin("Animation Control", &m_isOpen);
+    Mode getCurrentMode() const { return m_currentMode; }
+    bool isRecordingMode() const { return m_currentMode == PHYSICS_RECORDING; }
+    bool isPlaybackMode() const { return m_currentMode == ANIMATION_PLAYBACK; }
+
+    void onImGuiRender() override {  // ← YOUR BASE CLASS METHOD!
+        ImGui::Begin("Animation Control");
 
         if (!m_animController) {
             ImGui::Text("No AnimationController!");
@@ -34,24 +41,45 @@ public:
             return;
         }
 
-        // Initialize baking settings once
         if (!m_initialized) {
             initializeBakingSettings();
             m_initialized = true;
         }
 
+        // ========== MODE SELECTOR ==========
+        ImGui::SeparatorText("Mode");
+
+        if (ImGui::RadioButton("Physics Recording", m_currentMode == PHYSICS_RECORDING)) {
+            m_currentMode = PHYSICS_RECORDING;
+            std::cout << "Switched to PHYSICS RECORDING mode" << std::endl;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Animation Playback", m_currentMode == ANIMATION_PLAYBACK)) {
+            m_currentMode = ANIMATION_PLAYBACK;
+            std::cout << "Switched to ANIMATION PLAYBACK mode" << std::endl;
+        }
+
+        if (m_currentMode == PHYSICS_RECORDING) {
+            ImGui::TextColored(ImVec4(1, 0.5, 0, 1), "Mode: Recording physics motion");
+        }
+        else {
+            ImGui::TextColored(ImVec4(0, 1, 0, 1), "Mode: Playing back keyframes");
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
         // ========== KEYFRAME RECORDING ==========
 
         ImGui::SeparatorText("Keyframe Recording");
 
-        // Manual keyframe button
         if (ImGui::Button("Record Keyframe (K)", ImVec2(-1, 30))) {
             recordManualKeyframes();
         }
 
         ImGui::Spacing();
 
-        // Physics baking settings
         if (ImGui::CollapsingHeader("Physics Auto-Record", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::Indent();
 
@@ -60,7 +88,6 @@ public:
                     m_animController->setObjectBakingEnabled(objID, enabled);
                 }
 
-                // Show keyframe count
                 ImGui::SameLine(200);
                 int count = m_animController->getRecorder()->getKeyframeCount(objID);
                 if (enabled) {
@@ -97,6 +124,13 @@ public:
                 }
             }
 
+            ImGui::Spacing();
+
+            if (ImGui::Button("Clear All Keyframes", ImVec2(-1, 0))) {
+                m_animController->getRecorder()->clearAll();
+                std::cout << "Cleared all keyframes" << std::endl;
+            }
+
             ImGui::Unindent();
         }
 
@@ -130,17 +164,15 @@ private:
         const auto& renderables = m_sceneManager->getRenderable();
 
         for (const auto& obj : renderables) {
-            // Check SimpleModel
             auto model = std::dynamic_pointer_cast<SimpleModel>(obj);
             if (model) {
                 std::string id = model->getAnimationID();
                 if (!id.empty()) {
-                    m_bakingEnabled[id] = false;  // Default: manual
+                    m_bakingEnabled[id] = false;
                 }
                 continue;
             }
 
-            // Check SimpleGeometry
             auto geom = std::dynamic_pointer_cast<SimpleGeometry>(obj);
             if (geom) {
                 std::string id = geom->getAnimationID();
@@ -152,9 +184,8 @@ private:
     }
 
     void recordManualKeyframes() {
-        // Record all objects that are NOT auto-baking
         for (const auto& [objID, bakingEnabled] : m_bakingEnabled) {
-            if (!bakingEnabled) {  // Only manual objects
+            if (!bakingEnabled) {
                 m_animController->recordKeyframe(objID);
             }
         }

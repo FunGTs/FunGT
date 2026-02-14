@@ -138,6 +138,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/Physics/Integrators
     ${FUNGT_BASE_DIR}/Physics/ContactHelpers
     ${FUNGT_BASE_DIR}/Physics/PhysicsWorld
+    ${FUNGT_BASE_DIR}/Physics/AnimationCreator
     ${FUNGT_BASE_DIR}/Physics/Clothing
     ${FUNGT_BASE_DIR}/Quaternion
     ${FUNGT_BASE_DIR}/Vector
@@ -155,6 +156,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/PBR/Render/brdf
     ${FUNGT_BASE_DIR}/PBR/Render/shared
     ${FUNGT_BASE_DIR}/PBR/TextureManager
+    #${FUNGT_BASE_DIR}/PBR/TriangleExtractor
     ${FUNGT_BASE_DIR}/PBR/BVH
     ${FUNGT_BASE_DIR}/Triangle
 )
@@ -208,6 +210,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
+    ${FUNGT_BASE_DIR}/Physics/AnimationCreator/key_frame_recorder.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
     ${FUNGT_BASE_DIR}/Renders/framebuffer.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
@@ -216,6 +219,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/Intersection/intersection.cpp
     ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
+    #${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════

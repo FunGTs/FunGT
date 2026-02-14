@@ -22,6 +22,7 @@ class SimpleModel : public Renderable {
     glm::vec3 m_rotation = glm::vec3(0.f);
     glm::vec3 m_scale    = glm::vec3(1.0); 
     std::vector<Triangle> m_triangles;
+    std::string m_animationID;
     SimpleModel();
 public:
   
@@ -34,6 +35,14 @@ public:
     void position(float x = 0.f, float y = 0.f, float z = 0.f);
     void rotation(float x = 0.f, float y = 0.f, float z = 0.f);
     void scale(float s = 1.f);
+    void scale(float x, float y, float z){
+        m_scale = glm::vec3(x, y, z);
+        m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
+    }
+    glm::vec3 getScale() const { return m_scale; } // Assuming uniform scaling
+    glm::vec3 getPosition() const { return m_position; }
+    glm::vec3 getRotation() const { return m_rotation; }
+
     void addCollisionProperty(std::shared_ptr<RigidBody> body);;
     //Override methods from Renderable
     void draw() override;
@@ -44,6 +53,8 @@ public:
     glm::mat4 getProjectionMatrix() override;
     glm::mat4 getModelMatrix() const override;
     std::vector<Triangle> getTriangleList();
+    void setAnimationID(const std::string& id) { m_animationID = id; }
+    std::string getAnimationID() const { return m_animationID; }
     const std::vector<std::unique_ptr<Mesh>>& getMeshes() const {
         return m_model->getMeshes();
     }

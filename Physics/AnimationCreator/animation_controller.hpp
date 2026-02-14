@@ -1,7 +1,7 @@
 #if !defined(_ANIMATION_CONTROLLER_H_)
 #define _ANIMATION_CONTROLLER_H_
 
-#include "KeyFrameRecorder/key_frame_recorder.hpp"
+#include "key_frame_recorder.hpp"
 #include "SceneManager/scene_manager.hpp"
 #include "SimpleModel/simple_model.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
@@ -141,7 +141,7 @@ namespace fungt {
                 // Record position from RigidBody
                 fungt::Vec3 pos = rigidBody->m_pos;
                 fungt::Vec3 rot(0, 0, 0);  // TODO: Convert quaternion to euler
-                fungt::Vec3 scl = model->getScale();
+                fungt::Vec3 scl = fungt::toFungtVec3(model->getScale());
 
                 m_recorder->recordKeyframe(id, frame, pos, rot, scl);
             }
@@ -161,6 +161,7 @@ namespace fungt {
          *   4. Update model matrix
          */
         void updateFrame(int frame) {
+            std::cout << "Updating frame from animation controller " << frame << std::endl;
             if (!m_sceneManager) return;
 
             const auto& renderables = m_sceneManager->getRenderable();
@@ -211,31 +212,32 @@ namespace fungt {
             fungt::Vec3& pos, fungt::Vec3& rot, fungt::Vec3& scl) {
             auto model = std::dynamic_pointer_cast<SimpleModel>(obj);
             if (model) {
-                pos = model->getPosition();
-                rot = model->getRotation();
-                scl = model->getScale();
+                pos = fungt::toFungtVec3(model->getPosition());
+                rot = fungt::toFungtVec3(model->getRotation());
+                scl = fungt::toFungtVec3(model->getScale());
                 return;
             }
 
             auto geom = std::dynamic_pointer_cast<SimpleGeometry>(obj);
             if (geom) {
-                pos = geom->getPosition();
-                rot = geom->getRotation();
-                scl = geom->getScale();
+                pos = fungt::toFungtVec3(geom->getPosition());
+                rot = fungt::toFungtVec3(geom->getRotation());
+                scl = fungt::toFungtVec3(geom->getScale());
+
             }
         }
 
-        /**
-         * THIS IS THE MAGIC!
-         * Gets interpolated transform and applies it to object
-         */
+        
+        //Gets interpolated transform and applies it to object
+        
         void applyKeyframeToModel(std::shared_ptr<SimpleModel> model,
             const std::string& id, int frame) {
             fungt::Vec3 pos, rot, scl;
 
             // GET FROM KEYFRAMERECORDER!
             if (m_recorder->getInterpolatedTransform(id, frame, pos, rot, scl)) {
-                // APPLY TO MODEL!
+               
+                std::cout << "Applying to " << id << ": pos=(" << pos.x << "," << pos.y << "," << pos.z << ")" << std::endl;
                 model->position(pos.x, pos.y, pos.z);
                 model->rotation(rot.x, rot.y, rot.z);
                 model->scale(scl.x, scl.y, scl.z);

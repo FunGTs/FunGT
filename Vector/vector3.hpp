@@ -56,6 +56,10 @@ namespace fungt{
                 x -= other.x; y -= other.y; z -= other.z;
                 return *this;
             }
+            fgt_device Vec3& operator=(const Vec3& other) {
+                x = other.x; y = other.y; z = other.z;
+                return *this;
+            }
             fgt_device float dot(const Vec3& other) const {
                 return x * other.x + y * other.y + z * other.z;
             }
