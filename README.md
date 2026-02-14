@@ -64,8 +64,7 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 Install dependencies on Debian-based systems:
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential cmake libgl1-mesa-dev \
-    libassimp-dev libglfw3-dev libglad-dev libglm-dev
+sudo apt install build-essential libgl-dev libglfw3-dev libglew-dev
 ```
 
 ### Build Instructions
