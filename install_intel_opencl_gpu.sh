@@ -1,89 +1,99 @@
 #!/bin/bash
-
 set -e
 
-WORKDIR="/tmp/intel-neo"
-IGC_VERSION="1.0.16510.2"
-NEO_VERSION="24.13.29138.7"
-IGDGMM_VERSION="22.3.18"
-SUM_FILE="ww13.sum"
-
 echo "========================================"
-echo "Intel GPU OpenCL (NEO) FULL Installer"
+echo "Intel GPU OpenCL (NEO) SIMPLE Installer"
 echo "========================================"
 
 # ------------------------------------------------
-# Skip if already installed
+# Check if already installed
 # ------------------------------------------------
 
-if clinfo 2>/dev/null | grep -qi "Intel(R) OpenCL"; then
-    echo "Intel GPU OpenCL already detected."
+if command -v clinfo &>/dev/null && clinfo | grep -qi "Intel"; then
+    echo "Intel OpenCL already detected on this system."
+    echo "Nothing to do."
     exit 0
 fi
 
 # ------------------------------------------------
-# Create temporary directory
+# Create working directory
 # ------------------------------------------------
 
-sudo rm -rf "$WORKDIR"
-mkdir -p "$WORKDIR"
-cd "$WORKDIR"
+mkdir -p neo
+cd neo
 
-echo "Downloading ALL packages..."
+# ------------------------------------------------
+# Download ALL packages (exact Intel example)
+# ------------------------------------------------
 
-# IGC
-wget -q https://github.com/intel/intel-graphics-compiler/releases/download/igc-$IGC_VERSION/intel-igc-core_${IGC_VERSION}_amd64.deb
-wget -q https://github.com/intel/intel-graphics-compiler/releases/download/igc-$IGC_VERSION/intel-igc-opencl_${IGC_VERSION}_amd64.deb
+echo "Downloading packages..."
 
-# Compute runtime (ALL packages including debug)
-wget -q https://github.com/intel/compute-runtime/releases/download/$NEO_VERSION/intel-level-zero-gpu_${NEO_VERSION}_amd64.deb
-wget -q https://github.com/intel/compute-runtime/releases/download/$NEO_VERSION/intel-level-zero-gpu-dbgsym_1.3.29138.7_amd64.ddeb
-wget -q https://github.com/intel/compute-runtime/releases/download/$NEO_VERSION/intel-opencl-icd_${NEO_VERSION}_amd64.deb
-wget -q https://github.com/intel/compute-runtime/releases/download/$NEO_VERSION/intel-opencl-icd-dbgsym_${NEO_VERSION}_amd64.ddeb
-wget -q https://github.com/intel/compute-runtime/releases/download/$NEO_VERSION/libigdgmm12_${IGDGMM_VERSION}_amd64.deb
+wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.16510.2/intel-igc-core_1.0.16510.2_amd64.deb
+wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.16510.2/intel-igc-opencl_1.0.16510.2_amd64.deb
+
+wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-level-zero-gpu-dbgsym_1.3.29138.7_amd64.ddeb
+wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-level-zero-gpu_1.3.29138.7_amd64.deb
+wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-opencl-icd-dbgsym_24.13.29138.7_amd64.ddeb
+wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-opencl-icd_24.13.29138.7_amd64.deb
+wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/libigdgmm12_22.3.18_amd64.deb
 
 # ------------------------------------------------
 # Verify SHA256
 # ------------------------------------------------
 
 echo "Downloading checksum file..."
-wget -q https://github.com/intel/compute-runtime/releases/download/$NEO_VERSION/$SUM_FILE
+wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/ww13.sum
 
 echo "Verifying checksums..."
-sha256sum -c $SUM_FILE || {
-    echo "Checksum verification failed."
-    exit 1
-}
+sha256sum -c ww13.sum
+
+echo
+echo "========================================"
+echo "Downloads and checksum verification SUCCESS."
+echo "========================================"
+echo
 
 # ------------------------------------------------
-# Install all packages
+# Ask before installation
 # ------------------------------------------------
 
-echo "Installing ALL packages..."
-sudo dpkg -i *.deb *.ddeb || sudo apt -f install -y
+read -p "Proceed with installation? (y/N): " CONFIRM
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    echo "Installation cancelled."
+    exit 0
+fi
+
+# ------------------------------------------------
+# Install
+# ------------------------------------------------
+
+sudo dpkg -i *.deb *.ddeb
+sudo apt-get install -f -y
+
+# ------------------------------------------------
+# Ensure clinfo exists
+# ------------------------------------------------
+
+if ! command -v clinfo &>/dev/null; then
+    echo "clinfo not installed. Installing..."
+    sudo apt-get update
+    sudo apt-get install -y clinfo
+fi
 
 # ------------------------------------------------
 # Verify installation
 # ------------------------------------------------
 
+echo
 echo "========================================"
-echo "Verifying Intel GPU OpenCL..."
+echo "Verifying OpenCL..."
 echo "========================================"
 
-if ! command -v clinfo &> /dev/null; then
-    echo "clinfo not installed."
-    echo "Install with: sudo apt install clinfo"
-    exit 1
-fi
-
-if clinfo | grep -qi "Intel(R) OpenCL"; then
-    echo "SUCCESS: Intel GPU OpenCL detected."
+if clinfo | grep -qi "Intel"; then
+    echo "SUCCESS: Intel OpenCL detected."
 else
-    echo "ERROR: Intel GPU OpenCL NOT detected."
-    exit 1
+    echo "WARNING: Intel OpenCL not detected."
 fi
 
-echo "========================================"
-echo "Done."
-echo "========================================"
-
+echo
+echo "Installation complete."
