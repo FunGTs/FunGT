@@ -1,10 +1,10 @@
 FUNGT_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR := $(FUNGT_ROOT)/toolchain/sycl/linux_x64
 DPCPP_DIR := $(TOOLCHAIN_DIR)/dpcpp
-TOOLCHAIN_TAR := fungt-sycl-toolchain-linux-x64.tar.gz
+TOOLCHAIN_TAR := fungt_sycl_toolchain_linux_x64.tar.gz
 
 
-TOOLCHAIN_URL := https://github.com/FunGTs/FunGT/releases/download/v0.1.0-compile-sycl-toolchain-linux/$(TOOLCHAIN_TAR)
+TOOLCHAIN_URL := https://github.com/FunGTs/FunGT/releases/download/v0.1.1-compile-sycl-toolchain-linux/$(TOOLCHAIN_TAR)
 
 .PHONY: fungt-deps
 
