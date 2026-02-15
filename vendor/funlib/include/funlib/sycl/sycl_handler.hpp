@@ -28,7 +28,7 @@ namespace flib
         
         friend class tensor_operations;
 
-        static void select_device(std::string device_name);
+        static void select_device(std::string device_name, std::string device_type = "", bool profiling = false);
         static void get_device_info();
         static void sys_info();
         static void get_platform_info();
