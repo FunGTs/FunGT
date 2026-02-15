@@ -261,7 +261,7 @@ void SYCL_Renderer::createQueue()
     try {
         
         //flib::sycl_handler::sys_info(); // Prints system info
-        flib::sycl_handler::select_device("Intel"); // Selects a vendor for your computations
+        flib::sycl_handler::select_device("Intel","GPU"); // Selects a vendor for your computations
         flib::sycl_handler::get_device_info(); // Prints current device info
 
         m_queue = flib::sycl_handler::get_queue();
