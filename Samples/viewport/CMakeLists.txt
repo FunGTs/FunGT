@@ -128,7 +128,9 @@ include_directories(
     ${FUNGT_BASE_DIR}/Path_Manager
     ${FUNGT_BASE_DIR}/InfoWindow
     ${FUNGT_BASE_DIR}/GUI
+    ${FUNGT_BASE_DIR}/GUI/physics
     ${FUNGT_BASE_DIR}/SimpleModel
+    ${FUNGT_BASE_DIR}/SimpleGeometry
     ${FUNGT_BASE_DIR}/Physics/CollisionManager
     ${FUNGT_BASE_DIR}/Physics/Contact
     ${FUNGT_BASE_DIR}/Physics/RigidBody
@@ -182,6 +184,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Geometries/shape.cpp
     ${FUNGT_BASE_DIR}/Geometries/inf_grid.cpp
     ${FUNGT_BASE_DIR}/Geometries/square.cpp
+    ${FUNGT_BASE_DIR}/Geometries/sphere.cpp
+    ${FUNGT_BASE_DIR}/Geometries/box.cpp
     ${FUNGT_BASE_DIR}/Model/model.cpp
     ${FUNGT_BASE_DIR}/Helpers/helpers.cpp
     ${FUNGT_BASE_DIR}/Animation/animation.cpp
@@ -195,8 +199,13 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
     ${FUNGT_BASE_DIR}/GUI/gui.cpp
+    ${FUNGT_BASE_DIR}/GUI/physics/simulation_controller_window.cpp
+    ${FUNGT_BASE_DIR}/GUI/physics/debug_rigidbody_renderer.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
+    ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
+    ${FUNGT_BASE_DIR}/Physics/Collisions/manifold_collision.cpp
+    ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
