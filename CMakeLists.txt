@@ -359,12 +359,51 @@ elseif (UNIX)
     message(STATUS "Configuring for Linux")
     
     # Find required packages
-    find_package(OpenCL REQUIRED)
-    if (OpenCL_FOUND)
-        message(STATUS "OpenCL found")
+    if(FUNGT_USE_SYCL)
+
+        # Try bundled toolchain OpenCL first
+        set(BUNDLED_OPENCL_INCLUDE "${BUNDLED_SYCL_DIR}/include")
+        find_library(BUNDLED_OPENCL_LIBRARY
+            NAMES OpenCL
+            PATHS "${BUNDLED_SYCL_DIR}/lib"
+            NO_DEFAULT_PATH
+        )
+
+        if(EXISTS "${BUNDLED_OPENCL_INCLUDE}/CL/opencl.h" AND BUNDLED_OPENCL_LIBRARY)
+
+            set(OpenCL_INCLUDE_DIRS "${BUNDLED_OPENCL_INCLUDE}")
+            set(OpenCL_LIBRARIES "${BUNDLED_OPENCL_LIBRARY}")
+
+            message(STATUS "OpenCL (bundled) found:")
+            message(STATUS "  Include: ${OpenCL_INCLUDE_DIRS}")
+            message(STATUS "  Library: ${OpenCL_LIBRARIES}")
+
+        else()
+
+            message(STATUS "Bundled OpenCL not found, trying system OpenCL...")
+
+            find_package(OpenCL REQUIRED)
+
+            if(OpenCL_FOUND)
+                message(STATUS "OpenCL (system) found: ${OpenCL_INCLUDE_DIRS}")
+            else()
+                message(FATAL_ERROR "OpenCL library not found!")
+            endif()
+
+        endif()
+
     else()
-        message(FATAL_ERROR "OpenCL library not found!")
+
+        # If SYCL disabled, just use system OpenCL
+        find_package(OpenCL REQUIRED)
+        if(OpenCL_FOUND)
+            message(STATUS "OpenCL found: ${OpenCL_INCLUDE_DIRS}")
+        else()
+            message(FATAL_ERROR "OpenCL library not found!")
+        endif()
+
     endif()
+
     
     find_package(OpenGL REQUIRED)
     if (OpenGL_FOUND)
