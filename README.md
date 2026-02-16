@@ -165,8 +165,14 @@ This will download and add the toolchain from the official FunGT GitHub Releases
 `toolchain/sycl/linux_x64/dpcpp`
 
 ### Build Instructions
+
+
+
 ```bash
 
+# In the FunGT root folder export the proper libraries
+
+export LD_LIBRARY_PATH=$PWD/toolchain/sycl/linux_x64/dpcpp/lib:$LD_LIBRARY_PATH
 
 # Go to the Samples folder and create a build directory inside one of the available directories:
 mkdir build && cd build
@@ -174,6 +180,7 @@ mkdir build && cd build
 # Configure and build: Use path of  FunGT 
 cmake -DFUNGT_BASE_DIR=/path/to/FunGT ..
 make
+
 
 # Run FunGT
 ./FunGT
