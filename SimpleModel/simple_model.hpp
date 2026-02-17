@@ -23,6 +23,8 @@ class SimpleModel : public Renderable {
     glm::vec3 m_scale    = glm::vec3(1.0); 
     std::vector<Triangle> m_triangles;
     std::string m_animationID;
+    bool isStatic = true; // Flag to indicate if the model is static (non-moving)
+    bool m_usePhysicsRigidBody = true; // Flag to indicate if the model should use a physics rigid body
     SimpleModel();
 public:
   
@@ -39,6 +41,7 @@ public:
         m_scale = glm::vec3(x, y, z);
         m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
     }
+    void setUsePhysicsRigidBody(bool use) { m_usePhysicsRigidBody = use; }
     glm::vec3 getScale() const { return m_scale; } // Assuming uniform scaling
     glm::vec3 getPosition() const { return m_position; }
     glm::vec3 getRotation() const { return m_rotation; }
