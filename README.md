@@ -32,17 +32,10 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 
 ## Screenshots
 ### PBR Path Tracing
-![Path Traced Render](demos/luxo_lamp.png)
-*Cook-Torrance BRDF with emissive materials - rendered on Intel integrated GPU via SYCL*
 
-### Main Interface
-![Interface Demo](demos/interface.png)
+![Path Traced Render](demos/sycl.png)
+*Cook-Torrance BRDF with emissive materials - rendered on integrated GPU via SYCL*
 
-### Model Rendering
-![Render Demo](demos/pixar_ball_render.png)
-
-### Animation System
-*[Space for animation playback screenshot]*
 
 ## Getting Started
 
@@ -102,16 +95,11 @@ Advanced physics simulation and particle systems are available in the `experimen
 
 ### Physics Demos (Experimental Branch)
 
-**Luxo Jr. Animation** - Pixar lamp with physics-based movement:
+The goal of this branch is to test new implementations (Physcis focused) without laoding the full user interface (UI)
 
-![Luxo Jr.](fungt_images/luxoJr.png)
+A demo of our full GPU pipeline physics is at:
 
-**GPU Particle System** - 10,000 particles running on integrated graphics:
-
-![Particles Demo](demos/particles.gif)
-
-**Collision detection** - 10 pixar balls colliding:
-![Balls Demo](demos/pixar_balls_demo.gif)
+https://fungts.github.io/FunGT/
 
 ## Roadmap
 
