@@ -119,5 +119,4 @@ FunGT welcomes contributions! Whether it's bug reports, feature requests, or cod
 See [LICENSE](LICENSE) file for details.
 
 ## Contact
-
-*[Add your contact/social links here]*
+juan.garcia.cpp@gmail.com
