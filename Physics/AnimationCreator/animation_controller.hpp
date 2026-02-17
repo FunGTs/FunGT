@@ -140,7 +140,11 @@ namespace fungt {
 
                 // Record position from RigidBody
                 fungt::Vec3 pos = rigidBody->m_pos;
-                fungt::Vec3 rot(0, 0, 0);  // TODO: Convert quaternion to euler
+                auto eulerAngles = rigidBody->getEulerAngles();
+                fungt::Vec3 rot(0, 0, 0); 
+                rot.x = glm::degrees(eulerAngles.x);
+                rot.y = glm::degrees(eulerAngles.y);
+                rot.z = glm::degrees(eulerAngles.z);
                 fungt::Vec3 scl = fungt::toFungtVec3(model->getScale());
 
                 m_recorder->recordKeyframe(id, frame, pos, rot, scl);
