@@ -1,6 +1,9 @@
 # FunGT (Fun Graphics Tool)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/juanchuletas/FunGL/blob/main/fungt_logo.png?raw=true">
+  <img src="https://github.com/juanchuletas/FunGL/blob/main/fungl_logo.png?raw=true" alt="Alt text for your logo">
+</picture>
 
-![FunGT Logo](https://github.com/juanchuletas/FunGL/blob/main/fungt_logo.png?raw=true)
 
 ## Overview
 
