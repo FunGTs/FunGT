@@ -15,6 +15,9 @@ FunGT::FunGT(int _width, int _height)
     m_imguiLayer = std::make_unique<ImGuiLayer>();
     // Create simulation controller
     m_simController = std::make_shared<fungt::SimulationController>();
+
+    //Progressive Path Tracer
+    m_progressiveTracer = std::make_unique<ProgressivePathTracer>();
     
 }
 FunGT::~FunGT(){
@@ -124,7 +127,10 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
        m_imguiLayer->addWindow(std::make_unique<LightEditorWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
-       m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager,&m_camera));
+       if(m_ViewPortLayer){
+           ViewPort* viewportPtr = m_ViewPortLayer.get();
+           m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager, &m_camera,viewportPtr));
+       }
        m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
        m_layerStack.PushLayer(std::move(m_imguiLayer));
@@ -139,12 +145,27 @@ void FunGT::set(const std::function<void()>& renderLambda){
                     m_physicsDebugRenderer->render();
                 }
         });
+        m_ViewPortLayer->setPathTraceFunction([this](int width, int height, int sample) {
+            auto* viewport = m_layerStack.get<ViewPort>();
+            if (!viewport) return;
+
+            GLuint pathTraceTexture = viewport->getPathTraceTexture();
+
+            // Initialize on first sample or if not initialized
+            if (sample == 0 || !m_progressiveTracer->isInitialized()) {
+                m_progressiveTracer->initialize(&m_camera, m_sceneManager, width, height);
+            }
+
+            // Render one sample
+            m_progressiveTracer->renderSample(sample, pathTraceTexture);
+
+        });
        m_layerStack.PushLayer(std::move(m_ViewPortLayer));
    }
 
    // UPDATE PROJECTION MATRIX BASED ON VIEWPORT SIZE
    auto* view_port = m_layerStack.get<ViewPort>();
-   if (view_port)
+   if (view_port)   
    {
        auto view_port_size = view_port->getViewPortSize();
        if (view_port_size.x > 0 && view_port_size.y > 0) {
@@ -167,7 +188,14 @@ void FunGT::update(const std::function<void()> &renderLambda)
 
     processKeyBoardInput();
     glm::mat4 ViewMatrix = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
-
+    glm::mat4 currentView = m_camera.getViewMatrix();
+    if (currentView != m_lastViewMatrix) {
+        auto* viewport = m_layerStack.get<ViewPort>();
+        if (viewport && viewport->isPathTracing()) {
+            viewport->resetAccumulation();  // Reset sample count to 0
+        }
+        m_lastViewMatrix = currentView;
+    }
     // GET VIEWPORT SIZE FROM VIEWPORT LAYER
     auto* view_port = m_layerStack.get<ViewPort>();
     if (view_port) {

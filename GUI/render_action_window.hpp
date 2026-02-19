@@ -7,6 +7,7 @@
 #include "PBR/Space/space.hpp"
 #include "PBR/PBRCamera/pbr_camera.hpp"
 #include "PBR/Render/include/compute_backends.hpp"
+#include "ViewPort/viewport.hpp"
 #include <memory>
 #include <chrono>
 
@@ -31,7 +32,9 @@ private:
     int m_renderHeight = 1080;
     bool m_useViewportSize = false;
     bool m_isRendering = false;
-
+    bool m_viewportPathTrace = false;        // Enable viewport preview?
+    int m_previewSamples = 5;               // Samples for preview
+    ViewPort* m_viewport = nullptr;
     // Resolution presets
     const char* m_resolutionPresets[5] = {
         "Custom",
@@ -47,9 +50,10 @@ private:
     int m_viewportHeight = 1080;
 
 public:
-    RenderWindow(std::shared_ptr<SceneManager> sceneManager, Camera* camera)
+    RenderWindow(std::shared_ptr<SceneManager> sceneManager, Camera* camera, ViewPort* viewport)
         : m_sceneManager(sceneManager)
         , m_camera(camera)
+        , m_viewport(viewport)
     {
     }
 
@@ -85,7 +89,31 @@ public:
 
         ImGui::Spacing();
         ImGui::Separator();
+        // ====================================================================
+        // NEW SECTION - VIEWPORT PREVIEW
+        // ====================================================================
+        ImGui::SeparatorText("Viewport Preview");
 
+        if (ImGui::Checkbox("Enable RaySpace Preview", &m_viewportPathTrace)) {
+            if (m_viewport) {
+                m_viewport->enablePathTracing(m_viewportPathTrace);
+                if (m_viewportPathTrace) {
+                    m_viewport->resetAccumulation();
+                }
+            }
+        }
+
+        if (m_viewportPathTrace) {
+            ImGui::SliderInt("Preview Samples", &m_previewSamples, 1, 128);
+            if (m_viewport) {
+                m_viewport->setMaxPreviewSamples(m_previewSamples);
+            }
+
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                "Progressive rendering in viewport");
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                "(resets when camera moves)");
+        }
         // ====================================================================
         // RESOLUTION SETTINGS
         // ====================================================================
@@ -176,7 +204,7 @@ public:
 
         ImGui::Spacing();
         ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f),
-            "Output: CUDA_output.png or CPU_output.png");
+            "Output: CUDA_output.png or SYCL_output.png");
 
         ImGui::End();
     }
