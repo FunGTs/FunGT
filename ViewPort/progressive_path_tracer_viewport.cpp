@@ -81,41 +81,34 @@ void ProgressivePathTracer::renderSample(int sample, GLuint targetTexture)
     // Render ONE sample (set samples to 1)
     m_space->setSamples(1);
     auto framebuffer = m_space->Render(m_width, m_height);
-    std::cout << "Framebuffer size: " << framebuffer.size() << std::endl;  // DEBUG
-    std::cout << "Expected size: " << (m_width * m_height) << std::endl;   // DEBUG
-    if (!framebuffer.empty()) {
-        std::cout << "First pixel: (" << framebuffer[0].x << ", "
-            << framebuffer[0].y << ", " << framebuffer[0].z << ")" << std::endl;  // DEBUG
-    }
-    // Accumulate using progressive average
-// Accumulate using progressive average
-    float weight = 1.0f / (sample + 1);
-
+    
+    // ACCUMULATE (just add, don't average yet)
     for (int i = 0; i < m_width * m_height; i++) {
-        int bufIdx = i * 4;  // RGBA index in accumBuffer
-
-        // Accumulate RGB separately
-        m_accumBuffer[bufIdx + 0] = m_accumBuffer[bufIdx + 0] * (1.0f - weight) + framebuffer[i].x * weight;  // R
-        m_accumBuffer[bufIdx + 1] = m_accumBuffer[bufIdx + 1] * (1.0f - weight) + framebuffer[i].y * weight;  // G
-        m_accumBuffer[bufIdx + 2] = m_accumBuffer[bufIdx + 2] * (1.0f - weight) + framebuffer[i].z * weight;  // B
-        m_accumBuffer[bufIdx + 3] = 1.0f;  // Alpha always 1
+        int bufIdx = i * 4;
+        m_accumBuffer[bufIdx + 0] += framebuffer[i].x;  // Just sum
+        m_accumBuffer[bufIdx + 1] += framebuffer[i].y;
+        m_accumBuffer[bufIdx + 2] += framebuffer[i].z;
+        m_accumBuffer[bufIdx + 3] = 1.0f;
     }
-    // Check accumulated value
-    std::cout << "Accum first pixel: (" << m_accumBuffer[0] << ", "
-        << m_accumBuffer[1] << ", " << m_accumBuffer[2] << ")" << std::endl;
-    // NEW - Apply gamma correction like SaveFrameBufferAsPNG does:
+
+    // DISPLAY (average and gamma correct)
+    float invSamples = 1.0f / (sample + 1);
     std::vector<float> gammaCorrected(m_width * m_height * 4);
-    for (int i = 0; i < m_width * m_height; i++) {
-        int srcIdx = i * 4;
-        int dstIdx = i * 4;
 
-        // Gamma correct (1.0 / 2.2)
-        gammaCorrected[dstIdx + 0] = std::pow(std::clamp(m_accumBuffer[srcIdx + 0], 0.0f, 1.0f), 1.0f / 2.2f);
-        gammaCorrected[dstIdx + 1] = std::pow(std::clamp(m_accumBuffer[srcIdx + 1], 0.0f, 1.0f), 1.0f / 2.2f);
-        gammaCorrected[dstIdx + 2] = std::pow(std::clamp(m_accumBuffer[srcIdx + 2], 0.0f, 1.0f), 1.0f / 2.2f);
-        gammaCorrected[dstIdx + 3] = 1.0f;
+    for (int i = 0; i < m_width * m_height; i++) {
+        int idx = i * 4;
+
+        // Average first, then gamma correct
+        float r = m_accumBuffer[idx + 0] * invSamples;
+        float g = m_accumBuffer[idx + 1] * invSamples;
+        float b = m_accumBuffer[idx + 2] * invSamples;
+
+        gammaCorrected[idx + 0] = std::pow(std::clamp(r, 0.0f, 1.0f), 1.0f / 2.2f);
+        gammaCorrected[idx + 1] = std::pow(std::clamp(g, 0.0f, 1.0f), 1.0f / 2.2f);
+        gammaCorrected[idx + 2] = std::pow(std::clamp(b, 0.0f, 1.0f), 1.0f / 2.2f);
+        gammaCorrected[idx + 3] = 1.0f;
     }
-    // Upload to OpenGL texture
+
     glBindTexture(GL_TEXTURE_2D, targetTexture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height,
         GL_RGBA, GL_FLOAT, gammaCorrected.data());
