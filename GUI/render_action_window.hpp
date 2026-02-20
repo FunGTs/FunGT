@@ -33,7 +33,7 @@ private:
     bool m_useViewportSize = false;
     bool m_isRendering = false;
     bool m_viewportPathTrace = false;        // Enable viewport preview?
-    int m_previewSamples = 16;               // Samples for preview
+    int m_previewSamples = 32;               // Samples for preview
     ViewPort* m_viewport = nullptr;
     // Resolution presets
     const char* m_resolutionPresets[5] = {

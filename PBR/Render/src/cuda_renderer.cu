@@ -199,7 +199,8 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     const std::vector<Light> &lightsList,
     const std::vector<int>& emissiveTriIndices,
     const PBRCamera& camera,
-    int samplesPerPixel
+    int samplesPerPixel,
+    int sampleOffset
 ) {
     std::vector<fungt::Vec3> framebuffer;
     const int imageSize = width * height;
