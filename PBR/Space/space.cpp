@@ -4,7 +4,7 @@
 Space::Space(){
     m_lights.push_back(Light(
         fungt::Vec3(-5.0f, 8.0f, 4.0f),    // position
-        fungt::Vec3(10.0f, 10.0f, 10.0f)  // strong white intensity
+        fungt::Vec3(100.0f, 100.0f, 100.0f)  // strong white intensity
     ));  
     // DEBUG
     std::cout << "DEBUG: GetBackend() returns: " << static_cast<int>(ComputeRender::GetBackend()) << std::endl;
@@ -52,7 +52,7 @@ Space::Space(std::vector<Triangle>& triangleList)
     m_triangles = std::move(triangleList);
     m_lights.push_back(Light(
         fungt::Vec3(2.0f, 2.0f, 2.0f),    // position
-        fungt::Vec3(10.0f, 10.0f, 10.0f)  // strong white intensity
+        fungt::Vec3(100.0f, 100.0f, 100.0f)  // strong white intensity
     ));
 }
 
