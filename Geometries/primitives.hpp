@@ -23,6 +23,25 @@ private:
     std::vector<PrimitiveVertex> m_vertex;
     std::vector<GLuint> m_index;
 
+    //Topology data for editing
+    struct HalfEdge {
+        uint32_t vertex;      // Which vertex this edge points TO
+        uint32_t twin;        // Opposite half-edge (UINT32_MAX if boundary)
+        uint32_t next;        // Next half-edge in the same face
+        uint32_t face;        // Which face this edge belongs to
+    };
+
+    struct EditFace {
+        uint32_t halfEdge;    // One (any) half-edge of this face
+        bool selected;        // Is this face selected?
+    };
+
+    std::vector<HalfEdge> m_halfEdges;
+    std::vector<EditFace> m_faces;
+    std::vector<bool> m_vertexSelected;  // Per-vertex selection flags
+
+    bool m_topologyDirty;  // Does topology need rebuilding?
+
 public:
     VertexArrayObject m_vao;
     VertexBuffer m_vb;
@@ -49,7 +68,22 @@ public:
         const std::vector<unsigned int>& getIndices() const;
         // Geometry-specific virtuals
         virtual void setData() = 0;
+        // NEW: Topology management
+        void buildTopology();
+        bool isTopologyBuilt() const { return !m_topologyDirty; }
 
+        // Selection
+        void clearSelection();
+        void selectVertex(uint32_t idx, bool additive = false);
+        void selectFace(uint32_t idx, bool additive = false);
+        const std::vector<bool>& getVertexSelection() const { return m_vertexSelected; }
+        const std::vector<EditFace>& getFaces() const { return m_faces; }
+
+        // GPU sync
+        void updateGPUBuffers();
+
+        // Geometry operations
+        void recalculateNormals();
         // Graphics initialization
         void setTexture(const std::string &pathToTexture);
         void InitGraphics();
