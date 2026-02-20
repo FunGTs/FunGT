@@ -80,7 +80,7 @@ void ProgressivePathTracer::renderSample(int sample, GLuint targetTexture)
 
     // Render ONE sample (set samples to 1)
     m_space->setSamples(1);
-    auto framebuffer = m_space->Render(m_width, m_height);
+    auto framebuffer = m_space->Render(m_width, m_height,sample);
     
     // ACCUMULATE (just add, don't average yet)
     for (int i = 0; i < m_width * m_height; i++) {

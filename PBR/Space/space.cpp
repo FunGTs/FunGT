@@ -65,7 +65,7 @@ Space::Space(const PBRCamera& camera)
 Space::~Space(){
 }
 
-std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
+std::vector<fungt::Vec3> Space::Render(const int width, const int height,int sampleOffset) {
   
     std::cout << "Starting render with " << ComputeRender::GetBackendName() << std::endl;
     size_t triMem = m_triangles.size() * sizeof(Triangle);
@@ -81,8 +81,8 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height) {
         << "  Framebuffer: " << frameMem / (1024.0 * 1024.0) << " MB\n"
         << "  Total:     " << totalMem / (1024.0 * 1024.0) << " MB\n";
     std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(
-        width, height, m_triangles, m_bvh_nodes, m_lights,m_emissiveTriIndices, m_camera, m_samplesPerPixel
-    );
+        width, height, m_triangles, m_bvh_nodes, m_lights,m_emissiveTriIndices, 
+        m_camera, m_samplesPerPixel, sampleOffset);
 
     return frameBuffer;
 }

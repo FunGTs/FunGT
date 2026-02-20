@@ -15,7 +15,7 @@ private:
     std::function<void(int, int, int)> m_PathTraceFunc; // New function for path tracing with sample count
     bool m_pathTraceMode = false;           // Check : Is path tracing enabled?
     int m_currentSample = 0;                // Current sample count
-    int m_maxPreviewSamples = 5;           // Stop after this many samples
+    int m_maxPreviewSamples = 32;           // Stop after this many samples
     GLuint m_pathTraceTexture = 0;  
 public:
     ViewPort();
