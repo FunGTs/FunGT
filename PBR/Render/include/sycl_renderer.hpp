@@ -36,7 +36,8 @@ public:
         const std::vector<Light>& lightsList,
         const std::vector<int>& emissiveTriIndices,
         const PBRCamera& camera,
-        int samplesPerPixel
+        int samplesPerPixel,
+        int sampleOffset
     ) override;
     void createQueue();
     sycl::queue &getQueue();

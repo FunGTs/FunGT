@@ -20,7 +20,8 @@ class IComputeRenderer{
             const std::vector<Light> &lightsList,
             const std::vector<int>& emissiveTriIndices,
             const PBRCamera& camera, 
-            int samplesPerPixel 
+            int samplesPerPixel,
+            int sampleOffset
         ) = 0;
 
 
