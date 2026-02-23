@@ -345,11 +345,11 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
         tri.uvs[2][0] = v2.texcoord.x;
         tri.uvs[2][1] = v2.texcoord.y;
 
-        tri.material.baseColor[0] = material.baseColor.x;
-        tri.material.baseColor[1] = material.baseColor.y;
-        tri.material.baseColor[2] = material.baseColor.z;
-        tri.material.roughness = material.roughness;
-        tri.material.metallic = material.metallic;
+        tri.material.baseColor[0] = material.m_diffLigth.x;
+        tri.material.baseColor[1] = material.m_diffLigth.y;
+        tri.material.baseColor[2] = material.m_diffLigth.z;
+        tri.material.roughness = 0.7;
+        tri.material.metallic  = 0.05;
         tri.material.baseColorTexIdx = baseColorTexId;
 
         m_triangles.push_back(tri);
