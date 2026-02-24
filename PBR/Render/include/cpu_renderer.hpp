@@ -28,7 +28,8 @@ class CPU_Renderer : public IComputeRenderer{
             const std::vector<Light> &lightsList,
             const std::vector<int>& emissiveTriIndices,
             const PBRCamera& camera,
-            int samplesPerPixel
+            int samplesPerPixel,
+            int sampleOffset
         );
 
 

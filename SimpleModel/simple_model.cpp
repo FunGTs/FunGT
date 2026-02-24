@@ -61,27 +61,21 @@ void SimpleModel::setViewMatrix(const glm::mat4 &viewMatrix)
 
 void SimpleModel::updateModelMatrix()
 {
-    if(m_collisionM.has_value()){
-       
-        //std::cout<<"Updating position from Collision Manager"<<std::endl;
-        auto rigidBoy = (*m_collisionM)->getCollideBody(0); // Assuming the first body is the one we want
-        if(!rigidBoy){
-            std::cerr<<"Error: RigidBody is nullptr in SimpleModel::updateModelMatrix"<<std::endl;
-            
-        }
-        
-        //std::cout<<"RigidBody Position: ("<<rigidBoy->m_pos.x<<", "<<rigidBoy->m_pos.y<<", "<<rigidBoy->m_pos.z<<")\n";
+    if (auto rigidBoy = m_physicsBody.lock()) {
+        //std::cout << "Updating model at: " << rigidBoy->m_pos.x << ", " << rigidBoy->m_pos.y << ", " << rigidBoy->m_pos.z << std::endl;
+
         m_position.x = rigidBoy->m_pos.x;
         m_position.y = rigidBoy->m_pos.y;
         m_position.z = rigidBoy->m_pos.z;
+
         auto eulerAngles = rigidBoy->getEulerAngles();
-        //std::cout<<"RigidBody Rotation (Euler angles in degrees): ("<<glm::degrees(eulerAngles.x)<<", "
-        //<<glm::degrees(eulerAngles.y)<<", "<<glm::degrees(eulerAngles.z)<<")\n";
-        // Convert radians to degrees for glm
         m_rotation.x = glm::degrees(eulerAngles.x);
         m_rotation.y = glm::degrees(eulerAngles.y);
         m_rotation.z = glm::degrees(eulerAngles.z);
-    }   
+    }
+    // else {
+    //     std::cout << "WEAK_PTR LOCK FAILED! use_count=" << m_physicsBody.use_count() << std::endl;
+    // }
     //m_rotation.x = (float)glfwGetTime()*10.0;
     //m_rotation.z = (float)glfwGetTime()*10.0;
     m_ModelMatrix = glm::mat4(1.f);
@@ -137,7 +131,7 @@ std::vector<Triangle> SimpleModel::getTriangleList()
         global_material.reflectance = 0.05f;
         global_material.emission = 0.0f;
         global_material.baseColorTexIdx = -1;
-        
+
         for (size_t i = 0; i < meshPtr->m_index.size(); i += 3) {
             const funGTVERTEX& v0 = meshPtr->m_vertex[meshPtr->m_index[i + 0]];
             const funGTVERTEX& v1 = meshPtr->m_vertex[meshPtr->m_index[i + 1]];
@@ -186,7 +180,7 @@ void SimpleModel::scale(float s)
     m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
 }
 
-void SimpleModel::addCollisionProperty(std::shared_ptr<CollisionManager> _collisionM)
+void SimpleModel::addCollisionProperty(std::shared_ptr<RigidBody> body)
 {
-    m_collisionM = _collisionM; // Assign the CollisionManager to the optional
+    m_physicsBody = body;  // Store direct reference
 }
