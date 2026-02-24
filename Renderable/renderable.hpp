@@ -2,7 +2,8 @@
 #define _RENDERABLE_H_
 #include "../include/prerequisites.hpp" 
 #include "../include/glmath.hpp"
-#include "../Shaders/shader.hpp"
+#include "Shaders/shader.hpp"
+#include "Physics/RigidBody/rigid_body.hpp"
 
 class Renderable{ //Abstract class
 
@@ -36,6 +37,10 @@ class Renderable{ //Abstract class
         }
         virtual void disableDepthFunc(){
 
+        }
+        // Physics support - returns empty weak_ptr by default
+        virtual std::weak_ptr<RigidBody> getRigidBody() const {
+            return std::weak_ptr<RigidBody>();
         }
         virtual ~Renderable() = default;
 

@@ -10,7 +10,9 @@ public:
     fungt::Vec3 m_pos;
     fungt::Vec3 m_vel;
     fungt::Vec3 m_force;
-
+    // NEW: Correction velocities (split impulse)
+    fungt::Vec3 m_pushVelocity;      // For position correction only
+    fungt::Vec3 m_turnVelocity;      // For rotation correction only
     float m_mass; 
     float m_invMass;
 
@@ -29,7 +31,7 @@ public:
     float m_friction;
     
     RigidBody(std::unique_ptr<Shape> _shape, float _mass, float _rest = 0.6f, float _frict = 0.3f) : m_pos(0, 0, 0), m_vel(0, 0, 0), m_force(0, 0, 0),
-          m_mass(_mass), m_angularVel(0, 0, 0), m_torque(0, 0, 0),
+        m_mass(_mass), m_angularVel(0, 0, 0), m_torque(0, 0, 0), m_pushVelocity(0, 0, 0), m_turnVelocity(0, 0, 0),
           m_shape(std::move(_shape)), m_restitution(_rest), m_friction(_frict) {
         
         if (m_mass > 0) {
@@ -60,6 +62,10 @@ public:
         } else {
             // Static body
             m_invMass = 0;
+            m_inertiaTensor = fungt::Matrix3f();  // Zero matrix
+            m_invInertiaTensor = fungt::Matrix3f();  // Zero matrix
+            m_inertiaTensorWorld = fungt::Matrix3f();
+            m_invInertiaTensorWorld = fungt::Matrix3f();
         }
     }
 
@@ -86,9 +92,25 @@ public:
         m_angularVel += m_invInertiaTensor * angularImpulse;
     }
      void updateInertiaTensors() {
+        // Normalize quaternion first to prevent drift
+        m_orientation = m_orientation.normalize();
+
         fungt::Matrix3f rotMatrix = m_orientation.toMatrix();
+
+        // SAFETY: Validate rotation matrix for NaN
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                if (!std::isfinite(rotMatrix.m[i][j])) {
+                    std::cerr << "ERROR: NaN in rotation matrix! Resetting orientation." << std::endl;
+                    m_orientation = Quaternion(1, 0, 0, 0);  // Reset to identity
+                    rotMatrix = m_orientation.toMatrix();
+                    break;
+                }
+            }
+        }
+
         fungt::Matrix3f rotMatrixT = rotMatrix.transpose();
-        
+
         // I_world = R * I_local * R^T
         m_inertiaTensorWorld = rotMatrix * m_inertiaTensor * rotMatrixT;
         m_invInertiaTensorWorld = rotMatrix * m_invInertiaTensor * rotMatrixT;

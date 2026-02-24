@@ -13,7 +13,12 @@ FunGT::FunGT(int _width, int _height)
     m_sceneManager = std::make_shared<SceneManager>();
     m_ViewPortLayer = std::make_unique<ViewPort>();
     m_imguiLayer = std::make_unique<ImGuiLayer>();
-    //m_grid = std::make_shared<InfiniteGrid>();
+    // Create simulation controller
+    m_simController = std::make_shared<fungt::SimulationController>();
+
+    //Progressive Path Tracer
+    m_progressiveTracer = std::make_unique<ProgressivePathTracer>();
+    
 }
 FunGT::~FunGT(){
     std::cout<<"FunGT destructor"<<std::endl; 
@@ -91,8 +96,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
     std::string grid_fs = getAssetPath("shaders/grid_fs.glsl");
     m_grid->init(grid_vs,grid_fs);
     m_grid->setPlanes(nearPlane, farPlane);
-    //m_grid->setViewMatrix(m_camera.getViewMatrix());
-    //m_grid->setProjectionMatrix(ProjectionMatrix);
+
     m_sceneManager->addRenderableObj(m_grid);
     renderLambda();
     
@@ -106,8 +110,15 @@ void FunGT::set(const std::function<void()>& renderLambda){
        
 
     }
-
-
+   // CREATE PHYSICS DEBUG RENDERER (NOT a layer! Just a utility)
+   if (m_collisionManager) {
+      
+       if(m_collisionManager->isShowingCollidableBodies()) {
+           m_physicsDebugRenderer = std::make_unique<PhysicsDebugRenderer>(m_collisionManager, m_sceneManager, &m_camera);
+           m_physicsDebugRenderer->setShowCollisionBoxes(true);
+           std::cout << "Collidable bodies will be shown in debug renderer." << std::endl;
+       }
+   }
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
@@ -116,8 +127,12 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
        m_imguiLayer->addWindow(std::make_unique<LightEditorWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
-       m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager,&m_camera));
+       if(m_ViewPortLayer){
+           ViewPort* viewportPtr = m_ViewPortLayer.get();
+           m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager, &m_camera,viewportPtr));
+       }
        m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
+       m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
        m_layerStack.PushLayer(std::move(m_imguiLayer));
    }
 
@@ -125,13 +140,32 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_ViewPortLayer->setRenderFunction([this]() {
            // Render all models managed by the SceneManager
                 m_sceneManager->renderScene();
+                // Second: Render wireframes ON TOP of scene (before ImGui!)
+                if (m_physicsDebugRenderer) {
+                    m_physicsDebugRenderer->render();
+                }
+        });
+        m_ViewPortLayer->setPathTraceFunction([this](int width, int height, int sample) {
+            auto* viewport = m_layerStack.get<ViewPort>();
+            if (!viewport) return;
+
+            GLuint pathTraceTexture = viewport->getPathTraceTexture();
+
+            // Initialize on first sample or if not initialized
+            if (sample == 0 || !m_progressiveTracer->isInitialized()) {
+                m_progressiveTracer->initialize(&m_camera, m_sceneManager, width, height);
+            }
+
+            // Render one sample
+            m_progressiveTracer->renderSample(sample, pathTraceTexture);
+
         });
        m_layerStack.PushLayer(std::move(m_ViewPortLayer));
    }
 
    // UPDATE PROJECTION MATRIX BASED ON VIEWPORT SIZE
    auto* view_port = m_layerStack.get<ViewPort>();
-   if (view_port)
+   if (view_port)   
    {
        auto view_port_size = view_port->getViewPortSize();
        if (view_port_size.x > 0 && view_port_size.y > 0) {
@@ -151,16 +185,17 @@ std::unique_ptr<FunGT> FunGT::createScene(int _width, int _height)
 void FunGT::update(const std::function<void()> &renderLambda)
 {
 
-    float currentFrame = glfwGetTime();
-    deltaTime = currentFrame-lastFrame; 
-    lastFrame = currentFrame; 
-
-    m_sceneManager->setDeltaTime(deltaTime);
-
 
     processKeyBoardInput();
     glm::mat4 ViewMatrix = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
-
+    glm::mat4 currentView = m_camera.getViewMatrix();
+    if (currentView != m_lastViewMatrix) {
+        auto* viewport = m_layerStack.get<ViewPort>();
+        if (viewport && viewport->isPathTracing()) {
+            viewport->resetAccumulation();  // Reset sample count to 0
+        }
+        m_lastViewMatrix = currentView;
+    }
     // GET VIEWPORT SIZE FROM VIEWPORT LAYER
     auto* view_port = m_layerStack.get<ViewPort>();
     if (view_port) {

@@ -136,7 +136,9 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
     const std::vector<Light>& lightsList,
     const std::vector<int>& emissiveTriIndices,
     const PBRCamera& camera,
-    int samplesPerPixel)
+    int samplesPerPixel,
+    int sampleOffset
+    )
 {
     int imageSize = width * height;
     std::vector<fungt::Vec3> framebuffer(imageSize);
@@ -199,7 +201,7 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
                             int y = tileY + localY;
                             int pixelIdx = x + y * width;
 
-                            fungt::RNG rng(pixelIdx * 1337ULL + sample * 7919ULL);
+                            fungt::RNG rng(pixelIdx * 1337ULL + (sample + sampleOffset) * 7919ULL);
 
                             // ONE SAMPLE per kernel launch
                             float u = (x + rng.nextFloat()) / (width - 1);
