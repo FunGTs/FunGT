@@ -327,6 +327,8 @@ endif()
 # ════════════════════════════════════════════════════════════════════════════
 add_executable(FunGT ${SOURCE_FILES})
 if(FUNGT_USE_CUDA)
+    target_compile_definitions(FunGT PRIVATE FUNGT_USE_CUDA)
+    target_include_directories(FunGT PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
     set_target_properties(FunGT PROPERTIES
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         CUDA_SEPARABLE_COMPILATION ON

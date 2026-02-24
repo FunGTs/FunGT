@@ -4,7 +4,7 @@ project(FunGT)
 # ════════════════════════════════════════════════════════════════════════════
 # GPU BACKEND OPTIONS
 # ════════════════════════════════════════════════════════════════════════════
-option(FUNGT_USE_CUDA "Enable CUDA backend for NVIDIA GPUs" OFF)
+option(FUNGT_USE_CUDA "Enable CUDA backend for NVIDIA GPUs" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend for Intel GPUs" ON)
 
 # Allow FUNGT_BASE_DIR to be set externally (command line, environment, or cache)
@@ -327,6 +327,8 @@ endif()
 # ════════════════════════════════════════════════════════════════════════════
 add_executable(FunGT ${SOURCE_FILES})
 if(FUNGT_USE_CUDA)
+    target_compile_definitions(FunGT PRIVATE FUNGT_USE_CUDA)
+    target_include_directories(FunGT PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
     set_target_properties(FunGT PROPERTIES
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         CUDA_SEPARABLE_COMPILATION ON
