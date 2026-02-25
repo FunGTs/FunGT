@@ -338,6 +338,7 @@ if(FUNGT_USE_CUDA)
     set_target_properties(FunGT PROPERTIES
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         CUDA_SEPARABLE_COMPILATION ON
+        CUDA_ARCHITECTURES "native"  
     )
 endif()
 # ════════════════════════════════════════════════════════════════════════════

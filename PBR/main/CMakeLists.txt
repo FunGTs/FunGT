@@ -352,6 +352,10 @@ if(FUNGT_USE_CUDA)
     target_compile_definitions(pbr_render PRIVATE FUNGT_USE_CUDA)
     # THE FIX: explicitly give bundled clang++ the CUDA toolkit include path
     target_include_directories(pbr_render PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
+        set_target_properties(pbr_render PROPERTIES
+        CUDA_ARCHITECTURES "native"
+    )
+
 endif()
 
 target_include_directories(pbr_render PRIVATE
