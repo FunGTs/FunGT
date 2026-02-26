@@ -81,7 +81,8 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height,int sam
         << "  Framebuffer: " << frameMem / (1024.0 * 1024.0) << " MB\n"
         << "  Total:     " << totalMem / (1024.0 * 1024.0) << " MB\n";
     std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(
-        width, height, m_triangles, m_bvh_nodes, m_lights,m_emissiveTriIndices, 
+        width, height, m_triangles, m_hotTriangles, m_coldTriangles,
+        m_bvh_nodes, m_lights, m_emissiveTriIndices,
         m_camera, m_samplesPerPixel, sampleOffset);
 
     return frameBuffer;
@@ -135,6 +136,24 @@ void Space::sendTexturesToRender()
         throw std::runtime_error("Unknown Compute API!");
     }
 
+}
+
+void Space::buildGPUDataStructures()
+{
+    m_hotTriangles.resize(m_triangles.size());
+    m_coldTriangles.resize(m_triangles.size());
+
+    for (size_t i = 0; i < m_triangles.size(); i++) {
+        m_hotTriangles[i].v0 = fungt::Vec4(m_triangles[i].v0);
+        m_hotTriangles[i].v1 = fungt::Vec4(m_triangles[i].v1);
+        m_hotTriangles[i].v2 = fungt::Vec4(m_triangles[i].v2);
+
+        m_coldTriangles[i].n0 = fungt::Vec4(m_triangles[i].n0);
+        m_coldTriangles[i].n1 = fungt::Vec4(m_triangles[i].n1);
+        m_coldTriangles[i].n2 = fungt::Vec4(m_triangles[i].n2);
+        m_coldTriangles[i].material = m_triangles[i].material;
+        memcpy(m_coldTriangles[i].uvs, m_triangles[i].uvs, sizeof(m_triangles[i].uvs));
+    }
 }
 
 void Space::InitComputeRenderBackend()
@@ -404,6 +423,7 @@ void Space::BuildBVH()
         }
     }
     std::cout << "Emissive triangles: " << m_emissiveTriIndices.size() << std::endl;
+    buildGPUDataStructures(); //build hot/cold triangle arrays for GPU rendering
 }
 
 void Space::setSamples(int numOfSamples)

@@ -23,6 +23,7 @@
 #if defined(__KERNEL_CUDA__)
 #define fgt_device __host__ __device__
 #define fgt_device_gpu __device__
+#define fgt_gpu_noinline __noinline__
 #define fgt_device_forceinline __host__ __device__ __forceinline__
 #define fgt_device_constant __constant__
 #define fgt_global __global__
@@ -31,6 +32,7 @@
 #define fgt_device inline
 #define fgt_device_gpu inline
 #define fgt_device_forceinline inline
+#define fgt_gpu_noinline [[intel::noinline]]
 #define fgt_device_constant const
 #define fgt_global
 #define fgt_shared /* use local_accessor in SYCL kernels */

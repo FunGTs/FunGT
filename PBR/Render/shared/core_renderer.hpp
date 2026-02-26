@@ -103,7 +103,7 @@ fgt_device_gpu bool traceShadowRayBVH(
     int numNodes,
     float maxDist)  // Only check hits closer than this (distance to light)
 {
-    int stack[64];
+    int stack[32];
     int stackPtr = 0;
     stack[stackPtr++] = 0;  // Start with root
 
@@ -148,7 +148,7 @@ fgt_device_gpu bool inline traceRayBVH(
     float closest = FLT_MAX;
 
     // Stack-based traversal (no recursion on GPU!)
-    int stack[64];  // Stack to track nodes to visit
+    int stack[32];  // Stack to track nodes to visit
     int stackPtr = 0;
     stack[stackPtr++] = 0;  // Start with root node (index 0)
 

@@ -35,6 +35,8 @@ class Space {
 
     PBRCamera m_camera;
     std::vector<Triangle> m_triangles;
+    std::vector<gpu::TriangleGeometry>    m_hotTriangles;
+    std::vector<gpu::TriangleShadingData> m_coldTriangles;
     std::unique_ptr<IComputeRenderer> m_computeRenderer;
     std::vector<Light> m_lights; 
     int m_samplesPerPixel = 16;
@@ -44,7 +46,7 @@ class Space {
     std::vector<int> m_emissiveTriIndices;
     
     void sendTexturesToRender();
-
+    void buildGPUDataStructures();
     public:
         Space();
         Space(std::vector<Triangle>& triangleList);
