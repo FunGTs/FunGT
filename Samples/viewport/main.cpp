@@ -38,13 +38,23 @@ int main() {
     FunGTSGeom ground = SimpleGeometry::create(Geometry::Plane);
     ground->load(getAssetPath("img/floor.png"));
     ground->position(0.0,0.0,0.0);
-    //std::string ps_vs = getAssetPath("resources/particle.vs");
-    //std::string ps_fs = getAssetPath("resources/particle.fs");
-    //std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000, ps_vs, ps_fs);
+
+
+    FunGTSGeom backWall = SimpleGeometry::create(Geometry::Plane);
+    backWall->load(getAssetPath("img/leftwall.png"));
+    backWall->rotation(90.0f, 0.0f, 0.0f);
+    backWall->position(0.0f, 0.0f, -40.0f);
+    FunGTSGeom left_Wall = SimpleGeometry::create(Geometry::Plane);
+    left_Wall->load(getAssetPath("img/leftwall.png"));
+    left_Wall->rotation(90.0f, 0.0f, -90.0f);
+    left_Wall->position(-40.0f, 0.0f, 0.0f);
+
     myGame->set([&]() { // Sets up all the scenes in your game
         // Adds the renderable objects to the SceneManager
                 // Adds the renderable objects to the SceneManager
         scene_manager->addRenderableObj(ground);
+        scene_manager->addRenderableObj(backWall);
+        scene_manager->addRenderableObj(left_Wall);
         scene_manager->addRenderableObj(pixarLamp);
         scene_manager->addRenderableObj(pixarBall);
         });

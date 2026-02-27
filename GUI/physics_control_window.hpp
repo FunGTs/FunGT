@@ -2,7 +2,7 @@
 #define _PHYSICS_CONTROL_WINDOW_H_
 
 #include "imgui_window.hpp"
-#include "../physics/simulation_controller_window.hpp"
+#include "GUI/physics/simulation_controller_window.hpp"
 #include <memory>
 
 class PhysicsControlWindow : public ImGuiWindow {

@@ -41,7 +41,8 @@ class CUDA_Renderer : public IComputeRenderer{
             const std::vector<Light> &lightsList,
             const std::vector<int>& emissiveTriIndices,
             const PBRCamera& camera,
-            int samplesPerPixel
+            int samplesPerPixel,
+            int sampleOffset
         );
         void setCudaTextureObjects(const std::vector<cudaTextureObject_t>& textureObj) {
             std::cout<<"*** SETTING CUDA TEXTURE OBJECTS*** "<<std::endl;
