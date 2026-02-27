@@ -17,12 +17,17 @@ namespace fungt{
         // Arithmetic with Vec4
         fgt_device Vec4 operator+(const Vec4& o) const { return Vec4(x + o.x, y + o.y, z + o.z, w + o.w); }
         fgt_device Vec4 operator-(const Vec4& o) const { return Vec4(x - o.x, y - o.y, z - o.z, w - o.w); }
+        fgt_device Vec3 operator-(const Vec4& o) const {
+            return Vec3(x - o.x, y - o.y, z - o.z);
+        }
         fgt_device Vec4 operator*(float s)        const { return Vec4(x * s, y * s, z * s, w * s); }
         fgt_device Vec4 operator/(float s)        const { return Vec4(x / s, y / s, z / s, w / s); }
         fgt_device Vec4& operator+=(const Vec4& o) { x += o.x; y += o.y; z += o.z; w += o.w; return *this; }
         fgt_device Vec4& operator-=(const Vec4& o) { x -= o.x; y -= o.y; z -= o.z; w -= o.w; return *this; }
-
-        // Scalar multiply from left
+        fgt_device Vec3 operator*(float s) const {
+            return Vec3(x * s, y * s, z * s);
+        }
+        // Scalar multiply from left    
         fgt_device friend Vec4 operator*(float s, const Vec4& v) { return Vec4(v.x * s, v.y * s, v.z * s, v.w * s); }
 
         // Dot and length — w ignored for geometric ops

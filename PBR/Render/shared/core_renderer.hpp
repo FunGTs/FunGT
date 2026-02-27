@@ -137,6 +137,8 @@ fgt_device_gpu bool traceShadowRayBVH(
 fgt_device_gpu bool inline traceRayBVH(
     const fungt::Ray& ray,
     const Triangle* tris,
+    const gpu::TriangleGeometry *hotTris,
+    const gpu::TriangleGeometry *coldTris,
     const BVHNode* bvhNodes,
     int numNodes,
     const TextureDeviceObject* textures,
@@ -169,36 +171,35 @@ fgt_device_gpu bool inline traceRayBVH(
                 int triIdx = node.firstTriIdx + i;
                 HitData temp;
 
-                if (Intersection::MollerTrumbore(ray, tris[triIdx], 0.001f, closest, temp)) {
+                if (Intersection::MollerTrumbore(ray, hotTris[triIdx], 0.001f, closest, temp)) {
                     hitSomething = true;
                     closest = temp.dis;
                     hit = temp;
 
-                    // Calculate geometric normal
-                    fungt::Vec3 e1 = tris[triIdx].v1 - tris[triIdx].v0;
-                    fungt::Vec3 e2 = tris[triIdx].v2 - tris[triIdx].v0;
+                    const gpu::TriangleGeometry& hot = hotTris[triIdx];
+                    const gpu::TriangleShadingData& cold = coldTris[triIdx];
+
+                    const float bx = temp.bary.x;
+                    const float by = temp.bary.y;
+                    const float bz = temp.bary.z;
+
+                    // Vec4 direct subtraction — no .xyz() temporaries
+                    fungt::Vec3 e1 = hot.v1 - hot.v0;
+                    fungt::Vec3 e2 = hot.v2 - hot.v0;
                     hit.geometricNormal = e1.cross(e2).normalize();
 
-                    // Interpolate shading normal
-                    hit.normal = (tris[triIdx].n0 * temp.bary.x +
-                        tris[triIdx].n1 * temp.bary.y +
-                        tris[triIdx].n2 * temp.bary.z).normalize();
+                    // Reuse cached barycentrics
+                    hit.normal = (cold.n0 * bx + cold.n1 * by + cold.n2 * bz).normalize();
 
-                    // Ensure normal faces same hemisphere
-                    if (hit.normal.dot(hit.geometricNormal) < 0.0f) {
+                    if (hit.normal.dot(hit.geometricNormal) < 0.0f)
                         hit.normal = hit.normal * -1.0f;
-                    }
 
-                    hit.material = tris[triIdx].material;
+                    hit.material = cold.material;
 
                     // Texture sampling (if applicable)
                     if (hit.material.baseColorTexIdx >= 0 && textures != nullptr) {
-                        float u = tris[triIdx].uvs[0][0] * temp.bary.x +
-                            tris[triIdx].uvs[1][0] * temp.bary.y +
-                            tris[triIdx].uvs[2][0] * temp.bary.z;
-                        float v = tris[triIdx].uvs[0][1] * temp.bary.x +
-                            tris[triIdx].uvs[1][1] * temp.bary.y +
-                            tris[triIdx].uvs[2][1] * temp.bary.z;
+                        float u = cold.uvs[0][0] * bx + cold.uvs[1][0] * by + cold.uvs[2][0] * bz;
+                        float v = cold.uvs[0][1] * bx + cold.uvs[1][1] * by + cold.uvs[2][1] * bz;
 
                         fungt::Vec3 texColor = sampleTexture2D(textures[hit.material.baseColorTexIdx], u, v);
                         texColor.x = powf(texColor.x, 2.2f);

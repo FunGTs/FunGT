@@ -1,9 +1,9 @@
 #if !defined(_INTERSECTION_H_)
 #define _INTERSECTION_H_
-#include "../Ray/ray.hpp"
-#include "../HitData/hit_data.hpp"
-#include "../../Triangle/triangle.hpp"
-#include "../BVH/aabb.hpp"
+#include "Ray/ray.hpp"
+#include "HitData/hit_data.hpp"
+#include "Triangle/triangle.hpp"
+#include "BVH/aabb.hpp"
 
 class Intersection{
 
@@ -51,6 +51,36 @@ class Intersection{
             if (rec.normal.dot(rec.geometricNormal) < 0.0f) {
                 rec.normal = rec.normal * -1.0f;
             }
+            return true;
+        }
+        static fgt_device inline bool MollerTrumbore(
+            const fungt::Ray& ray,
+            const gpu::TriangleGeometry& tri,
+            float tMin, float tMax,
+            HitData& rec)
+        {
+            const float EPSILON = 1e-8f;
+            fungt::Vec3 edge1 = tri.v1 - tri.v0;
+            fungt::Vec3 edge2 = tri.v2 - tri.v0;
+            fungt::Vec3 h = ray.m_dir.cross(edge2);
+            float a = edge1.dot(h);
+            if (fabs(a) < EPSILON) return false;
+
+            float f = 1.0f / a;
+            fungt::Vec3 s = ray.m_origin - tri.v0.xyz();
+            float u = f * s.dot(h);
+            if (u < 0.0f || u > 1.0f) return false;
+
+            fungt::Vec3 q = s.cross(edge1);
+            float v = f * ray.m_dir.dot(q);
+            if (v < 0.0f || u + v > 1.0f) return false;
+
+            float t = f * edge2.dot(q);
+            if (t < tMin || t > tMax) return false;
+
+            rec.dis = t;
+            rec.point = ray.at(t);
+            rec.bary = fungt::Vec3(1.0f - u - v, u, v);
             return true;
         }
         static fgt_device bool intersectAABB(
