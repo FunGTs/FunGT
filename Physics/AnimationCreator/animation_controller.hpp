@@ -25,7 +25,7 @@ namespace fungt {
         int m_maxFrame;
         bool m_isPlaying;
         float m_playbackSpeed;
-
+        int m_lastRecordedFrame = 0;
         std::set<std::string> m_bakingEnabledObjects;  // Objects to auto-record
 
     public:
@@ -113,12 +113,13 @@ namespace fungt {
         bool isObjectBakingEnabled(const std::string& objectID) const {
             return m_bakingEnabledObjects.find(objectID) != m_bakingEnabledObjects.end();
         }
-
+        int getLastRecordedFrame() const { return m_lastRecordedFrame; }
         /**
          * Record physics frame for ALL objects that have baking enabled
          * Call this every frame when physics is running
          */
         void recordPhysicsFrame(int frame) {
+            m_lastRecordedFrame = frame;
             const auto& renderables = m_sceneManager->getRenderable();
 
             for (const auto& obj : renderables) {

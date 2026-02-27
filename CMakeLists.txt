@@ -214,7 +214,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/PBR/Render/brdf
     ${FUNGT_BASE_DIR}/PBR/Render/shared
     ${FUNGT_BASE_DIR}/PBR/TextureManager
-    #${FUNGT_BASE_DIR}/PBR/TriangleExtractor
+    ${FUNGT_BASE_DIR}/PBR/TriangleExtractor
     ${FUNGT_BASE_DIR}/PBR/BVH
     ${FUNGT_BASE_DIR}/Triangle
 )
@@ -278,7 +278,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/Intersection/intersection.cpp
     ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
-    #${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
+    ${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════

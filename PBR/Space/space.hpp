@@ -57,8 +57,24 @@ class Space {
         void LoadModelToRender(const SimpleModel& model);
         void LoadGeometryToRender(const SimpleGeometry& geometry);
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
+        static void SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer,
+            int width, int height,
+            const std::string& filename);
         void BuildBVH();
         void setSamples(int numOfSamples);
+        void ClearSpace() {
+            m_triangles.clear();
+            m_bvh_nodes.clear();
+            m_bvh_indices.clear();
+            m_emissiveTriIndices.clear();
+            m_lights.clear();
+        }
+        void ClearGeometry() {
+            m_triangles.clear();
+            m_bvh_nodes.clear();
+            m_bvh_indices.clear();
+            m_emissiveTriIndices.clear();
+        }
         void LoadTrianglesToRender(const std::vector<Triangle>& triangles) {
             m_triangles = triangles;
         }
