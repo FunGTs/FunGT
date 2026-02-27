@@ -1,6 +1,9 @@
 # FunGT (Fun Graphics Tool)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/juanchuletas/FunGL/blob/main/fungt_logo.png?raw=true">
+  <img src="https://github.com/juanchuletas/FunGL/blob/main/fungl_logo.png?raw=true" alt="Alt text for your logo">
+</picture>
 
-![FunGT Logo](https://github.com/juanchuletas/FunGL/blob/main/fungt_logo.png?raw=true)
 
 ## Overview
 
@@ -32,17 +35,10 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 
 ## Screenshots
 ### PBR Path Tracing
-![Path Traced Render](demos/luxo_lamp.png)
-*Cook-Torrance BRDF with emissive materials - rendered on Intel integrated GPU via SYCL*
 
-### Main Interface
-![Interface Demo](demos/interface.png)
+![Path Traced Render](demos/sycl.png)
+*Cook-Torrance BRDF with emissive materials - rendered on integrated GPU via SYCL*
 
-### Model Rendering
-![Render Demo](demos/pixar_ball_render.png)
-
-### Animation System
-*[Space for animation playback screenshot]*
 
 ## Getting Started
 
@@ -57,29 +53,130 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 - GLM
 - stb_image
 - CUDA Toolkit (for CUDA backend)
-- Intel LLVM SYCL compiler (for SYCL backend)
+- Intel LLVM SYCL compiler (you can use the provided via FunGT GitHub Releases for the SYCL backend)
 
-### Linux Installation
+
+# Linux Installation
 
 Install dependencies on Debian-based systems:
+
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential cmake libgl1-mesa-dev \
-    libassimp-dev libglfw3-dev libglad-dev libglm-dev
+sudo apt install build-essential libgl-dev libglfw3-dev libglew-dev
+sudo apt install ocl-icd-libopencl1
+sudo apt-get install libstdc++-12-dev
+sudo apt-get install zlib1g-dev
+
+```
+### ASSIMP installation
+
+We strongly recommend the installation from source
+
+```bash
+git clone https://github.com/assimp/assimp.git
 ```
 
-### Build Instructions
+Build: this will take a while based on your system
+
 ```bash
-# Clone the repository
+
+cd assimp
+cmake CMakeLists.txt
+cmake --build .
+
+```
+
+
+
+```bash
+sudo make install
+```
+### GLM installation
+
+Please do a from source install:
+
+Got to https://github.com/g-truc/glm/releases/tag/1.0.1 and download the source code (zip).
+
+
+1. Unzip the file
+
+
+2. Install
+
+    ```bash
+    cd cd glm-1.0.1
+    cmake \
+        -DGLM_BUILD_TESTS=OFF \
+        -DBUILD_SHARED_LIBS=OFF \
+        -B build .
+    cmake --build build -- all
+    cmake --build build -- install
+    ```
+
+
+
+
+
+## Clone the repository
+
+```bash
+
 git clone https://github.com/juanchuletas/FunGT.git
 cd FunGT
 
-# Create build directory
+```
+
+
+#### Installing dependencies for SYCL toolchain:
+
+In order to avoid issues first install the OpenCL GPU runtime:
+
+```bash
+
+    ./install_intel_opencl_gpu.sh
+
+```
+Then run the script for the OpenCL CPU Runtime
+
+```bash
+
+    ./install_intel_opencl_cpu.sh
+
+```
+
+### SYCL Toolchain (Required)
+
+FunGT uses the Intel DPC++ / SYCL compiler for GPU acceleration on Intel hardware.
+
+The toolchain is **not stored in the Git repository** due to size constraints.
+Instead, it is downloaded automatically.
+
+From the FunGT root directory:
+
+```bash
+make fungt-deps
+```
+This will download and add the toolchain from the official FunGT GitHub Releases under:
+
+`toolchain/sycl/linux_x64/dpcpp`
+
+### Build Instructions
+
+
+
+```bash
+
+# In the FunGT root folder export the proper libraries
+
+export LD_LIBRARY_PATH=$PWD/toolchain/sycl/linux_x64/dpcpp/lib:$LD_LIBRARY_PATH
+
+# Go to the Samples folder and create a build directory inside one of the available directories:
 mkdir build && cd build
 
-# Configure and build
-cmake ..
+# Configure and build: Use path of  FunGT 
+cmake -DFUNGT_BASE_DIR=/path/to/FunGT ..
 make
+
 
 # Run FunGT
 ./FunGT
@@ -103,16 +200,11 @@ Advanced physics simulation and particle systems are available in the `experimen
 
 ### Physics Demos (Experimental Branch)
 
-**Luxo Jr. Animation** - Pixar lamp with physics-based movement:
+The goal of this branch is to test new implementations (Physcis focused) without laoding the full user interface (UI)
 
-![Luxo Jr.](fungt_images/luxoJr.png)
+A demo of our full GPU pipeline physics is at:
 
-**GPU Particle System** - 10,000 particles running on integrated graphics:
-
-![Particles Demo](demos/particles.gif)
-
-**Collision detection** - 10 pixar balls colliding:
-![Balls Demo](demos/pixar_balls_demo.gif)
+https://fungts.github.io/FunGT/
 
 ## Roadmap
 
@@ -127,10 +219,12 @@ Advanced physics simulation and particle systems are available in the `experimen
 
 FunGT welcomes contributions! Whether it's bug reports, feature requests, or code contributions, please feel free to open an issue or submit a pull request.
 
-## License
+## License & Attribution
 
-See [LICENSE](LICENSE) file for details.
+FunGT is licensed under the Apache License 2.0.
 
-## Contact
+FunGT uses the Intel DPC++/SYCL compiler to enable GPU acceleration on Intel integrated graphics.
+The Intel DPC++ toolchain is distributed as a prebuilt binary package via GitHub Releases
+and is not stored in the FunGT Git repository.
 
-*[Add your contact/social links here]*
+See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for complete third-party license and attribution information.

@@ -34,10 +34,57 @@ endif()
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
 
-# Use Intel SYCL compiler (clang) for everything
-set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ════════════════════════════════════════════════════════════════════════════
+# SYCL TOOLCHAIN DETECTION
+# ════════════════════════════════════════════════════════════════════════════
+if(UNIX)
+    if(DEFINED SYCL_COMPILER_PATH)
+        if(NOT EXISTS "${SYCL_COMPILER_PATH}")
+            message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
+        endif()
+        set(CMAKE_CXX_COMPILER ${SYCL_COMPILER_PATH})
+        message(STATUS "Using user-provided SYCL compiler: ${SYCL_COMPILER_PATH}")
+    else()
+        set(BUNDLED_SYCL_DIR "${FUNGT_BASE_DIR}/toolchain/sycl/linux_x64/dpcpp")
+        set(BUNDLED_SYCL_COMPILER "${BUNDLED_SYCL_DIR}/bin/clang++")
+
+        if(EXISTS "${BUNDLED_SYCL_COMPILER}")
+            set(CMAKE_CXX_COMPILER ${BUNDLED_SYCL_COMPILER})
+            message(STATUS "Using bundled SYCL compiler: ${BUNDLED_SYCL_COMPILER}")
+        else()
+            message(FATAL_ERROR
+                "SYCL compiler not found!\n"
+                "Please either:\n"
+                "  1. Use bundled toolchain (should be at ${BUNDLED_SYCL_DIR})\n"
+                "  2. Provide your own: cmake -DSYCL_COMPILER_PATH=/path/to/clang++ ..\n")
+        endif()
+    endif()
+elseif(WIN32)
+    if(DEFINED SYCL_COMPILER_PATH)
+        if(NOT EXISTS "${SYCL_COMPILER_PATH}")
+            message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
+        endif()
+        set(CMAKE_CXX_COMPILER ${SYCL_COMPILER_PATH})
+        message(STATUS "Using user-provided SYCL compiler: ${SYCL_COMPILER_PATH}")
+    else()
+        set(BUNDLED_SYCL_DIR "${FUNGT_BASE_DIR}/lib/windows_x64/dpcpp")
+        set(BUNDLED_SYCL_COMPILER "${BUNDLED_SYCL_DIR}/bin/clang++.exe")
+
+        if(EXISTS "${BUNDLED_SYCL_COMPILER}")
+            set(CMAKE_CXX_COMPILER ${BUNDLED_SYCL_COMPILER})
+            message(STATUS "Using bundled SYCL compiler: ${BUNDLED_SYCL_COMPILER}")
+        else()
+            message(FATAL_ERROR
+                "SYCL compiler not found!\n"
+                "Please either:\n"
+                "  1. Use bundled toolchain (should be at ${BUNDLED_SYCL_DIR})\n"
+                "  2. Provide your own: cmake -DSYCL_COMPILER_PATH=C:/path/to/clang++.exe ..\n")
+        endif()
+    endif()
+endif()
 
 # ────────────────────────────────────────────────────────
 # funlib setup
@@ -122,16 +169,14 @@ set(PBR_CORE_FILES
 
 add_library(pbr_core STATIC ${PBR_CORE_FILES})
 
-target_include_directories(pbr_core PUBLIC 
+target_include_directories(pbr_core PUBLIC
     ${FUNGT_INCLUDES}
     ${FUNLIB_DIR}/include
 )
 
-# Compile core with -fsycl (same as main FunGT)
 target_compile_options(pbr_core PRIVATE -fsycl)
 target_link_options(pbr_core PRIVATE -fsycl)
 
-# Core library compiled with Intel clang (same as SYCL compiler)
 message(STATUS "Core PBR library configured (compiler: Intel clang + -fsycl)")
 
 # ────────────────────────────────────────────────────────
@@ -141,41 +186,41 @@ if(FUNGT_USE_CUDA)
     message(STATUS "──────────────────────────────────────")
     message(STATUS "CUDA backend ENABLED")
     message(STATUS "──────────────────────────────────────")
-    
+
     enable_language(CUDA)
-    
+    find_package(CUDAToolkit REQUIRED)
+
     set(CUDA_FILES
         ${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu
         ${FUNGT_BASE_DIR}/PBR/TextureManager/cuda_texture.cpp
     )
-    
+
     add_library(pbr_cuda STATIC ${CUDA_FILES})
-    
-    target_include_directories(pbr_cuda PUBLIC 
+
+    target_include_directories(pbr_cuda PUBLIC
         ${FUNGT_INCLUDES}
         ${FUNLIB_DIR}/include
+        ${CUDAToolkit_INCLUDE_DIRS}
     )
-    
-    # CRITICAL: Mark ALL files as CUDA (not just .cu files!)
+
     set_source_files_properties(
         ${FUNGT_BASE_DIR}/PBR/Render/src/cuda_renderer.cu
         ${FUNGT_BASE_DIR}/PBR/TextureManager/cuda_texture.cpp
         PROPERTIES LANGUAGE CUDA
     )
-    
+
     set_target_properties(pbr_cuda PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
         CUDA_ARCHITECTURES "native"
     )
-    
-    target_compile_definitions(pbr_cuda PUBLIC 
-        FUNGT_USE_CUDA
-    )
-    
+
+    target_compile_definitions(pbr_cuda PUBLIC FUNGT_USE_CUDA)
+
     message(STATUS "CUDA library configured")
     message(STATUS "  Files: cuda_renderer.cu, cuda_texture.cpp")
     message(STATUS "  Compiler: nvcc")
-    
+    message(STATUS "  CUDA includes: ${CUDAToolkit_INCLUDE_DIRS}")
+
 else()
     message(STATUS "CUDA backend disabled")
 endif()
@@ -187,38 +232,34 @@ if(FUNGT_USE_SYCL)
     message(STATUS "──────────────────────────────────────")
     message(STATUS "SYCL backend ENABLED")
     message(STATUS "──────────────────────────────────────")
-    
+
     set(SYCL_FILES
         ${FUNGT_BASE_DIR}/PBR/Render/src/sycl_renderer.cpp
         ${FUNGT_BASE_DIR}/PBR/TextureManager/sycl_texture.cpp
     )
-    
+
     add_library(pbr_sycl STATIC ${SYCL_FILES})
-    
-    target_include_directories(pbr_sycl PUBLIC 
+
+    target_include_directories(pbr_sycl PUBLIC
         ${FUNGT_INCLUDES}
         ${FUNLIB_DIR}/include
     )
-    
-    # Link GLEW, OpenGL, and glfw so funlib can compile (same as main FunGT)
-    target_link_libraries(pbr_sycl PRIVATE 
+
+    target_link_libraries(pbr_sycl PRIVATE
         OpenGL::GL
         GLEW::GLEW
         glfw
     )
-    
-    # Add SYCL-specific flags
+
     target_compile_options(pbr_sycl PRIVATE -fsycl)
     target_link_options(pbr_sycl PRIVATE -fsycl)
-    
-    target_compile_definitions(pbr_sycl PUBLIC 
-        FUNGT_USE_SYCL
-    )
-    
+
+    target_compile_definitions(pbr_sycl PUBLIC FUNGT_USE_SYCL)
+
     message(STATUS "SYCL library configured")
     message(STATUS "  Files: sycl_renderer.cpp, sycl_texture.cpp")
     message(STATUS "  Flags: -fsycl")
-    
+
 else()
     message(STATUS "SYCL backend disabled")
 endif()
@@ -226,11 +267,36 @@ endif()
 # ────────────────────────────────────────────────────────
 # Find required packages
 # ────────────────────────────────────────────────────────
-find_package(OpenCL REQUIRED)
-if(OpenCL_FOUND)
-    message(STATUS "OpenCL found: ${OpenCL_INCLUDE_DIRS}")
+if(FUNGT_USE_SYCL)
+    set(BUNDLED_OPENCL_INCLUDE "${BUNDLED_SYCL_DIR}/include")
+    find_library(BUNDLED_OPENCL_LIBRARY
+        NAMES OpenCL
+        PATHS "${BUNDLED_SYCL_DIR}/lib"
+        NO_DEFAULT_PATH
+    )
+
+    if(EXISTS "${BUNDLED_OPENCL_INCLUDE}/CL/opencl.h" AND BUNDLED_OPENCL_LIBRARY)
+        set(OpenCL_INCLUDE_DIRS "${BUNDLED_OPENCL_INCLUDE}")
+        set(OpenCL_LIBRARIES "${BUNDLED_OPENCL_LIBRARY}")
+        message(STATUS "OpenCL (bundled) found:")
+        message(STATUS "  Include: ${OpenCL_INCLUDE_DIRS}")
+        message(STATUS "  Library: ${OpenCL_LIBRARIES}")
+    else()
+        message(STATUS "Bundled OpenCL not found, trying system OpenCL...")
+        find_package(OpenCL REQUIRED)
+        if(OpenCL_FOUND)
+            message(STATUS "OpenCL (system) found: ${OpenCL_INCLUDE_DIRS}")
+        else()
+            message(FATAL_ERROR "OpenCL library not found!")
+        endif()
+    endif()
 else()
-    message(FATAL_ERROR "OpenCL library not found!")
+    find_package(OpenCL REQUIRED)
+    if(OpenCL_FOUND)
+        message(STATUS "OpenCL found: ${OpenCL_INCLUDE_DIRS}")
+    else()
+        message(FATAL_ERROR "OpenCL library not found!")
+    endif()
 endif()
 
 find_package(OpenGL REQUIRED)
@@ -271,12 +337,11 @@ endif()
 # ────────────────────────────────────────────────────────
 # FINAL EXECUTABLE
 # ────────────────────────────────────────────────────────
-add_executable(pbr_render 
+add_executable(pbr_render
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${FUNGT_BASE_DIR}/PBR/Space/space.cpp  # ← ADD THIS!
+    ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
 )
 
-# CRITICAL: Add -fsycl IMMEDIATELY after add_executable
 if(FUNGT_USE_SYCL)
     target_compile_options(pbr_render PRIVATE -fsycl)
     target_link_options(pbr_render PRIVATE -fsycl)
@@ -285,15 +350,20 @@ endif()
 
 if(FUNGT_USE_CUDA)
     target_compile_definitions(pbr_render PRIVATE FUNGT_USE_CUDA)
+    # THE FIX: explicitly give bundled clang++ the CUDA toolkit include path
+    target_include_directories(pbr_render PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
+        set_target_properties(pbr_render PROPERTIES
+        CUDA_ARCHITECTURES "native"
+    )
+
 endif()
 
-target_include_directories(pbr_render PRIVATE 
+target_include_directories(pbr_render PRIVATE
     ${FUNGT_INCLUDES}
     ${OpenCL_INCLUDE_DIRS}
 )
 
-# Link core library + conditionally link backend libraries
-target_link_libraries(pbr_render PRIVATE 
+target_link_libraries(pbr_render PRIVATE
     pbr_core
     $<$<BOOL:${FUNGT_USE_CUDA}>:pbr_cuda>
     $<$<BOOL:${FUNGT_USE_SYCL}>:pbr_sycl>
@@ -316,9 +386,10 @@ message(STATUS "  PBR Render Build Configuration")
 message(STATUS "══════════════════════════════════════")
 message(STATUS "Build type:       ${CMAKE_BUILD_TYPE}")
 message(STATUS "FunGT base:       ${FUNGT_BASE_DIR}")
-message(STATUS "Default compiler: Intel clang (SYCL-capable)")
+message(STATUS "Default compiler: Bundled Intel clang (SYCL-capable)")
 if(FUNGT_USE_CUDA)
     message(STATUS "CUDA backend:     ENABLED (nvcc)")
+    message(STATUS "CUDA includes:    ${CUDAToolkit_INCLUDE_DIRS}")
 else()
     message(STATUS "CUDA backend:     DISABLED")
 endif()

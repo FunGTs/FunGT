@@ -51,7 +51,7 @@ class Space {
         Space(const PBRCamera &camera);
         ~Space();
 
-        std::vector<fungt::Vec3> Render(const int width, const int height);
+        std::vector<fungt::Vec3> Render(const int width, const int height,int sampleOffset = 0);
        
         void InitComputeRenderBackend();
         void LoadModelToRender(const SimpleModel& model);
