@@ -28,7 +28,7 @@ int main() {
     );
     ground->m_pos = fungt::Vec3(0, -0.5f, 0.f);
     ground->m_restitution = 0.4f;
-    ground->m_friction = 0.4f;
+    ground->m_friction = 0.6f;
     myCollision->add(ground);
 
     auto leftWall = std::make_shared<RigidBody>(
@@ -44,7 +44,9 @@ int main() {
     );
     ball->m_pos = fungt::Vec3(0.0f, 2.3f, 15.0f);
     ball->m_vel = fungt::Vec3(0.0f, 0.0f, -15.0f);
-    ball->m_angularVel = fungt::Vec3(0, 0, 5.0f);
+  
+    ball->m_angularVel = fungt::Vec3(-1.0, 0, 0);  // ≈ (6.52, 0, 0)
+
     ball->m_restitution = 0.8f;
     ball->m_friction = 0.3f;
     myCollision->add(ball);

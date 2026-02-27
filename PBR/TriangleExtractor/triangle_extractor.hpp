@@ -5,23 +5,14 @@
 #include "SimpleModel/simple_model.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
 #include "SceneManager/scene_manager.hpp"
-#include "PBR/TextureManager/idevice_texture.hpp"
+#include "PBR/Space/space.hpp"
 #include <vector>
 #include <memory>
 
-// Extract triangles from a SimpleModel (with current transform!)
-std::vector<Triangle> extractTriangles(
-    const SimpleModel& model,
-    IDeviceTexture* textureManager);
-
-// Extract triangles from a SimpleGeometry (with current transform!)
-std::vector<Triangle> extractTriangles(
-    const SimpleGeometry& geometry,
-    IDeviceTexture* textureManager);
 
 // Extract triangles from ALL objects in SceneManager
-std::vector<Triangle> extractTriangles(
+void extractTriangles(
     SceneManager* sceneManager,
-    IDeviceTexture* textureManager);
+    Space &space);
 
 #endif // _TRIANGLE_EXTRACTOR_H_

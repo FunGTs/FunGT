@@ -137,7 +137,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
        if(m_animationController){
-           auto animWindow = std::make_unique<AnimationControlWindow>(m_animationController, m_sceneManager);
+           auto animWindow = std::make_unique<AnimationControlWindow>(m_animationController, m_sceneManager, &m_camera);
            m_animWindow = animWindow.get();
            m_imguiLayer->addWindow(std::move(animWindow));
        }
