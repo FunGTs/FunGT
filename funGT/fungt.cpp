@@ -118,6 +118,9 @@ void FunGT::set(const std::function<void()>& renderLambda){
            m_physicsDebugRenderer->setShowCollisionBoxes(true);
            std::cout << "Collidable bodies will be shown in debug renderer." << std::endl;
        }
+       // CREATE ANIMATION CONTROLLER
+       m_animationController = std::make_shared<fungt::AnimationController>(m_sceneManager);
+       
    }
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
@@ -133,6 +136,11 @@ void FunGT::set(const std::function<void()>& renderLambda){
        }
        m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
+       if(m_animationController){
+           auto animWindow = std::make_unique<AnimationControlWindow>(m_animationController, m_sceneManager, &m_camera);
+           m_animWindow = animWindow.get();
+           m_imguiLayer->addWindow(std::move(animWindow));
+       }
        m_layerStack.PushLayer(std::move(m_imguiLayer));
    }
 

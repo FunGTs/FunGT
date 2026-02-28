@@ -385,6 +385,33 @@ void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, in
     stbi_write_png(file_name.c_str(), width, height, 3, pixels.data(), width * 3);
 }
 
+void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height, const std::string& filename)
+{
+    std::vector<unsigned char> pixels(width * height * 3);
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            // Flip Y coordinate
+            int srcIdx = y * width + x;
+            int dstIdx = (height - 1 - y) * width + x;
+
+            fungt::Vec3 color = framebuffer[srcIdx];
+
+            // Clamp and gamma correct
+            color.x = std::pow(std::clamp(color.x, 0.0f, 1.0f), 1.0f / 2.2f);
+            color.y = std::pow(std::clamp(color.y, 0.0f, 1.0f), 1.0f / 2.2f);
+            color.z = std::pow(std::clamp(color.z, 0.0f, 1.0f), 1.0f / 2.2f);
+
+            pixels[dstIdx * 3 + 0] = static_cast<unsigned char>(255.99f * color.x);
+            pixels[dstIdx * 3 + 1] = static_cast<unsigned char>(255.99f * color.y);
+            pixels[dstIdx * 3 + 2] = static_cast<unsigned char>(255.99f * color.z);
+        }
+    }
+
+    stbi_write_png(filename.c_str(), width, height, 3, pixels.data(), width * 3);
+    std::cout << "Saved frame: " << filename << std::endl;
+}
+
 void Space::BuildBVH()
 {
     
