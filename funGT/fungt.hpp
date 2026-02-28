@@ -13,6 +13,7 @@
 #include "Layer/layer_stack.hpp"              
 #include "GUI/fungt_gui_headers.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
+#include "Physics/AnimationCreator/animation_controller.hpp"
 #include "Physics/PhysicsWorld/physics_world.hpp"
 #include <memory>
 #include <unordered_map>
@@ -59,7 +60,8 @@ class FunGT : public GraphicsTool{
     spCollisionManager m_collisionManager;
     std::shared_ptr<PhysicsWorld> m_physicsWorld;
     //Progressive Path Tracer
-    std::unique_ptr<ProgressivePathTracer> m_progressiveTracer;
+    std::unique_ptr<ProgressivePathTracer> m_progressiveTracer;    std::shared_ptr<fungt::AnimationController> m_animationController;
+    AnimationControlWindow* m_animWindow;  // RAW POINTER TO AVOID CIRCULAR DEPENDENCY (IMGUI LAYER OWNS THIS)
     public: 
         FunGT(int _width, int _height); 
         ~FunGT();
@@ -81,6 +83,11 @@ class FunGT : public GraphicsTool{
                 return nullptr;
             }
             return m_collisionManager;
+        }
+        // ANIMATION CREATOR METHODS
+        AnimationControlWindow* getAnimationWindow() { return m_animWindow; }
+        std::shared_ptr<fungt::AnimationController> getAnimationController() {
+            return m_animationController;
         }
         void createPhysicsWorld() {
             m_physicsWorld = std::make_shared<PhysicsWorld>();
