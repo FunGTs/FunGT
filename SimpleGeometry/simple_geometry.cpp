@@ -15,9 +15,26 @@ void SimpleGeometry::setPrimitive(std::shared_ptr<Primitive> primitive) {
 
 void SimpleGeometry::setMaterial(const glm::vec3& baseColor, float roughness, float metallic)
 {
-    m_material.baseColor = baseColor;
-    m_material.roughness = roughness;
-    m_material.metallic = metallic;
+    // Base color maps to diffuse
+    m_material.m_diffLigth = baseColor;
+
+    // Ambient is darker version of base color
+    //m_material.m_ambientLight = baseColor * 0.3f;
+
+    // Roughness maps to shininess inversely
+    // roughness: 0 = shiny, 1 = rough
+    // shininess: high = shiny, low = rough
+    // Formula: shininess = (1 - roughness)^2 * 128
+    // float shininess = std::pow(1.0f - roughness, 2.0f) * 128.0f;
+    // m_material.m_shininess = std::max(1.0f, shininess);
+
+    // // Specular strength based on roughness
+    // // Rough surfaces have weak specular highlights
+    // float specStrength = 1.0f - roughness;
+    // m_material.m_specLight = glm::vec3(specStrength * 0.5f);
+
+    // // No emission by default
+    // m_material.m_emission = 0.0f;
 }
 
 void SimpleGeometry::setShaderPaths(const std::string &vs_path, const std::string &fs_path) {
@@ -34,6 +51,7 @@ void SimpleGeometry::load(const std::string &pathToTexture) {
     m_Shader.create(m_vs_path, m_fs_path);
     if(!pathToTexture.empty()){
         m_primitive->setTexture(pathToTexture);
+        
         m_isTexturized = true;
     }
     m_primitive->InitGraphics();
@@ -61,7 +79,10 @@ void SimpleGeometry::scale(float s) {
 }
 
 void SimpleGeometry::draw() {
+   
     if (m_primitive) {
+        m_Shader.setUniform1i("hasTexture", m_isTexturized == true ? 1 : 0);
+        m_material.sendToShader(m_Shader);
         m_primitive->draw();
     }
 }
@@ -127,6 +148,19 @@ std::shared_ptr<SimpleGeometry> SimpleGeometry::create(Geometry geomType) {
             simpleGeom->setPrimitive(std::make_shared<Plane>(80.0f, 80.0f)); // 10x10 ground
             simpleGeom->m_vs_path = getAssetPath("shaders/primitive_vs.glsl");
             simpleGeom->m_fs_path = getAssetPath("shaders/primitive_fs.glsl");
+            break;
+        }
+        case Geometry::Torus:{
+            simpleGeom->setPrimitive(std::make_shared<Torus>(0.8f, 0.3f, 48, 24));
+            simpleGeom->m_vs_path = getAssetPath("shaders/primitive_vs.glsl");
+            simpleGeom->m_fs_path = getAssetPath("shaders/primitive_fs.glsl");
+            
+            // Donut: warm brown, somewhat rough, non-metallic
+            simpleGeom->setMaterial(
+                glm::vec3(0.82f, 0.61f, 0.42f),  // baseColor (donut brown)
+                0.7f,                             // roughness (matte finish)
+                0.0f                              // metallic (food is never metal)
+            );
             break;
         }   
         default:
