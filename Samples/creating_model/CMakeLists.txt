@@ -37,64 +37,6 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ════════════════════════════════════════════════════════════════════════════
-# SYCL TOOLCHAIN DETECTION
-# ════════════════════════════════════════════════════════════════════════════
-# Priority:
-# 1. User-provided SYCL_COMPILER_PATH (cmake -DSYCL_COMPILER_PATH=...)
-# 2. Bundled SYCL toolchain in lib/linux_x64/dpcpp/
-# 3. Error - user must provide SYCL compiler
-
-if(UNIX)
-    if(DEFINED SYCL_COMPILER_PATH)
-        # User provided their own SYCL compiler
-        if(NOT EXISTS "${SYCL_COMPILER_PATH}")
-            message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
-        endif()
-        set(CMAKE_CXX_COMPILER ${SYCL_COMPILER_PATH})
-        message(STATUS "Using user-provided SYCL compiler: ${SYCL_COMPILER_PATH}")
-    else()
-        # Try bundled SYCL toolchain
-        set(BUNDLED_SYCL_DIR "${FUNGT_BASE_DIR}/toolchain/sycl/linux_x64/dpcpp")
-        set(BUNDLED_SYCL_COMPILER "${BUNDLED_SYCL_DIR}/bin/clang++")
-        
-        if(EXISTS "${BUNDLED_SYCL_COMPILER}")
-            set(CMAKE_CXX_COMPILER ${BUNDLED_SYCL_COMPILER})
-            message(STATUS "Using bundled SYCL compiler: ${BUNDLED_SYCL_COMPILER}")
-        else()
-            message(FATAL_ERROR 
-                "SYCL compiler not found!\n"
-                "Please either:\n"
-                "  1. Use bundled toolchain (should be at ${BUNDLED_SYCL_DIR})\n"
-                "  2. Provide your own: cmake -DSYCL_COMPILER_PATH=/path/to/clang++ ..\n")
-        endif()
-    endif()
-elseif(WIN32)
-    if(DEFINED SYCL_COMPILER_PATH)
-        # User provided their own SYCL compiler
-        if(NOT EXISTS "${SYCL_COMPILER_PATH}")
-            message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
-        endif()
-        set(CMAKE_CXX_COMPILER ${SYCL_COMPILER_PATH})
-        message(STATUS "Using user-provided SYCL compiler: ${SYCL_COMPILER_PATH}")
-    else()
-        # Try bundled SYCL toolchain
-        set(BUNDLED_SYCL_DIR "${FUNGT_BASE_DIR}/lib/windows_x64/dpcpp")
-        set(BUNDLED_SYCL_COMPILER "${BUNDLED_SYCL_DIR}/bin/clang++.exe")
-        
-        if(EXISTS "${BUNDLED_SYCL_COMPILER}")
-            set(CMAKE_CXX_COMPILER ${BUNDLED_SYCL_COMPILER})
-            message(STATUS "Using bundled SYCL compiler: ${BUNDLED_SYCL_COMPILER}")
-        else()
-            message(FATAL_ERROR 
-                "SYCL compiler not found!\n"
-                "Please either:\n"
-                "  1. Use bundled toolchain (should be at ${BUNDLED_SYCL_DIR})\n"
-                "  2. Provide your own: cmake -DSYCL_COMPILER_PATH=C:/path/to/clang++.exe ..\n")
-        endif()
-    endif()
-endif()
-
-# ════════════════════════════════════════════════════════════════════════════
 # PBR RENDERER LIBRARIES - PREBUILT FROM PBR/main/build
 # ════════════════════════════════════════════════════════════════════════════
 set(PBR_LIB_DIR ${FUNGT_BASE_DIR}/PBR/main/build)
@@ -105,7 +47,7 @@ if(UNIX)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
     
     # ALWAYS use SYCL compiler (required for funlib)
-    # set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/FunGT/toolchain/sycl/linux_x64/dpcpp/bin/clang++)
+    set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++)
     
     # Add the prebuilt ImGui library
     add_library(imgui STATIC IMPORTED)
@@ -196,7 +138,6 @@ include_directories(
     ${FUNGT_BASE_DIR}/Physics/Integrators
     ${FUNGT_BASE_DIR}/Physics/ContactHelpers
     ${FUNGT_BASE_DIR}/Physics/PhysicsWorld
-    ${FUNGT_BASE_DIR}/Physics/AnimationCreator
     ${FUNGT_BASE_DIR}/Physics/Clothing
     ${FUNGT_BASE_DIR}/Quaternion
     ${FUNGT_BASE_DIR}/Vector
@@ -214,7 +155,6 @@ include_directories(
     ${FUNGT_BASE_DIR}/PBR/Render/brdf
     ${FUNGT_BASE_DIR}/PBR/Render/shared
     ${FUNGT_BASE_DIR}/PBR/TextureManager
-    ${FUNGT_BASE_DIR}/PBR/TriangleExtractor
     ${FUNGT_BASE_DIR}/PBR/BVH
     ${FUNGT_BASE_DIR}/Triangle
 )
@@ -269,9 +209,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
-    ${FUNGT_BASE_DIR}/Physics/AnimationCreator/key_frame_recorder.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
-    ${FUNGT_BASE_DIR}/ViewPort/progressive_path_tracer_viewport.cpp
     ${FUNGT_BASE_DIR}/Renders/framebuffer.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
     ${FUNGT_BASE_DIR}/Platform/OpenGL/OGLframeBuffer.cpp
@@ -279,7 +217,6 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/Intersection/intersection.cpp
     ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
-    ${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -338,12 +275,9 @@ endif()
 # ════════════════════════════════════════════════════════════════════════════
 add_executable(FunGT ${SOURCE_FILES})
 if(FUNGT_USE_CUDA)
-    target_compile_definitions(FunGT PRIVATE FUNGT_USE_CUDA)
-    target_include_directories(FunGT PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
     set_target_properties(FunGT PROPERTIES
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         CUDA_SEPARABLE_COMPILATION ON
-        CUDA_ARCHITECTURES "native"  
     )
 endif()
 # ════════════════════════════════════════════════════════════════════════════
@@ -373,51 +307,12 @@ elseif (UNIX)
     message(STATUS "Configuring for Linux")
     
     # Find required packages
-    if(FUNGT_USE_SYCL)
-
-        # Try bundled toolchain OpenCL first
-        set(BUNDLED_OPENCL_INCLUDE "${BUNDLED_SYCL_DIR}/include")
-        find_library(BUNDLED_OPENCL_LIBRARY
-            NAMES OpenCL
-            PATHS "${BUNDLED_SYCL_DIR}/lib"
-            NO_DEFAULT_PATH
-        )
-
-        if(EXISTS "${BUNDLED_OPENCL_INCLUDE}/CL/opencl.h" AND BUNDLED_OPENCL_LIBRARY)
-
-            set(OpenCL_INCLUDE_DIRS "${BUNDLED_OPENCL_INCLUDE}")
-            set(OpenCL_LIBRARIES "${BUNDLED_OPENCL_LIBRARY}")
-
-            message(STATUS "OpenCL (bundled) found:")
-            message(STATUS "  Include: ${OpenCL_INCLUDE_DIRS}")
-            message(STATUS "  Library: ${OpenCL_LIBRARIES}")
-
-        else()
-
-            message(STATUS "Bundled OpenCL not found, trying system OpenCL...")
-
-            find_package(OpenCL REQUIRED)
-
-            if(OpenCL_FOUND)
-                message(STATUS "OpenCL (system) found: ${OpenCL_INCLUDE_DIRS}")
-            else()
-                message(FATAL_ERROR "OpenCL library not found!")
-            endif()
-
-        endif()
-
+    find_package(OpenCL REQUIRED)
+    if (OpenCL_FOUND)
+        message(STATUS "OpenCL found")
     else()
-
-        # If SYCL disabled, just use system OpenCL
-        find_package(OpenCL REQUIRED)
-        if(OpenCL_FOUND)
-            message(STATUS "OpenCL found: ${OpenCL_INCLUDE_DIRS}")
-        else()
-            message(FATAL_ERROR "OpenCL library not found!")
-        endif()
-
+        message(FATAL_ERROR "OpenCL library not found!")
     endif()
-
     
     find_package(OpenGL REQUIRED)
     if (OpenGL_FOUND)

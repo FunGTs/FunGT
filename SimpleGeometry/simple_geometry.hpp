@@ -6,8 +6,10 @@
 #include "Geometries/sphere.hpp"
 #include "Geometries/box.hpp"
 #include "Geometries/plane.hpp"
+#include "Geometries/torus.hpp"
 #include "Renderable/renderable.hpp"
 #include "Path_Manager/path_manager.hpp"
+#include "Material/material.hpp"
 #include "Shaders/shader.hpp"
 #include <memory>
 
@@ -17,19 +19,14 @@ enum class Geometry {
     Cube,
     Sphere,
     Box,
-    Plane
+    Plane,
+    Torus
     // Add more geometry types as needed
 };
 
 class SimpleGeometry : public Renderable {
 private:
-    struct GeometryMaterial {
-        int baseColorTexIdx = -1;
-        glm::vec3 baseColor = glm::vec3(0.8f);
-        float roughness = 0.5f;
-        float metallic = 0.0f;
-    };
-    GeometryMaterial m_material;
+    Material m_material;
     std::shared_ptr<Primitive> m_primitive;
     Shader m_Shader;
 
@@ -71,7 +68,7 @@ public:
 
     // Getters for PBR path tracer
     std::shared_ptr<Primitive> getPrimitive() const { return m_primitive; }
-    const GeometryMaterial& getMaterial() const { return m_material; }
+    const Material& getMaterial() const { return m_material; }
     // Override methods from Renderable
     void draw() override;
     Shader& getShader() override;
