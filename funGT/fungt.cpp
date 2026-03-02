@@ -31,7 +31,23 @@ void FunGT::processKeyBoardInput()
     //     m_camera.move(deltaTime,2);
     // if (glfwGetKey(m_Window, GLFW_KEY_D) == GLFW_PRESS)
     //     m_camera.move(deltaTime,3);
-    
+    static bool tabPressed = false;
+    if (glfwGetKey(m_Window, GLFW_KEY_TAB) == GLFW_PRESS) {
+        if (!tabPressed) {
+            m_editMode = !m_editMode;
+
+            // Toggle edit mode on ALL renderables
+            for (auto& node : m_sceneManager->getRenderable()) {
+                node->setEditMode(m_editMode);
+            }
+
+            std::cout << "Edit Mode: " << (m_editMode ? "ON" : "OFF") << std::endl;
+            tabPressed = true;
+        }
+    }
+    else {
+        tabPressed = false;
+    }
 }
 void FunGT::processMouseInput(double xpos, double ypos)
 {

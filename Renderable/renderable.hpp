@@ -7,6 +7,10 @@
 
 class Renderable{ //Abstract class
 
+    protected:
+        bool m_isEditMode = false;  // NEW: Edit mode flag
+        bool m_isEditable  = false; // Can this renderable be edited?
+
     public: 
 
 
@@ -42,6 +46,11 @@ class Renderable{ //Abstract class
         virtual std::weak_ptr<RigidBody> getRigidBody() const {
             return std::weak_ptr<RigidBody>();
         }
+
+        virtual void setEditMode(bool enabled) { m_isEditMode = enabled; }
+        virtual bool isEditMode() const { return m_isEditMode; }
+        virtual bool isEditable() const { return m_isEditable; }   
+
         virtual ~Renderable() = default;
 
 }; 

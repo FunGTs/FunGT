@@ -78,7 +78,9 @@ public:
         void selectFace(uint32_t idx, bool additive = false);
         const std::vector<bool>& getVertexSelection() const { return m_vertexSelected; }
         const std::vector<EditFace>& getFaces() const { return m_faces; }
-
+        //Drawing wireframe and vertices for edit mode: all primitives will use the same method, so we can implement it here in the base class
+        void drawWireframe();
+        void drawVertices();
         // GPU sync
         void updateGPUBuffers();
 

@@ -58,6 +58,12 @@ class FunGT : public GraphicsTool{
     spCollisionManager m_collisionManager;
     std::shared_ptr<PhysicsWorld> m_physicsWorld;
 
+
+    //Editing meshes:
+
+    bool m_editMode = false;
+    Primitive* m_activePrimitive = nullptr;  // Which mesh are we editing
+
     public: 
         FunGT(int _width, int _height); 
         ~FunGT();
@@ -85,7 +91,6 @@ class FunGT : public GraphicsTool{
             if(m_physicsWorld) {
                 m_collisionManager = m_physicsWorld->getCollisionManager();
             }
-            //m_collisionManager = m_physicsWorld->getCollisionManager();
         }
         std::shared_ptr<PhysicsWorld> getPhysicsWorld() {
             if(!m_physicsWorld) {
@@ -94,6 +99,12 @@ class FunGT : public GraphicsTool{
             }
             return m_physicsWorld;
         }
+        //Mesh editing functions
+        bool isEditMode() const { return m_editMode; }
+        void setEditMode(bool enabled) { m_editMode = enabled; }
+        void setActivePrimitive(Primitive* prim) { m_activePrimitive = prim; }
+        Primitive* getActivePrimitive() { return m_activePrimitive; }
+
     protected:
         // Override virtual methods from GraphicsTool
         void onMouseMove(double xpos, double ypos) override;
