@@ -4,10 +4,13 @@
     SYCLTexture::SYCLTexture(sycl::queue& queue)
     :m_queue{&queue}{
 
+        auto currDevice = m_queue.get_device();
         std::cout << "SYCLTexture: Initialized with queue for device: "
-            << queue.get_device().get_info<sycl::info::device::name>()
+            << currDevice.get_info<sycl::info::device::name>()
             << std::endl;
-
+        
+        m_useBindlessImages = currDevice.has(sycl::aspect::ext_oneapi_bindless_images);
+        std::cout << "Bindless Image support: " << (m_useBindlessImages ? "YES" : "NO") << std::endl;
     }
     SYCLTexture::~SYCLTexture() {
         cleanup();
@@ -29,40 +32,17 @@
         std::cout << "SYCLTexture: Loaded " << path
             << " (" << width << "x" << height << ", " << channels << " channels)"
             << std::endl;
-
         try{
-            const unsigned int numChannels = 4;
-            const auto channelType = sycl::image_channel_type::unorm_int8;
-            syclexp::image_descriptor desc(
-                { static_cast<size_t>(width), static_cast<size_t>(height) },
-                numChannels,
-                channelType
-            );
-            syclexp::image_mem imgMem(desc, *m_queue);
+           
 
-            auto cpyToDeviceEvent = m_queue->ext_oneapi_copy(
-                data, //Source
-                imgMem.get_handle(), //Destination
-                desc //Image descriptor
-            );
-            cpyToDeviceEvent.wait_and_throw();
-            syclexp::bindless_image_sampler sampler(
-                sycl::addressing_mode::repeat,
-                sycl::coordinate_normalization_mode::normalized,
-                sycl::filtering_mode::linear
-            );
-            syclexp::sampled_image_handle imgHandle =
-                syclexp::create_image(imgMem, sampler,desc, *m_queue);
+            int index = -1;
 
-            SYCLTextureData texData;
-            texData.imgHandle = imgHandle;
-            texData.imgMem = std::move(imgMem);
-            texData.width = width;
-            texData.height = height;
-            texData.path = path;
-            int index = textures.size();
-            textures.push_back(std::move(texData));
-            pathToIndex[path] = index;
+            if (m_useBindlessImages) {
+                index = loadBindlessTexture(data, width, height, path);
+            }
+            else {
+                index = loadBufferTexture(data, width, height, path);
+            }
 
             stbi_image_free(data);
 
@@ -118,4 +98,47 @@
 
         textures.clear();
         pathToIndex.clear();
+    }
+
+    int SYCLTexture::loadBindlessTexture(unsigned char* data, int width, int height, const std::string& path)
+    {
+        const unsigned int numChannels = 4;
+        const auto channelType = sycl::image_channel_type::unorm_int8;
+        syclexp::image_descriptor desc(
+            { static_cast<size_t>(width), static_cast<size_t>(height) },
+            numChannels,
+            channelType
+        );
+        syclexp::image_mem imgMem(desc, *m_queue);
+
+        auto cpyToDeviceEvent = m_queue->ext_oneapi_copy(
+            data, //Source
+            imgMem.get_handle(), //Destination
+            desc //Image descriptor
+        );
+        cpyToDeviceEvent.wait_and_throw();
+        syclexp::bindless_image_sampler sampler(
+            sycl::addressing_mode::repeat,
+            sycl::coordinate_normalization_mode::normalized,
+            sycl::filtering_mode::linear
+        );
+        syclexp::sampled_image_handle imgHandle =
+            syclexp::create_image(imgMem, sampler, desc, *m_queue);
+
+        SYCLTextureData texData;
+        texData.imgHandle = imgHandle;
+        texData.imgMem = std::move(imgMem);
+        texData.width = width;
+        texData.height = height;
+        texData.path = path;
+        int index = textures.size();
+        textures.push_back(std::move(texData));
+        pathToIndex[path] = index;
+
+        return index;
+    }
+
+    int SYCLTexture::loadBufferTexture(unsigned char* data, int w, int h, const std::string& path)
+    {
+        return 0;
     }

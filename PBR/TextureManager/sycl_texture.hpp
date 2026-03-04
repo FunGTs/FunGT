@@ -17,12 +17,19 @@ struct SYCLTextureData {
     int width, height;
     std::string path;
 };
-
+//General buffers for textures
+struct BufferTextureData {
+    float* deviceData;  // Device pointer
+    int width;
+    int height;
+    std::string path;
+};
 class SYCLTexture : public IDeviceTexture {
 private:
     std::vector<SYCLTextureData> textures;
     std::map<std::string, int> pathToIndex;
     sycl::queue* m_queue;
+    bool m_useBindlessImages = true;
 
 public:
     SYCLTexture(sycl::queue& queue);
@@ -31,7 +38,8 @@ public:
     int loadTexture(const std::string& path) override;
     int getTextureCount() const override{};
     void cleanup() override;
-
+    int loadBindlessTexture(unsigned char* data, int w, int h, const std::string& path);
+    int loadBufferTexture(unsigned char* data, int w, int h, const std::string& path);
     // MATCHING CUDA PATTERN - return host-side handles!
     std::vector<syclexp::sampled_image_handle> getImageHandles() {
         std::vector<syclexp::sampled_image_handle> handles;
