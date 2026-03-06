@@ -1,9 +1,9 @@
 #if !defined(_INTERSECTION_H_)
 #define _INTERSECTION_H_
-#include "Ray/ray.hpp"
-#include "HitData/hit_data.hpp"
+#include "PBR/Ray/ray.hpp"
+#include "PBR/HitData/hit_data.hpp"
 #include "Triangle/triangle.hpp"
-#include "BVH/aabb.hpp"
+#include "PBR/BVH/aabb.hpp"
 
 class Intersection{
 
@@ -60,8 +60,8 @@ class Intersection{
             HitData& rec)
         {
             const float EPSILON = 1e-8f;
-            fungt::Vec3 edge1 = tri.v1 - tri.v0;
-            fungt::Vec3 edge2 = tri.v2 - tri.v0;
+            fungt::Vec3 edge1  = fungt::sub(tri.v1, tri.v0);
+            fungt::Vec3 edge2 = fungt::sub(tri.v2, tri.v0);
             fungt::Vec3 h = ray.m_dir.cross(edge2);
             float a = edge1.dot(h);
             if (fabs(a) < EPSILON) return false;

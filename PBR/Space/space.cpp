@@ -81,7 +81,7 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height,int sam
         << "  Framebuffer: " << frameMem / (1024.0 * 1024.0) << " MB\n"
         << "  Total:     " << totalMem / (1024.0 * 1024.0) << " MB\n";
     std::vector<fungt::Vec3> frameBuffer = m_computeRenderer->RenderScene(
-        width, height, m_triangles, m_hotTriangles, m_coldTriangles,
+        width, height, m_hotTriangles, m_coldTriangles,
         m_bvh_nodes, m_lights, m_emissiveTriIndices,
         m_camera, m_samplesPerPixel, sampleOffset);
 

@@ -17,16 +17,10 @@ namespace fungt{
         // Arithmetic with Vec4
         fgt_device Vec4 operator+(const Vec4& o) const { return Vec4(x + o.x, y + o.y, z + o.z, w + o.w); }
         fgt_device Vec4 operator-(const Vec4& o) const { return Vec4(x - o.x, y - o.y, z - o.z, w - o.w); }
-        fgt_device Vec3 operator-(const Vec4& o) const {
-            return Vec3(x - o.x, y - o.y, z - o.z);
-        }
         fgt_device Vec4 operator*(float s)        const { return Vec4(x * s, y * s, z * s, w * s); }
         fgt_device Vec4 operator/(float s)        const { return Vec4(x / s, y / s, z / s, w / s); }
         fgt_device Vec4& operator+=(const Vec4& o) { x += o.x; y += o.y; z += o.z; w += o.w; return *this; }
         fgt_device Vec4& operator-=(const Vec4& o) { x -= o.x; y -= o.y; z -= o.z; w -= o.w; return *this; }
-        fgt_device Vec3 operator*(float s) const {
-            return Vec3(x * s, y * s, z * s);
-        }
         // Scalar multiply from left    
         fgt_device friend Vec4 operator*(float s, const Vec4& v) { return Vec4(v.x * s, v.y * s, v.z * s, v.w * s); }
 
@@ -53,7 +47,13 @@ namespace fungt{
         fgt_device float  operator[](int i) const { if (i == 0) return x; if (i == 1) return y; if (i == 2) return z; return w; }
         fgt_device float& operator[](int i) { if (i == 0) return x; if (i == 1) return y; if (i == 2) return z; return w; }
     };
-
+    fgt_device inline fungt::Vec3 sub(const Vec4& a, const Vec4& b)  {
+        return Vec3(a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+    //Mutiply a Vec4 times a scalar, returning a Vec3 (w ignored)
+    fgt_device inline fungt::Vec3 multiply(const Vec4& v, float s) {
+        return Vec3(v.x * s, v.y * s, v.z * s);
+    }
 }
 
 

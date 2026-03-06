@@ -28,6 +28,7 @@
 #define fgt_device_constant __constant__
 #define fgt_global __global__
 #define fgt_shared __shared__
+#define fgt_device_gpu_noinline   __device__ __noinline__
 #elif defined(__KERNEL_SYCL__)
 #define fgt_device inline
 #define fgt_device_gpu inline
@@ -36,10 +37,12 @@
 #define fgt_device_constant const
 #define fgt_global
 #define fgt_shared /* use local_accessor in SYCL kernels */
+#define fgt_device_gpu_noinline   [[intel::noinline]] inline
 #elif defined(__KERNEL_CPU__)
 #define fgt_device
 #define fgt_device_gpu
 #define fgt_device_forceinline inline
 #define fgt_global
 #define fgt_shared
+#define fgt_device_gpu_noinline inline
 #endif
