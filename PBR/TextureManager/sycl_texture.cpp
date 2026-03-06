@@ -77,16 +77,24 @@
             // Wait for all operations to complete
             m_queue->wait_and_throw();
 
-            for (size_t i = 0; i < textures.size(); i++) {
-                auto& tex = textures[i];
-                std::cout << "SYCLTexture: Destroying texture " << i << std::endl;
+            if(m_useBindlessImages){
+                for (size_t i = 0; i < textures.size(); i++) {
+                    auto& tex = textures[i];
+                    std::cout << "SYCLTexture: Destroying texture " << i << std::endl;
 
-                try {
-                    syclexp::destroy_image_handle(tex.imgHandle, *m_queue);
+                    try {
+                        syclexp::destroy_image_handle(tex.imgHandle, *m_queue);
+                    }
+                    catch (const sycl::exception& e) {
+                        std::cerr << "SYCLTexture: Error destroying texture " << i
+                            << ": " << e.what() << std::endl;
+                    }
                 }
-                catch (const sycl::exception& e) {
-                    std::cerr << "SYCLTexture: Error destroying texture " << i
-                        << ": " << e.what() << std::endl;
+            }
+            else{
+                for (auto& tex : m_bufferTextures) {
+                    std::cout << "SYCLTexture: Destroying buffer texture " << i << std::endl;
+                    sycl::free(tex.deviceData, *m_queue);
                 }
             }
 
@@ -140,5 +148,25 @@
 
     int SYCLTexture::loadBufferTexture(unsigned char* data, int w, int h, const std::string& path)
     {
-        return 0;
+        std::vector<float> floatData(w * h * 4);
+        for (int i = 0; i < w * h * 4; i++) {
+            floatData[i] = data[i] / 255.0f;
+        }
+
+        float* devData = sycl::malloc_device<float>(w * h * 4, *m_queue); //m_queue is of type pointer
+        m_queue->memcpy(devData, floatData.data(), w * h * 4 * sizeof(float)).wait();
+
+
+        BufferTextureData tex;
+        tex.deviceData = devData;
+        tex.width = w;
+        tex.height = h;
+        tex.path = path;
+
+        
+        int index = m_bufferTextures.size();
+        m_bufferTextures.push_back(tex);
+
+        std::cout << "Loaded buffer texture " << index << " (" << path << ")" << std::endl;
+        return index;
     }

@@ -124,8 +124,16 @@ void Space::sendTexturesToRender()
         if (syclRenderer && m_textureManager) { 
             // Set textures on renderer
             auto syclTexMgr = dynamic_cast<SYCLTexture*>(m_textureManager.get());
-            if (syclTexMgr)
-                syclRenderer->setSyclTextureHandles(syclTexMgr->getImageHandles());
+            if (syclTexMgr){
+                if(syclTexMgr->hasBindlessSupport())
+                {
+                    syclRenderer->setSyclTextureHandles(syclTexMgr->getImageHandles());
+                }
+                else{
+                    syclRenderer->setGPUBufferTextures(syclTexMgr->getBufferTextures());
+                }
+            }
+                
         }
         break;
     }

@@ -168,6 +168,9 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
     int numNodes = nodes.size();
     int numLights = lightsList.size();
     int numTextures = m_numTextures;
+
+    //Checking Texture properties
+    i
     auto textureHandles = m_textureHandles;
 
     //  Progressive loop OUTSIDE

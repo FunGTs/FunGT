@@ -2,6 +2,7 @@
 #define _SYCL_TEXTURE_HPP_
 
 #include "idevice_texture.hpp"
+#include "general_gpu_texture.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -24,13 +25,14 @@ struct BufferTextureData {
     int height;
     std::string path;
 };
+
 class SYCLTexture : public IDeviceTexture {
 private:
     std::vector<SYCLTextureData> textures;
     std::map<std::string, int> pathToIndex;
     sycl::queue* m_queue;
     bool m_useBindlessImages = true;
-
+    std::vector<BufferTextureData> m_bufferTextures;  // Add to class
 public:
     SYCLTexture(sycl::queue& queue);
     ~SYCLTexture();
@@ -40,7 +42,8 @@ public:
     void cleanup() override;
     int loadBindlessTexture(unsigned char* data, int w, int h, const std::string& path);
     int loadBufferTexture(unsigned char* data, int w, int h, const std::string& path);
-    // MATCHING CUDA PATTERN - return host-side handles!
+    bool hasBindlessSupport(){return m_useBindlessImages }
+    // return host-side handles!
     std::vector<syclexp::sampled_image_handle> getImageHandles() {
         std::vector<syclexp::sampled_image_handle> handles;
         for (const auto& tex : textures) {
@@ -49,6 +52,22 @@ public:
         std::cout<< "HANDLES SIZE : " <<handles.size()<<std::endl;
         return handles;
     }
+    std::vector<GPUTexture> getBufferTextures() {
+        if (m_useBindlessImages) {
+            throw std::runtime_error("Use bindless handles instead!");
+        }
+
+        std::vector<GPUTexture> result;
+        for (const auto& tex : m_bufferTextures) {
+            GPUTexture gpuTex;
+            gpuTex.data = tex.deviceData;
+            gpuTex.width = tex.width;
+            gpuTex.height = tex.height;
+            result.push_back(gpuTex);
+        }
+        return result;
+    }
+    
 };
 
 #endif // _SYCL_TEXTURE_HPP_
