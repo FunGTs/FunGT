@@ -42,7 +42,7 @@ public:
     void cleanup() override;
     int loadBindlessTexture(unsigned char* data, int w, int h, const std::string& path);
     int loadBufferTexture(unsigned char* data, int w, int h, const std::string& path);
-    bool hasBindlessSupport(){return m_useBindlessImages }
+    bool hasBindlessSupport(){return m_useBindlessImages; }
     // return host-side handles!
     std::vector<syclexp::sampled_image_handle> getImageHandles() {
         std::vector<syclexp::sampled_image_handle> handles;

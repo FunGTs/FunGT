@@ -4,7 +4,7 @@
     SYCLTexture::SYCLTexture(sycl::queue& queue)
     :m_queue{&queue}{
 
-        auto currDevice = m_queue.get_device();
+        auto currDevice = m_queue->get_device();
         std::cout << "SYCLTexture: Initialized with queue for device: "
             << currDevice.get_info<sycl::info::device::name>()
             << std::endl;

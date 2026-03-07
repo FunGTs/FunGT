@@ -95,6 +95,10 @@ public:
             sycl::free(m_textureHandles, m_queue);
             m_textureHandles = nullptr;
         }
+        if(m_bufferTextures){
+            sycl::free(m_bufferTextures, m_queue);
+            m_bufferTextures = nullptr;
+        }
     }
 };
 
