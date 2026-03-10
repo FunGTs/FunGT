@@ -32,6 +32,7 @@ Space::Space(){
     }
 #endif
 #ifdef FUNGT_USE_SYCL
+    case Compute::Backend::SYCL_CUDA:
     case Compute::Backend::SYCL:
     {
         std::cout << "Using SYCL to render scene" << std::endl;
@@ -117,6 +118,7 @@ void Space::sendTexturesToRender()
 #endif
 
 #ifdef FUNGT_USE_SYCL
+    case Compute::Backend::SYCL_CUDA:
     case Compute::Backend::SYCL:
     {
         std::cout << "Sending SYCL Textures" << std::endl;
@@ -167,7 +169,17 @@ void Space::InitComputeRenderBackend()
         std::cout << "Initializing SYCL backend" << std::endl;
         SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
         if (syclRenderer) {
-            syclRenderer->createQueue();
+            syclRenderer->createQueue("intel_queue", flib::vendor::INTEL, flib::device::GPU, flib::backend::LEVEL_ZERO);
+            m_textureManager = std::make_shared<SYCLTexture>(syclRenderer->getQueue());
+        }
+        break;
+    }
+    case Compute::Backend::SYCL_CUDA:
+    {
+        std::cout << "Initializing SYCL CUDA backend" << std::endl;
+        SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
+        if (syclRenderer) {
+            syclRenderer->createQueue("nvidia_queue", flib::vendor::NVIDIA, flib::device::GPU, flib::backend::CUDA);
             m_textureManager = std::make_shared<SYCLTexture>(syclRenderer->getQueue());
         }
         break;
