@@ -39,7 +39,9 @@ public:
         int samplesPerPixel,
         int sampleOffset
     ) override;
-    void createQueue();
+    void createQueue(const std::string &name, flib::vendor v = flib::vendor::INTEL, 
+                    flib::device dev = flib::device::GPU,
+                    flib::backend b = flib::backend::LEVEL_ZERO);
     sycl::queue &getQueue();
     // MATCHING CUDA PATTERN!
     void setSyclTextureHandles(

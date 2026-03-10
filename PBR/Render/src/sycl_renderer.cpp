@@ -258,15 +258,18 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
 
     return framebuffer;
 }
-void SYCL_Renderer::createQueue()
+void SYCL_Renderer::createQueue(const std::string& name, flib::vendor vendor ,
+    flib::device device ,
+    flib::backend backend)
 {
     try {
-        
+
+        flib::sycl_handler::register_queue(name, device, vendor, backend);
         //flib::sycl_handler::sys_info(); // Prints system info
-        flib::sycl_handler::select_device("Intel","GPU"); // Selects a vendor for your computations
+        //flib::sycl_handler::select_device("Intel","GPU"); // Selects a vendor for your computations
         flib::sycl_handler::get_device_info(); // Prints current device info
 
-        m_queue = flib::sycl_handler::get_queue();
+        m_queue = flib::sycl_handler::get_queue(name);
 
     }
     catch (const std::exception& e)

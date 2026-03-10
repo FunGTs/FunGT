@@ -8,6 +8,7 @@
 #include "PBR/PBRCamera/pbr_camera.hpp"
 #include "PBR/Render/include/compute_backends.hpp"
 #include "ViewPort/viewport.hpp"
+#include "InfoDevice/gpu_device_info.hpp"
 #include <memory>
 #include <chrono>
 
@@ -23,10 +24,10 @@
 class RenderWindow : public ImGuiWindow {
 private:
     std::shared_ptr<SceneManager> m_sceneManager;
+    std::shared_ptr<GPUDeviceManager> m_gpuManager;
     Camera* m_camera;
 
     // Render settings
-    int m_selectedBackend = 0;  // 0 = CUDA, 1 = SYCL
     int m_samples = 128;
     int m_renderWidth = 1920;
     int m_renderHeight = 1080;
@@ -50,8 +51,10 @@ private:
     int m_viewportHeight = 1080;
 
 public:
-    RenderWindow(std::shared_ptr<SceneManager> sceneManager, Camera* camera, ViewPort* viewport)
+    RenderWindow(std::shared_ptr<SceneManager> sceneManager, Camera* camera, ViewPort* viewport,
+                 std::shared_ptr<GPUDeviceManager> gpuManager)
         : m_sceneManager(sceneManager)
+        , m_gpuManager(gpuManager)
         , m_camera(camera)
         , m_viewport(viewport)
     {
@@ -74,18 +77,26 @@ public:
         }
 
         // ====================================================================
-        // COMPUTE BACKEND SELECTION
+        // ACTIVE COMPUTE DEVICE
         // ====================================================================
         ImGui::SeparatorText("Compute Backend");
 
-        const char* backends[] = { "CUDA (NVIDIA)", "SYCL" };
-        if (ImGui::Combo("Backend", &m_selectedBackend, backends, 2)) {
-            // Backend changed
+        if (m_gpuManager) {
+            const auto& devices = m_gpuManager->getDevices();
+            int activeIdx = m_gpuManager->getActiveDeviceIndex();
+            if (activeIdx >= 0 && activeIdx < static_cast<int>(devices.size())) {
+                const auto& dev = devices[activeIdx];
+                ImGui::Text("Device: %s", dev.name.c_str());
+                ImGui::Text("Backend: %s", dev.getBackendName().c_str());
+                if (dev.memory_bytes > 0)
+                    ImGui::TextDisabled("Memory: %s", dev.getMemoryString().c_str());
+                else if (dev.compute_units > 0)
+                    ImGui::TextDisabled("Compute Units: %d EUs", dev.compute_units);
+            } else {
+                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "No device selected");
+            }
+            ImGui::TextDisabled("Change device in Render Settings");
         }
-
-        ImGui::Spacing();
-        ImGui::TextWrapped("CUDA: Fast (requires NVIDIA GPU)");
-        ImGui::TextWrapped("SYCL: Works on Intel GPU ");
 
         ImGui::Spacing();
         ImGui::Separator();
@@ -203,8 +214,14 @@ public:
         }
 
         ImGui::Spacing();
-        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f),
-            "Output: CUDA_output.png or SYCL_output.png");
+        if (m_gpuManager) {
+            const auto& devices = m_gpuManager->getDevices();
+            int activeIdx = m_gpuManager->getActiveDeviceIndex();
+            if (activeIdx >= 0 && activeIdx < static_cast<int>(devices.size())) {
+                ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f),
+                    "Output: %s_output.png", devices[activeIdx].getBackendName().c_str());
+            }
+        }
 
         ImGui::End();
     }
@@ -217,13 +234,27 @@ private:
 
         try {
             // ================================================================
-            // 1. SET COMPUTE BACKEND
+            // 1. SET COMPUTE BACKEND FROM SELECTED DEVICE
             // ================================================================
-            if (m_selectedBackend == 0) {
-                ComputeRender::SetBackend(Compute::Backend::CUDA);
-            }
-            else {
-                ComputeRender::SetBackend(Compute::Backend::SYCL);
+            {
+                const auto& devices = m_gpuManager->getDevices();
+                int activeIdx = m_gpuManager->getActiveDeviceIndex();
+                if (activeIdx >= 0 && activeIdx < static_cast<int>(devices.size())) {
+                    const auto& dev = devices[activeIdx];
+                    if (dev.backend == fungt::GPUBackend::CUDA) {
+                        ComputeRender::SetBackend(Compute::Backend::CUDA);
+                    } else if (dev.backend == fungt::GPUBackend::SYCL) {
+                        // SYCL on NVIDIA hardware uses the SYCL_CUDA backend
+                        bool isNvidia = dev.vendor.find("NVIDIA") != std::string::npos ||
+                                        dev.vendor.find("nvidia") != std::string::npos;
+                        ComputeRender::SetBackend(isNvidia ? Compute::Backend::SYCL_CUDA
+                                                           : Compute::Backend::SYCL);
+                    } else {
+                        ComputeRender::SetBackend(Compute::Backend::CPU);
+                    }
+                } else {
+                    ComputeRender::SetBackend(Compute::Backend::CUDA);  // fallback
+                }
             }
             std::cout << "Backend: " << ComputeRender::GetBackendName() << std::endl;
 
