@@ -37,10 +37,33 @@ namespace gpu {
                 std::cerr << "ERROR in applyForces: " << e.what() << std::endl;
                 throw;
             }
+            // ========== NEW: UPDATE UNIFORM GRID ==========
+            try {
+                // Step 1: Compute which cell each body is in
+                m_kernel->computeCellHashes();
+
+                // Step 2: Sort bodies by cell (groups nearby bodies together)
+                m_kernel->sortBodiesByCell();
+
+                // Step 3: Find where each cell starts/ends in sorted array
+                m_kernel->findCellBoundaries();
+
+                // DEBUG: Print grid state (first frame only)
+                static bool first_frame = true;
+                if (first_frame) {
+                    m_kernel->debugGrid();
+                    first_frame = false;
+                }
+            }
+            catch (const sycl::exception& e) {
+                std::cerr << "ERROR in grid update: " << e.what() << std::endl;
+                throw;
+            }
             try {
                 //std::cout << "Calling applyForces..." << std::endl;
                 m_kernel->detectStaticVsDynamic();
-                m_kernel->debugManifolds();
+                m_kernel->detectDynamicVsDynamic();
+                //m_kernel->debugManifolds();
                 //std::cout << "applyForces OK" << std::endl;
             }
             catch (const sycl::exception& e) {
@@ -50,7 +73,7 @@ namespace gpu {
             try {
                 //std::cout << "Calling applyForces..." << std::endl;
                 m_kernel->solveImpulses(dt);
-                m_kernel->debugVelocity(1);
+                //m_kernel->debugVelocity(1);
                 //std::cout << "applyForces OK" << std::endl;
             }
             catch (const sycl::exception& e) {
