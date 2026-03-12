@@ -477,8 +477,14 @@ elseif (UNIX)
     # ════════════════════════════════════════════════════════════════════════
     # SYCL compilation flags (always applied because funlib requires it)
     # ════════════════════════════════════════════════════════════════════════
-    target_compile_options(FunGT PRIVATE -fsycl)
-    target_link_options(FunGT PRIVATE -fsycl)
+    if(CUDAToolkit_FOUND)
+        message(STATUS "CUDA SYCL backend enabled")
+        set(SYCL_TARGETS nvptx64-nvidia-cuda,spir64)
+    else()
+        set(SYCL_TARGETS spir64)
+    endif()
+    target_compile_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
+    target_link_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
     
     if(FUNGT_USE_SYCL)
         target_compile_definitions(FunGT PRIVATE FUNGT_USE_SYCL)
