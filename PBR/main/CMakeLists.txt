@@ -232,6 +232,12 @@ if(FUNGT_USE_SYCL)
     message(STATUS "──────────────────────────────────────")
     message(STATUS "SYCL backend ENABLED")
     message(STATUS "──────────────────────────────────────")
+    if(CUDAToolkit_FOUND)
+        message(STATUS "CUDA SYCL backend enabled")
+        set(SYCL_TARGETS nvptx64-nvidia-cuda,spir64)
+    else()
+        set(SYCL_TARGETS spir64)
+    endif()
 
     set(SYCL_FILES
         ${FUNGT_BASE_DIR}/PBR/Render/src/sycl_renderer.cpp
@@ -251,14 +257,14 @@ if(FUNGT_USE_SYCL)
         glfw
     )
 
-    target_compile_options(pbr_sycl PRIVATE -fsycl)
-    target_link_options(pbr_sycl PRIVATE -fsycl)
+    target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
+    target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
 
     target_compile_definitions(pbr_sycl PUBLIC FUNGT_USE_SYCL)
 
     message(STATUS "SYCL library configured")
     message(STATUS "  Files: sycl_renderer.cpp, sycl_texture.cpp")
-    message(STATUS "  Flags: -fsycl")
+    message(STATUS "  Flags: -fsycl -fsycl-targets=${SYCL_TARGETS}")
 
 else()
     message(STATUS "SYCL backend disabled")
@@ -382,7 +388,7 @@ target_link_libraries(pbr_render PRIVATE
 # ────────────────────────────────────────────────────────
 message(STATUS "")
 message(STATUS "══════════════════════════════════════")
-message(STATUS "  PBR Render Build Configuration")
+message(STATUS "  RaySpace Render Build Configuration")
 message(STATUS "══════════════════════════════════════")
 message(STATUS "Build type:       ${CMAKE_BUILD_TYPE}")
 message(STATUS "FunGT base:       ${FUNGT_BASE_DIR}")
@@ -394,7 +400,7 @@ else()
     message(STATUS "CUDA backend:     DISABLED")
 endif()
 if(FUNGT_USE_SYCL)
-    message(STATUS "SYCL backend:     ENABLED (-fsycl)")
+    message(STATUS "SYCL backend:     ENABLED (-fsycl -fsycl-targets=${SYCL_TARGETS})")
 else()
     message(STATUS "SYCL backend:     DISABLED")
 endif()

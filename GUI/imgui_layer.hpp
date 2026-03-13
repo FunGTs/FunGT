@@ -14,14 +14,17 @@ private:
     std::vector<std::unique_ptr<ImGuiWindow>> m_windows;
     // GPU and render settings management
     std::shared_ptr<GPUDeviceManager> m_gpuManager;
-    //std::shared_ptr<RenderSettingsWindow> m_renderSettingsWindow;
     RenderSettingsWindow* m_renderSettingsWindow;  // Just a pointer
 
 public:
     ImGuiLayer()
-        :Layer("IMGUI LAYER") {
-
+        : Layer("IMGUI LAYER")
+        , m_gpuManager(std::make_shared<GPUDeviceManager>())
+    {
     }
+
+    std::shared_ptr<GPUDeviceManager> getGPUManager() const { return m_gpuManager; }
+
     void addWindow(std::unique_ptr<ImGuiWindow> window)
     {
         m_windows.push_back(std::move(window));
@@ -203,8 +206,7 @@ public:
         io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_width, &tex_height);
         io.FontGlobalScale = 1.8f;
 
-        // Initialize GPU device manager
-        m_gpuManager = std::make_shared<GPUDeviceManager>();
+        // Initialize GPU device manager (created in constructor, initialize here)
         m_gpuManager->initialize();
 
         // Create render settings window and add to windows list

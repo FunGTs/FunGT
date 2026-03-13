@@ -18,7 +18,7 @@ namespace flib{
             std::size_t xdim = static_cast<std::size_t>(std::ceil(std::sqrt(n)));
             std::size_t ydim = xdim; 
             // Get the SYCL queue from the sycl_handler   
-            sycl::queue Q = flib::sycl_handler::get_queue();
+            sycl::queue Q = flib::sycl_handler::get_queue("gl_queue");
             //OpeCL interop for updating particles
             cl_context clcontext = flib::sycl_handler::get_clContext();
                 

@@ -6,9 +6,15 @@
 #include <CL/cl_gl.h>
 #include <CL/cl_gl_ext.h>
 #include <funlib/Tensor/tensor.hpp>
-#include<algorithm>
+#include <algorithm>
+#include <map>
+#include <string>
 namespace flib
 {
+    enum class device  { GPU, CPU };
+    enum class vendor  { INTEL, NVIDIA };
+    enum class backend { OPENCL, LEVEL_ZERO, CUDA };
+
     class sycl_handler {
 
         static sycl::device _device;
@@ -16,31 +22,35 @@ namespace flib
         static sycl::platform _platform;
         static cl_context _clCtx;
         static sycl::context _syclCtx;
+        static std::map<std::string, sycl::queue> _queues;
         static sycl::info::device_type device_type_from_string(const std::string& type_str);
     protected:
-      
+
     public:
 
-        
+
         template<typename T, typename Func>
         friend class ParticleSystem;
 
-        
+
         friend class tensor_operations;
 
         static void select_device(std::string device_name, std::string device_type = "", bool profiling = false);
-        static void get_device_info();
+        static void get_device_info(const std::string& name = "");
         static void sys_info();
         static void get_platform_info();
         static void select_backend_device(const std::string& platform_filter,
                                       const std::string& device_type_filter);
-        static void create_gl_interop_context();
-        static bool is_rtc_available();
+        static void create_gl_interop_context(const std::string& name);
+        static bool is_rtc_available(const std::string& name = "");
+        static void register_queue(const std::string& name, flib::device device_type,
+                                   flib::vendor vendor_type, flib::backend backend_type);
         static sycl::queue get_queue();
+        static sycl::queue get_queue(const std::string& name);
         static cl_context get_clContext();
         static sycl::context get_sycl_context();
-        
-    
+
+
     };
 
 } // namespace flib
