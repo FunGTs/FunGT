@@ -67,22 +67,22 @@ void gpu::RadixSort::sort(int* cellHash, int* bodyIndex, int numBodies) {
         throw std::runtime_error("RadixSort not initialized!");
     }
 
-    std::cout << "RadixSort::sort() called with numBodies=" << numBodies << "\n";
+    //std::cout << "RadixSort::sort() called with numBodies=" << numBodies << "\n";
 
     // Copy input data to internal buffers
-    std::cout << "Copying input to device...\n";
+    //std::cout << "Copying input to device...\n";
     m_queue.memcpy(m_radixData.keys_in, cellHash, numBodies * sizeof(int)).wait();
     m_queue.memcpy(m_radixData.values_in, bodyIndex, numBodies * sizeof(int)).wait();
-    std::cout << "Input copied.\n";
+    //std::cout << "Input copied.\n";
 
     // 4 passes for 32-bit integers (8 bits per pass)
     for (int pass = 0; pass < 4; pass++) {
-        std::cout << "Starting pass " << pass << "...\n";
+        //std::cout << "Starting pass " << pass << "...\n";
         int bitShift = pass * 8;
 
         try {
             radixSortPass(bitShift, numBodies);
-            std::cout << "Pass " << pass << " completed.\n";
+            //std::cout << "Pass " << pass << " completed.\n";
         }
         catch (const sycl::exception& e) {
             std::cerr << "CRASH in pass " << pass << ": " << e.what() << "\n";
@@ -94,15 +94,15 @@ void gpu::RadixSort::sort(int* cellHash, int* bodyIndex, int numBodies) {
         std::swap(m_radixData.values_in, m_radixData.values_out);
     }
 
-    std::cout << "All passes done. Copying back...\n";
+    //std::cout << "All passes done. Copying back...\n";
     // Copy sorted data back
     m_queue.memcpy(cellHash, m_radixData.keys_in, numBodies * sizeof(int)).wait();
     m_queue.memcpy(bodyIndex, m_radixData.values_in, numBodies * sizeof(int)).wait();
-    std::cout << "RadixSort complete!\n";
+    //std::cout << "RadixSort complete!\n";
 }
 void gpu::RadixSort::radixSortPass(int bitShift, int numBodies)
 {
-    std::cout << "  radixSortPass bitShift=" << bitShift << " numBodies=" << numBodies << "\n";
+    //std::cout << "  radixSortPass bitShift=" << bitShift << " numBodies=" << numBodies << "\n";
     const int NUM_RADICES = 256;
     const int RADIX_MASK = 0xFF;
 
@@ -121,15 +121,15 @@ void gpu::RadixSort::radixSortPass(int bitShift, int numBodies)
     std::size_t global_y = ((ydim + local_y - 1) / local_y) * local_y;
 
     
-    std::cout << "  Grid: global=" << global_y << "x" << global_x
-        << " local=" << local_y << "x" << local_x << "\n";
+    // std::cout << "  Grid: global=" << global_y << "x" << global_x
+    //     << " local=" << local_y << "x" << local_x << "\n";
 
-    // Phase 1: Count
-    std::cout << "  Phase 1: Counting...\n";
-    auto device = m_queue.get_device();
-    std::cout << "GPU Physics Radix Sort on: "
-        << device.get_info<sycl::info::device::name>()
-        << std::endl;
+    // // Phase 1: Count
+    // std::cout << "  Phase 1: Counting...\n";
+    // auto device = m_queue.get_device();
+    // std::cout << "GPU Physics Radix Sort on: "
+    //     << device.get_info<sycl::info::device::name>()
+    //     << std::endl;
 
 
     try {
@@ -181,7 +181,7 @@ void gpu::RadixSort::radixSortPass(int bitShift, int numBodies)
                 });
             }).wait();
 
-        std::cout << "  Phase 1 done.\n";
+        //std::cout << "  Phase 1 done.\n";
     }
     catch (const sycl::exception& e) {
         std::cerr << "  CRASH in Phase 1: " << e.what() << "\n";
@@ -252,11 +252,11 @@ void gpu::RadixSort::radixSortPass(int bitShift, int numBodies)
     sycl::free(totalCounts, m_queue);
     sycl::free(globalOffsets, m_queue);
 
-    std::cout << "  Phase 2 done.\n";
+    //std::cout << "  Phase 2 done.\n";
     // Phase 3: Reorder elements
 
 
-    std::cout << "  Phase 3: Reordering...\n";
+    //std::cout << "  Phase 3: Reordering...\n";
     try {
         m_queue.submit([&](sycl::handler& cgh) {
             auto localOffsets = sycl::local_accessor<int, 1>(NUM_RADICES, cgh);
@@ -306,7 +306,7 @@ void gpu::RadixSort::radixSortPass(int bitShift, int numBodies)
                     }
                 });
             }).wait();
-        std::cout << "  Phase 3 done.\n";
+        //std::cout << "  Phase 3 done.\n";
     }
     catch (const sycl::exception& e) {
         std::cerr << "  CRASH in Phase 3: " << e.what() << "\n";

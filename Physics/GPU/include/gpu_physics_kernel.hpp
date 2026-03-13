@@ -3,6 +3,7 @@
 
 #include "gpu_includes.hpp"
 #include "gpu_device_data.hpp"
+#include "gpu_host_data.hpp"
 #include "gpu_memory_utils.hpp"
 #include "gpu_manifold_contacts.hpp"
 #include "gpu_manifold_utils.hpp"
@@ -25,6 +26,9 @@ namespace gpu {
 
         // Rendering (SYCL-OpenGL interop)
         unsigned int m_modelMatrixSSBO;
+        cl_mem m_clInteropBuffer = nullptr;
+        cl_command_queue m_clQueue = nullptr;
+        bool m_interopInitialized = false;
         //Uniform Grid
         UniformGridData m_gridData;
         bool m_gridInitialized;
@@ -44,6 +48,10 @@ namespace gpu {
         int m_capacity;
         float m_worldSize = 200.f;
         float m_cellSize = 5.0f;
+
+
+        HostData m_staging;
+        bool m_flushed = false;
         void initMemoryAllocations(int maxBodies);
     public:
         PhysicsKernel();
@@ -54,6 +62,7 @@ namespace gpu {
        
         void initUniformGrid();
         void cleanup();
+        void sendToDevice();
         //Sorting:
         void sortBodiesByCell();
         void findCellBoundaries();

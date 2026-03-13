@@ -40,44 +40,44 @@ int main() {
         << ", instanceCount=" << ground->getInstanceCount() << std::endl;
     // Balls
     gpuCollision->beginGroup();
-    for (int i = 0; i < 100; i++) {
-       float x = (rand() % 10) - 5.0f;
-        //float x = 0.0;
-        float y = 5.0f + i * 2.0f;
-        //float y = 5.0;
-        float z = -15.f;
+    // for (int i = 0; i < 100; i++) {
+    //    float x = (rand() % 10) - 5.0f;
+    //     //float x = 0.0;
+    //     float y = 5.0f + i * 2.0f;
+    //     //float y = 5.0;
+    //     float z = -15.f;
+    //     gpuCollision->addSphere(x, y, z, 1.0f, 1.0f);
+    // }
+    int gridSize = 10;  // 10×10×10 = 1000 balls
+    for (int i = 0; i < 1000; i++) {
+        int ix = i % gridSize;
+        int iy = (i / gridSize) % gridSize;
+        int iz = i / (gridSize * gridSize);
+
+        float x = ix * 3.0f - 15.0f;  // -15 to +15
+        float y = 5.0f + iy * 3.0f;   // 5 to 35 (not 2003!)
+        float z = -15.0f + iz * 3.0f; // -15 to +15
+
         gpuCollision->addSphere(x, y, z, 1.0f, 1.0f);
     }
-        // int gridSize = 10;  // 10×10×10 = 1000 balls
-        // for (int i = 0; i < 1000; i++) {
-        //     int ix = i % gridSize;
-        //     int iy = (i / gridSize) % gridSize;
-        //     int iz = i / (gridSize * gridSize);
-
-        //     float x = ix * 3.0f - 15.0f;  // -15 to +15
-        //     float y = 5.0f + iy * 3.0f;   // 5 to 35 (not 2003!)
-        //     float z = -15.0f + iz * 3.0f; // -15 to +15
-
-        //     gpuCollision->addSphere(x, y, z, 1.0f, 1.0f);
-        // }
     gpuCollision->endGroup();
-   
-    // === DEBUG START ===
-    std::cout << "\n=== DEBUG INFO ===" << std::endl;
-    std::cout << "Total bodies: " << gpuCollision->getNumBodies() << std::endl;
-    std::cout << "Total groups: " << gpuCollision->getNumGroups() << std::endl;
+    gpuCollision->sendToDevice(); //Very important! Must be called after adding bodies and before rendering!
+    // // === DEBUG START ===
+    // std::cout << "\n=== DEBUG INFO ===" << std::endl;
+    // std::cout << "Total bodies: " << gpuCollision->getNumBodies() << std::endl;
+    // std::cout << "Total groups: " << gpuCollision->getNumGroups() << std::endl;
 
-    std::cout << "\nGroups:" << std::endl;
-    for (int g = 0; g < gpuCollision->getNumGroups(); g++) {
-        auto grp = gpuCollision->getGroup(g);
-        std::cout << "  Group " << g << ": startIndex=" << grp.startIndex << ", count=" << grp.count << std::endl;
-    }
+    // std::cout << "\nGroups:" << std::endl;
+    // for (int g = 0; g < gpuCollision->getNumGroups(); g++) {
+    //     auto grp = gpuCollision->getGroup(g);
+    //     std::cout << "  Group " << g << ": startIndex=" << grp.startIndex << ", count=" << grp.count << std::endl;
+    // }
    
 
     auto balls = GPUGeometry::create(gpuCollision, GPUGeometryType::Sphere);
     balls->load(getAssetPath("img/BeachBallColor.jpg"));
-    std::cout << "BALLS: startIndex=" << balls->getStartIndex()
-        << ", instanceCount=" << balls->getInstanceCount() << std::endl;
+    // std::cout << "BALLS: startIndex=" << balls->getStartIndex()
+    //     << ", instanceCount=" << balls->getInstanceCount() << std::endl;
     FunGTSceneManager scene_manager = myGame->getSceneManager();
     FunGTInfoWindow infowindow = myGame->getInfoWindow();
 

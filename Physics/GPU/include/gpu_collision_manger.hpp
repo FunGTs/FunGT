@@ -75,7 +75,9 @@ namespace gpu {
         int getNumBodies() const {
             return m_kernel->getNumBodies();
         }
-
+        void sendToDevice() {
+            m_kernel->sendToDevice();
+        }
         // Get kernel
         std::shared_ptr<PhysicsKernel> getKernel() {
             return m_kernel;
