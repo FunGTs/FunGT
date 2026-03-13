@@ -17,7 +17,7 @@ namespace fungt {
     };
 
     // ════════════════════════════════════════════════════════════════════════════
-    // Device Information (Plain C++ - no GPU headers!)
+    // Device Information
     // ════════════════════════════════════════════════════════════════════════════
     struct GPUDeviceInfo {
         int id;

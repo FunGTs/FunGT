@@ -7,11 +7,11 @@ namespace Compute{
         CPU,
         CUDA,
         SYCL,
+        SYCL_CUDA, // SYCL targeting CUDA devices
     };
 }
 class ComputeRender {
 public:
-    static void Init();
     static const std::string GetBackendName();
     static void SetBackend(Compute::Backend api) { s_API = api; }
     static Compute::Backend GetBackend() { return s_API; }

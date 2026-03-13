@@ -4,9 +4,9 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
 : m_NumParticles{num}{
     // INITIALIZE SYCL WITH GL INTEROP (ParticleSimulation owns this responsibility)
     std::cout << "Initializing SYCL for ParticleSimulation..." << std::endl;
-    flib::sycl_handler::select_backend_device("OpenCL", "GPU");
-    flib::sycl_handler::create_gl_interop_context();
-    flib::sycl_handler::get_device_info();
+    flib::sycl_handler::register_queue("gl_queue", flib::device::GPU, flib::vendor::INTEL, flib::backend::OPENCL);
+    flib::sycl_handler::create_gl_interop_context("gl_queue"); // replaces that queue's context in-place
+    flib::sycl_handler::get_device_info("gl_queue");
     m_pSet.SetNumParticles(m_NumParticles);
     std::cout<<"Particle system constructor"<<std::endl;
     std::cout<<"Num particles: "<<m_pSet._particles.size()<<std::endl;

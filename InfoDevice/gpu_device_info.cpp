@@ -26,17 +26,17 @@ void GPUDeviceManager::initialize() {
         if (cuda_backend) {
             auto devices = cuda_backend->getDevices();
             if (!devices.empty()) {
-                std::cout << "✓ CUDA backend initialized: " << devices.size() << " device(s)" << std::endl;
+                std::cout << "CUDA backend initialized: " << devices.size() << " device(s)" << std::endl;
                 all_devices_.insert(all_devices_.end(), devices.begin(), devices.end());
                 backends_.push_back(std::move(cuda_backend));
             }
         }
     }
     catch (const std::exception& e) {
-        std::cout << "✗ CUDA backend failed: " << e.what() << std::endl;
+        std::cout << "CUDA backend failed: " << e.what() << std::endl;
     }
 #else
-    std::cout << "  CUDA backend disabled (compile with -DUSE_CUDA=ON)" << std::endl;
+    std::cout << "  CUDA backend disabled (compile with -DFUNGT_USE_CUDA=ON)" << std::endl;
 #endif
 
     // Try to create SYCL backend
@@ -46,17 +46,17 @@ void GPUDeviceManager::initialize() {
         if (sycl_backend) {
             auto devices = sycl_backend->getDevices();
             if (!devices.empty()) {
-                std::cout << "✓ SYCL backend initialized: " << devices.size() << " device(s)" << std::endl;
+                std::cout << " SYCL backend initialized: " << devices.size() << " device(s)" << std::endl;
                 all_devices_.insert(all_devices_.end(), devices.begin(), devices.end());
                 backends_.push_back(std::move(sycl_backend));
             }
         }
     }
     catch (const std::exception& e) {
-        std::cout << "✗ SYCL backend failed: " << e.what() << std::endl;
+        std::cout << "SYCL backend failed: " << e.what() << std::endl;
     }
 #else
-    std::cout << "  SYCL backend disabled (compile with -DUSE_SYCL=ON)" << std::endl;
+    std::cout << "  SYCL backend disabled (compile with -DFUNGT_USE_SYCL=ON)" << std::endl;
 #endif
 
     // Add OpenGL fallback device (always available)
@@ -70,7 +70,7 @@ void GPUDeviceManager::initialize() {
     opengl_device.isActive = false;
     all_devices_.push_back(opengl_device);
 
-    std::cout << "✓ OpenGL fallback available" << std::endl;
+    std::cout << "OpenGL fallback available" << std::endl;
 
     // Set first device as active by default
     if (!all_devices_.empty()) {
