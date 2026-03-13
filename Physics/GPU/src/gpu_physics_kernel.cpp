@@ -31,10 +31,26 @@ void gpu::PhysicsKernel::init(int maxBodies) {
     initMemoryAllocations(maxBodies);
     initUniformGrid( );
     //Initialize RadixSort
+    m_staging.resize(maxBodies);
     m_radixSort = std::make_unique<RadixSort>(m_queue);    
     if(m_radixSort){
         m_radixSort->init(maxBodies);
     }
+    // Create persistent CL interop from GL SSBO
+    m_clQueue = sycl::get_native<sycl::backend::opencl>(m_queue);
+
+    m_clInteropBuffer = clCreateFromGLBuffer(
+        flib::sycl_handler::get_clContext(),
+        CL_MEM_WRITE_ONLY,
+        m_modelMatrixSSBO,
+        NULL);
+
+    if (m_clInteropBuffer == NULL) {
+        std::cerr << "Failed to create CL buffer from GL SSBO!" << std::endl;
+        return;
+    }
+
+    m_interopInitialized = true;
    
 }
 
@@ -230,8 +246,76 @@ void gpu::PhysicsKernel::cleanup() {
         glDeleteBuffers(1, &m_modelMatrixSSBO);
         m_modelMatrixSSBO = 0;
     }
-
+    if (m_clInteropBuffer) {
+        clReleaseMemObject(m_clInteropBuffer);
+        m_clInteropBuffer = nullptr;
+    }
     std::cout << "GPU Physics Kernel cleaned up" << std::endl;
+}
+
+void gpu::PhysicsKernel::sendToDevice()
+{
+    if (m_numBodies == 0) return;
+    if (m_flushed) {
+        std::cerr << "WARNING: sendToDevice() already called. Ignoring." << std::endl;
+        return;
+    }
+
+    int n = m_numBodies;
+    std::cout << "Sending " << n << " bodies to GPU..." << std::endl;
+
+    // Shape data
+    m_queue.memcpy(m_data.shapeType, m_staging.shapeType.data(), n * sizeof(int));
+    m_queue.memcpy(m_data.bodyMode, m_staging.bodyMode.data(), n * sizeof(int));
+    m_queue.memcpy(m_data.radius, m_staging.radius.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.halfExtentX, m_staging.halfExtentX.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.halfExtentY, m_staging.halfExtentY.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.halfExtentZ, m_staging.halfExtentZ.data(), n * sizeof(float));
+
+    // Positions
+    m_queue.memcpy(m_data.x_pos, m_staging.x_pos.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.y_pos, m_staging.y_pos.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.z_pos, m_staging.z_pos.data(), n * sizeof(float));
+
+    // Linear velocity
+    m_queue.memcpy(m_data.x_vel, m_staging.x_vel.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.y_vel, m_staging.y_vel.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.z_vel, m_staging.z_vel.data(), n * sizeof(float));
+
+    // Forces
+    m_queue.memcpy(m_data.x_force, m_staging.x_force.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.y_force, m_staging.y_force.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.z_force, m_staging.z_force.data(), n * sizeof(float));
+
+    // Angular velocity
+    m_queue.memcpy(m_data.x_angVel, m_staging.x_angVel.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.y_angVel, m_staging.y_angVel.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.z_angVel, m_staging.z_angVel.data(), n * sizeof(float));
+
+    // Torques
+    m_queue.memcpy(m_data.x_torque, m_staging.x_torque.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.y_torque, m_staging.y_torque.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.z_torque, m_staging.z_torque.data(), n * sizeof(float));
+
+    // Orientations
+    m_queue.memcpy(m_data.orientW, m_staging.orientW.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.orientX, m_staging.orientX.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.orientY, m_staging.orientY.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.orientZ, m_staging.orientZ.data(), n * sizeof(float));
+
+    // Mass properties
+    m_queue.memcpy(m_data.invMass, m_staging.invMass.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.invInertiaTensor, m_staging.invInertiaTensor.data(), n * 9 * sizeof(float));
+
+    // Material
+    m_queue.memcpy(m_data.restitution, m_staging.restitution.data(), n * sizeof(float));
+    m_queue.memcpy(m_data.friction, m_staging.friction.data(), n * sizeof(float));
+
+    // Single synchronization point
+    m_queue.wait();
+
+    m_flushed = true;
+    std::cout << "Flush complete: " << n << " bodies uploaded in one batch." << std::endl;
 }
 
 void gpu::PhysicsKernel::sortBodiesByCell()
@@ -305,6 +389,79 @@ void gpu::PhysicsKernel::debugGrid()
     std::cout << "================================\n\n";
 }
 
+// int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass, MODE mode) {
+//     if (m_numBodies >= m_capacity) {
+//         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
+//         return -1;
+//     }
+
+//     int id = m_numBodies++;
+    
+//     // Upload position
+//     m_queue.memcpy(&m_data.x_pos[id], &x, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_pos[id], &y, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_pos[id], &z, sizeof(float)).wait();
+
+//     // Initialize velocities/forces to zero
+//     float zero = 0.0f;
+//     // Random lateral velocity for natural spin on impact
+//     float lateralVelX = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
+//     float lateralVelZ = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
+//     m_queue.memcpy(&m_data.x_vel[id], &lateralVelX, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_vel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_vel[id], &lateralVelZ, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.x_force[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_force[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_force[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.x_angVel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_angVel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_angVel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.x_torque[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_torque[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_torque[id], &zero, sizeof(float)).wait();
+
+//     // Initialize orientation to identity
+//     float one = 1.0f;
+//     m_queue.memcpy(&m_data.orientW[id], &one, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.orientX[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.orientY[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.orientZ[id], &zero, sizeof(float)).wait();
+
+//     // Set inverse mass
+//     float invMassVal = (mass > 0.0f) ? (1.0f / mass) : 0.0f;
+//     m_queue.memcpy(&m_data.invMass[id], &invMassVal, sizeof(float)).wait();
+
+//     // Calculate inverse inertia tensor for sphere: I = (2/5) * m * r²
+//     float invInertia = (mass > 0.0f) ? (2.5f / (mass * radius * radius)) : 0.0f;
+
+//     // Sphere inertia is diagonal
+//     float inertiaTensor[9] = {
+//         invInertia, 0.0f, 0.0f,
+//         0.0f, invInertia, 0.0f,
+//         0.0f, 0.0f, invInertia
+//     };
+
+//     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], inertiaTensor, 9 * sizeof(float)).wait();
+
+//     // Set shape type and geometry
+//     int shapeType = 0;  // sphere
+//     int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;
+//     m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
+//     m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();
+//     m_queue.memcpy(&m_data.radius[id], &radius, sizeof(float)).wait();
+
+//     float restitution = 0.8;
+//     float friction    = 0.3;
+//     m_queue.memcpy(&m_data.restitution[id], &restitution,sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
+//     // === DEBUG ===
+//     float readback_invMass;
+//     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
+//     std::cout << "addSphere: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
+//     // === END DEBUG ===
+
+//     return id;
+// }
 int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass, MODE mode) {
     if (m_numBodies >= m_capacity) {
         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
@@ -312,73 +469,117 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
     }
 
     int id = m_numBodies++;
-    
-    // Upload position
-    m_queue.memcpy(&m_data.x_pos[id], &x, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_pos[id], &y, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_pos[id], &z, sizeof(float)).wait();
 
-    // Initialize velocities/forces to zero
-    float zero = 0.0f;
-    // Random lateral velocity for natural spin on impact
-    float lateralVelX = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
-    float lateralVelZ = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
-    m_queue.memcpy(&m_data.x_vel[id], &lateralVelX, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_vel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_vel[id], &lateralVelZ, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.x_force[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_force[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_force[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.x_angVel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_angVel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_angVel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.x_torque[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_torque[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_torque[id], &zero, sizeof(float)).wait();
+    // Position
+    m_staging.x_pos[id] = x;
+    m_staging.y_pos[id] = y;
+    m_staging.z_pos[id] = z;
 
-    // Initialize orientation to identity
-    float one = 1.0f;
-    m_queue.memcpy(&m_data.orientW[id], &one, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.orientX[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.orientY[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.orientZ[id], &zero, sizeof(float)).wait();
+    // Lateral velocity for natural spin on impact
+    float lateralVelX = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;
+    float lateralVelZ = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;
+    m_staging.x_vel[id] = lateralVelX;
+    m_staging.y_vel[id] = 0.0f;
+    m_staging.z_vel[id] = lateralVelZ;
 
-    // Set inverse mass
+    // Forces, angular velocity, torque all default to 0.0f from resize()
+
+    // Orientation: identity quaternion (w=1 already set by resize())
+
+    // Inverse mass
     float invMassVal = (mass > 0.0f) ? (1.0f / mass) : 0.0f;
-    m_queue.memcpy(&m_data.invMass[id], &invMassVal, sizeof(float)).wait();
+    m_staging.invMass[id] = invMassVal;
 
-    // Calculate inverse inertia tensor for sphere: I = (2/5) * m * r²
+    // Inverse inertia tensor for sphere: I = (2/5) * m * r^2
     float invInertia = (mass > 0.0f) ? (2.5f / (mass * radius * radius)) : 0.0f;
+    int tensorIdx = id * 9;
+    m_staging.invInertiaTensor[tensorIdx + 0] = invInertia;
+    m_staging.invInertiaTensor[tensorIdx + 4] = invInertia;
+    m_staging.invInertiaTensor[tensorIdx + 8] = invInertia;
+    // Off-diagonal entries default to 0.0f from resize()
 
-    // Sphere inertia is diagonal
-    float inertiaTensor[9] = {
-        invInertia, 0.0f, 0.0f,
-        0.0f, invInertia, 0.0f,
-        0.0f, 0.0f, invInertia
-    };
+    // Shape data
+    m_staging.shapeType[id] = 0;  // sphere
+    m_staging.bodyMode[id] = (mode == MODE::DYNAMIC) ? 1 : 0;
+    m_staging.radius[id] = radius;
 
-    m_queue.memcpy(&m_data.invInertiaTensor[id * 9], inertiaTensor, 9 * sizeof(float)).wait();
-
-    // Set shape type and geometry
-    int shapeType = 0;  // sphere
-    int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;
-    m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
-    m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();
-    m_queue.memcpy(&m_data.radius[id], &radius, sizeof(float)).wait();
-
-    float restitution = 0.8;
-    float friction    = 0.3;
-    m_queue.memcpy(&m_data.restitution[id], &restitution,sizeof(float)).wait();
-    m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
-    // === DEBUG ===
-    float readback_invMass;
-    m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
-    std::cout << "addSphere: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
-    // === END DEBUG ===
+    // Material
+    m_staging.restitution[id] = 0.8f;
+    m_staging.friction[id] = 0.3f;
 
     return id;
 }
+// int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode) {
+//     if (m_numBodies >= m_capacity) {
+//         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
+//         return -1;
+//     }
 
+//     int id = m_numBodies++;
+
+//     // Same as sphere but different inertia
+//     m_queue.memcpy(&m_data.x_pos[id], &x, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_pos[id], &y, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_pos[id], &z, sizeof(float)).wait();
+
+//     float zero = 0.0f;
+//     m_queue.memcpy(&m_data.x_vel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_vel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_vel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.x_force[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_force[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_force[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.x_angVel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_angVel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_angVel[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.x_torque[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.y_torque[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.z_torque[id], &zero, sizeof(float)).wait();
+
+//     float one = 1.0f;
+//     m_queue.memcpy(&m_data.orientW[id], &one, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.orientX[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.orientY[id], &zero, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.orientZ[id], &zero, sizeof(float)).wait();
+
+//     float invMassVal = (mass > 0.0f) ? (1.0f / mass) : 0.0f;
+//     m_queue.memcpy(&m_data.invMass[id], &invMassVal, sizeof(float)).wait();
+
+//     // Box inertia tensor: I = (1/12) * m * (h² + d², w² + d², w² + h²)
+//     float invInertia[9] = { 0 };
+//     if (mass > 0.0f) {
+//         float w2 = width * width;
+//         float h2 = height * height;
+//         float d2 = depth * depth;
+//         invInertia[0] = 12.0f / (mass * (h2 + d2));  // Ixx
+//         invInertia[4] = 12.0f / (mass * (w2 + d2));  // Iyy
+//         invInertia[8] = 12.0f / (mass * (w2 + h2));  // Izz
+//     }
+
+//     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], invInertia, 9 * sizeof(float)).wait();
+
+//     // Set shape type and geometry
+//     int shapeType = 1;  // box
+//     int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;  // ADD THIS LINE
+//     m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();  // ADD THIS LINE
+//     m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
+//     float halfX = width * 0.5f;
+//     float halfY = height * 0.5f;
+//     float halfZ = depth * 0.5f;
+//     m_queue.memcpy(&m_data.halfExtentX[id], &halfX, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.halfExtentY[id], &halfY, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.halfExtentZ[id], &halfZ, sizeof(float)).wait();
+
+//     float readback_invMass;
+//     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
+
+//     float restitution = 0.5;
+//     float friction = 0.3;
+//     m_queue.memcpy(&m_data.restitution[id], &restitution, sizeof(float)).wait();
+//     m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
+//     std::cout << "addBox: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
+//     return id;
+// }
 int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode) {
     if (m_numBodies >= m_capacity) {
         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
@@ -387,67 +588,41 @@ int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float hei
 
     int id = m_numBodies++;
 
-    // Same as sphere but different inertia
-    m_queue.memcpy(&m_data.x_pos[id], &x, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_pos[id], &y, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_pos[id], &z, sizeof(float)).wait();
+    // Position
+    m_staging.x_pos[id] = x;
+    m_staging.y_pos[id] = y;
+    m_staging.z_pos[id] = z;
 
-    float zero = 0.0f;
-    m_queue.memcpy(&m_data.x_vel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_vel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_vel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.x_force[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_force[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_force[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.x_angVel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_angVel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_angVel[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.x_torque[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.y_torque[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.z_torque[id], &zero, sizeof(float)).wait();
+    // Velocity, forces, angular, torque all default to 0.0f from resize()
 
-    float one = 1.0f;
-    m_queue.memcpy(&m_data.orientW[id], &one, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.orientX[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.orientY[id], &zero, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.orientZ[id], &zero, sizeof(float)).wait();
+    // Orientation: identity quaternion (w=1 already set by resize())
 
+    // Inverse mass
     float invMassVal = (mass > 0.0f) ? (1.0f / mass) : 0.0f;
-    m_queue.memcpy(&m_data.invMass[id], &invMassVal, sizeof(float)).wait();
+    m_staging.invMass[id] = invMassVal;
 
-    // Box inertia tensor: I = (1/12) * m * (h² + d², w² + d², w² + h²)
-    float invInertia[9] = { 0 };
+    // Inverse inertia tensor for box: I = (1/12) * m * (h^2 + d^2, w^2 + d^2, w^2 + h^2)
+    int tensorIdx = id * 9;
     if (mass > 0.0f) {
         float w2 = width * width;
         float h2 = height * height;
         float d2 = depth * depth;
-        invInertia[0] = 12.0f / (mass * (h2 + d2));  // Ixx
-        invInertia[4] = 12.0f / (mass * (w2 + d2));  // Iyy
-        invInertia[8] = 12.0f / (mass * (w2 + h2));  // Izz
+        m_staging.invInertiaTensor[tensorIdx + 0] = 12.0f / (mass * (h2 + d2));
+        m_staging.invInertiaTensor[tensorIdx + 4] = 12.0f / (mass * (w2 + d2));
+        m_staging.invInertiaTensor[tensorIdx + 8] = 12.0f / (mass * (w2 + h2));
     }
 
-    m_queue.memcpy(&m_data.invInertiaTensor[id * 9], invInertia, 9 * sizeof(float)).wait();
+    // Shape data
+    m_staging.shapeType[id] = 1;  // box
+    m_staging.bodyMode[id] = (mode == MODE::DYNAMIC) ? 1 : 0;
+    m_staging.halfExtentX[id] = width * 0.5f;
+    m_staging.halfExtentY[id] = height * 0.5f;
+    m_staging.halfExtentZ[id] = depth * 0.5f;
 
-    // Set shape type and geometry
-    int shapeType = 1;  // box
-    int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;  // ADD THIS LINE
-    m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();  // ADD THIS LINE
-    m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
-    float halfX = width * 0.5f;
-    float halfY = height * 0.5f;
-    float halfZ = depth * 0.5f;
-    m_queue.memcpy(&m_data.halfExtentX[id], &halfX, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.halfExtentY[id], &halfY, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.halfExtentZ[id], &halfZ, sizeof(float)).wait();
+    // Material
+    m_staging.restitution[id] = 0.5f;
+    m_staging.friction[id] = 0.3f;
 
-    float readback_invMass;
-    m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
-
-    float restitution = 0.5;
-    float friction = 0.3;
-    m_queue.memcpy(&m_data.restitution[id], &restitution, sizeof(float)).wait();
-    m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
-    std::cout << "addBox: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
     return id;
 }
 void gpu::PhysicsKernel::computeCellHashes() {
@@ -690,31 +865,32 @@ void gpu::PhysicsKernel::buildMatrices() {
     std::size_t xdim = static_cast<std::size_t>(std::ceil(std::sqrt(n)));
     std::size_t ydim = xdim;
 
-    // Get OpenCL context and queue for interop
-    cl_context clcontext = flib::sycl_handler::get_clContext();
-    cl_command_queue clqueue = sycl::get_native<sycl::backend::opencl>(m_queue);
+    // // Get OpenCL context and queue for interop
+    // cl_context clcontext = flib::sycl_handler::get_clContext();
+    // cl_command_queue clqueue = sycl::get_native<sycl::backend::opencl>(m_queue);
 
-    // Create OpenCL buffer from OpenGL SSBO
-    cl_mem clbuffer = clCreateFromGLBuffer(clcontext, CL_MEM_WRITE_ONLY,
-        m_modelMatrixSSBO, NULL);
-    if (clbuffer == NULL) {
-        std::cerr << "Failed to create CL buffer from GL SSBO!" << std::endl;
-        return;
-    }
+    // // Create OpenCL buffer from OpenGL SSBO
+    // cl_mem clbuffer = clCreateFromGLBuffer(clcontext, CL_MEM_WRITE_ONLY,
+    //     m_modelMatrixSSBO, NULL);
+    // if (clbuffer == NULL) {
+    //     std::cerr << "Failed to create CL buffer from GL SSBO!" << std::endl;
+    //     return;
+    // }
 
     // Finish OpenGL operations
     glFinish();
 
     // Acquire GL object for SYCL use
+
     cl_event acquire_event;
-    clEnqueueAcquireGLObjects(clqueue, 1, &clbuffer, 0, NULL, &acquire_event);
+    clEnqueueAcquireGLObjects(m_clQueue, 1, &m_clInteropBuffer, 0, NULL, &acquire_event);
     clWaitForEvents(1, &acquire_event);
 
     // SYCL kernel scope
     {
         sycl::context syclCtx = flib::sycl_handler::get_sycl_context();
         sycl::buffer<float> matrixBuf =
-            sycl::make_buffer<sycl::backend::opencl, float>(clbuffer, syclCtx);
+            sycl::make_buffer<sycl::backend::opencl, float>(m_clInteropBuffer, syclCtx);
 
         DeviceData data = m_data;
         m_queue.submit([data, n, xdim, ydim, &matrixBuf](sycl::handler& h) {
@@ -780,18 +956,18 @@ void gpu::PhysicsKernel::buildMatrices() {
         m_queue.wait();
     }
 
-    clFinish(clqueue);
+    clFinish(m_clQueue);
 
     // Release GL object back to OpenGL
     cl_event release_event;
-    clEnqueueReleaseGLObjects(clqueue, 1, &clbuffer, 0, NULL, &release_event);
+    clEnqueueReleaseGLObjects(m_clQueue, 1, &m_clInteropBuffer, 0, NULL, &release_event);
     clWaitForEvents(1, &release_event);
 
     // Memory barrier
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     // Release OpenCL memory object
-    clReleaseMemObject(clbuffer);
+    //clReleaseMemObject(clbuffer);
 }
 void gpu::PhysicsKernel::clearManiFolds() {
     m_queue.memset(m_numManifolds, 0, sizeof(int)).wait();
