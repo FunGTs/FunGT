@@ -16,9 +16,11 @@ void gpu::PhysicsWorld::update(float dt)
     constexpr int SUBSTEPS = 4;
     float subDt = dt / SUBSTEPS;
 
-    m_kernel->clearManiFolds();
+  
 
     for (int s = 0; s < SUBSTEPS; s++) {
+        m_kernel->warmStart();
+        m_kernel->clearManiFolds();
         m_kernel->applyForces(subDt);
         m_kernel->computeCellHashes();
         m_kernel->sortBodiesByCell();

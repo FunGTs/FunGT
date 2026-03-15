@@ -82,7 +82,8 @@ namespace gpu {
         void solveImpulsesB(float dt);               // TODO: impulse solver with angular
         void projectPositions();
         void buildMatrices();       // Compute model matrices for rendering
-
+        void refreshManifolds();
+        void warmStart();
         // Getters
         int getNumBodies() const { return m_numBodies; }
         unsigned int getModelMatrixSSBO() const { return m_modelMatrixSSBO; }

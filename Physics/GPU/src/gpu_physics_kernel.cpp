@@ -182,7 +182,7 @@ void gpu::PhysicsKernel::initUniformGrid(){
     float worldSize = 100.0f;  // Adjust based on your simulation bounds
     float maxSphereRadius = 1.0f;  // Your largest sphere
 
-    m_gridData.cellSize = 2.5f * maxSphereRadius;
+    m_gridData.cellSize = 2.0f * maxSphereRadius;
     m_gridData.invCellSize = 1.0f / m_gridData.cellSize;
 
     m_gridData.gridDimX = static_cast<int>(worldSize / m_gridData.cellSize);
@@ -511,10 +511,13 @@ void gpu::PhysicsKernel::computeCellHashes() {
             float pz = data.z_pos[i];
 
             // Compute grid cell coordinates
-            int cellX = static_cast<int>(sycl::floor(px * grid.invCellSize));
-            int cellY = static_cast<int>(sycl::floor(py * grid.invCellSize));
-            int cellZ = static_cast<int>(sycl::floor(pz * grid.invCellSize));
+            float offsetX = px + 50.0f;  // shift so minimum position maps to positive
+            float offsetY = py + 50.0f;
+            float offsetZ = pz + 50.0f;
 
+            int cellX = static_cast<int>(sycl::floor(offsetX * grid.invCellSize));
+            int cellY = static_cast<int>(sycl::floor(offsetY * grid.invCellSize));
+            int cellZ = static_cast<int>(sycl::floor(offsetZ * grid.invCellSize));
             // Clamp to grid bounds
             cellX = sycl::clamp(cellX, 0, grid.gridDimX - 1);
             cellY = sycl::clamp(cellY, 0, grid.gridDimY - 1);
@@ -682,7 +685,7 @@ void gpu::PhysicsKernel::solveImpulsesB(float dt) {
     int* numManifolds = m_numManifolds;
 
     constexpr float ERP = 0.2f;
-    constexpr int ITERATIONS = 8;
+    constexpr int ITERATIONS = 16;
 
     int manifoldCount;
     m_queue.memcpy(&manifoldCount, numManifolds, sizeof(int)).wait();
@@ -696,7 +699,7 @@ void gpu::PhysicsKernel::solveImpulsesB(float dt) {
     std::size_t bxdim = 32;
     std::size_t bydim = (m_numBodies + bxdim - 1) / bxdim;
     std::size_t bn = static_cast<std::size_t>(m_numBodies);
-
+    std::cout << "manifolds: " << manifoldCount << " / " << m_maxManifolds << std::endl;
     for (int iter = 0; iter < ITERATIONS; iter++) {
         // 1. Zero accumulators
         m_queue.memset(data.dx_vel, 0, m_numBodies * sizeof(float));
@@ -1206,6 +1209,193 @@ void gpu::PhysicsKernel::projectPositions() {
                         rx.fetch_add(cx * invMassB);
                         ry.fetch_add(cy * invMassB);
                         rz.fetch_add(cz * invMassB);
+                    }
+                }
+            });
+        }).wait();
+}
+void gpu::PhysicsKernel::refreshManifolds() {
+    int manifoldCount;
+    m_queue.memcpy(&manifoldCount, m_numManifolds, sizeof(int)).wait();
+    if (manifoldCount == 0) return;
+
+    DeviceData data = m_data;
+    GPUManifold* manifolds = m_manifolds;
+    std::size_t mn = static_cast<std::size_t>(manifoldCount);
+    std::size_t mxdim = 32;
+    std::size_t mydim = (mn + mxdim - 1) / mxdim;
+
+    m_queue.submit([data, manifolds, mn, mxdim, mydim](sycl::handler& h) {
+        h.parallel_for(sycl::range<2>(mydim, mxdim),
+            [data, manifolds, mn, mxdim](sycl::item<2> item) {
+                std::size_t i = item[0] * mxdim + item[1];
+                if (i >= mn) return;
+
+                GPUManifold* m = &manifolds[i];
+                if (m->numPoints == 0) return;
+
+                int bodyA = m->bodyA;
+                int bodyB = m->bodyB;
+
+                if (data.shapeType[bodyA] == 0 && data.shapeType[bodyB] == 0) {
+                    float ax = data.x_pos[bodyA];
+                    float ay = data.y_pos[bodyA];
+                    float az = data.z_pos[bodyA];
+                    float ar = data.radius[bodyA];
+                    float bx = data.x_pos[bodyB];
+                    float by = data.y_pos[bodyB];
+                    float bz = data.z_pos[bodyB];
+                    float br = data.radius[bodyB];
+
+                    float dx = bx - ax;
+                    float dy = by - ay;
+                    float dz = bz - az;
+                    float distSq = dx * dx + dy * dy + dz * dz;
+                    float combinedRadius = ar + br;
+
+                    if (distSq >= combinedRadius * combinedRadius || distSq < 0.0001f) {
+                        m->numPoints = 0;
+                        return;
+                    }
+
+                    float dist = sycl::sqrt(distSq);
+                    float pen = combinedRadius - dist;
+                    float invDist = 1.0f / dist;
+                    float nx = dx * invDist;
+                    float ny = dy * invDist;
+                    float nz = dz * invDist;
+
+                    for (int p = 0; p < m->numPoints; p++) {
+                        m->points[p].normalX = nx;
+                        m->points[p].normalY = ny;
+                        m->points[p].normalZ = nz;
+                        m->points[p].penetration = pen;
+                        m->points[p].worldPointAx = ax + nx * ar;
+                        m->points[p].worldPointAy = ay + ny * ar;
+                        m->points[p].worldPointAz = az + nz * ar;
+                        m->points[p].worldPointBx = bx - nx * br;
+                        m->points[p].worldPointBy = by - ny * br;
+                        m->points[p].worldPointBz = bz - nz * br;
+                        m->points[p].localPointAx = nx * ar;
+                        m->points[p].localPointAy = ny * ar;
+                        m->points[p].localPointAz = nz * ar;
+                        m->points[p].localPointBx = -nx * br;
+                        m->points[p].localPointBy = -ny * br;
+                        m->points[p].localPointBz = -nz * br;
+                    }
+                }
+
+                if (data.shapeType[bodyA] == 1 && data.shapeType[bodyB] == 0) {
+                    float sx = data.x_pos[bodyB];
+                    float sy = data.y_pos[bodyB];
+                    float sz = data.z_pos[bodyB];
+                    float sr = data.radius[bodyB];
+                    float bx = data.x_pos[bodyA];
+                    float by = data.y_pos[bodyA];
+                    float bz = data.z_pos[bodyA];
+                    float hx = data.halfExtentX[bodyA];
+                    float hy = data.halfExtentY[bodyA];
+                    float hz = data.halfExtentZ[bodyA];
+
+                    float relX = sx - bx;
+                    float relY = sy - by;
+                    float relZ = sz - bz;
+
+                    float closestX = sycl::fmax(-hx, sycl::fmin(hx, relX));
+                    float closestY = sycl::fmax(-hy, sycl::fmin(hy, relY));
+                    float closestZ = sycl::fmax(-hz, sycl::fmin(hz, relZ));
+
+                    float wcx = bx + closestX;
+                    float wcy = by + closestY;
+                    float wcz = bz + closestZ;
+
+                    float dx = sx - wcx;
+                    float dy = sy - wcy;
+                    float dz = sz - wcz;
+                    float distSq = dx * dx + dy * dy + dz * dz;
+
+                    if (distSq >= sr * sr || distSq < 0.0001f) {
+                        m->numPoints = 0;
+                        return;
+                    }
+
+                    float dist = sycl::sqrt(distSq);
+                    float pen = sr - dist;
+                    float invDist = 1.0f / dist;
+                    float nx = dx * invDist;
+                    float ny = dy * invDist;
+                    float nz = dz * invDist;
+
+                    for (int p = 0; p < m->numPoints; p++) {
+                        m->points[p].normalX = nx;
+                        m->points[p].normalY = ny;
+                        m->points[p].normalZ = nz;
+                        m->points[p].penetration = pen;
+                        m->points[p].worldPointAx = sx - nx * (sr - pen);
+                        m->points[p].worldPointAy = sy - ny * (sr - pen);
+                        m->points[p].worldPointAz = sz - nz * (sr - pen);
+                        m->points[p].worldPointBx = wcx;
+                        m->points[p].worldPointBy = wcy;
+                        m->points[p].worldPointBz = wcz;
+                        m->points[p].localPointAx = -nx * (sr - pen);
+                        m->points[p].localPointAy = -ny * (sr - pen);
+                        m->points[p].localPointAz = -nz * (sr - pen);
+                        m->points[p].localPointBx = wcx - bx;
+                        m->points[p].localPointBy = wcy - by;
+                        m->points[p].localPointBz = wcz - bz;
+                    }
+                }
+            });
+        }).wait();
+}
+void gpu::PhysicsKernel::warmStart() {
+    int manifoldCount;
+    m_queue.memcpy(&manifoldCount, m_numManifolds, sizeof(int)).wait();
+    if (manifoldCount == 0) return;
+
+    DeviceData data = m_data;
+    GPUManifold* manifolds = m_manifolds;
+    std::size_t mn = static_cast<std::size_t>(manifoldCount);
+    std::size_t mxdim = 32;
+    std::size_t mydim = (mn + mxdim - 1) / mxdim;
+
+    m_queue.submit([data, manifolds, mn, mxdim, mydim](sycl::handler& h) {
+        h.parallel_for(sycl::range<2>(mydim, mxdim),
+            [data, manifolds, mn, mxdim](sycl::item<2> item) {
+                std::size_t i = item[0] * mxdim + item[1];
+                if (i >= mn) return;
+
+                GPUManifold* m = &manifolds[i];
+                if (m->numPoints == 0) return;
+
+                int bodyA = m->bodyA;
+                int bodyB = m->bodyB;
+                float invMassA = data.invMass[bodyA];
+                float invMassB = data.invMass[bodyB];
+
+                for (int p = 0; p < m->numPoints; p++) {
+                    float cachedImpulse = m->points[p].normalImpulse * 0.5f;
+                    m->points[p].normalImpulse = 0.0f;
+                    if (cachedImpulse <= 0.0f) continue;
+
+                    float nx = m->points[p].normalX;
+                    float ny = m->points[p].normalY;
+                    float nz = m->points[p].normalZ;
+
+                    float ix = cachedImpulse * nx;
+                    float iy = cachedImpulse * ny;
+                    float iz = cachedImpulse * nz;
+
+                    if (data.bodyMode[bodyA] == 1) {
+                        atomicAdd(&data.x_vel[bodyA], -ix * invMassA);
+                        atomicAdd(&data.y_vel[bodyA], -iy * invMassA);
+                        atomicAdd(&data.z_vel[bodyA], -iz * invMassA);
+                    }
+
+                    if (data.bodyMode[bodyB] == 1) {
+                        atomicAdd(&data.x_vel[bodyB], ix * invMassB);
+                        atomicAdd(&data.y_vel[bodyB], iy * invMassB);
+                        atomicAdd(&data.z_vel[bodyB], iz * invMassB);
                     }
                 }
             });
