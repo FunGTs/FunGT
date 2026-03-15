@@ -48,18 +48,31 @@ int main() {
     //     float z = -15.f;
     //     gpuCollision->addSphere(x, y, z, 1.0f, 1.0f);
     // }
-    int gridSize = 10;  // 10×10×10 = 1000 balls
-    for (int i = 0; i < 1000; i++) {
-        int ix = i % gridSize;
-        int iy = (i / gridSize) % gridSize;
-        int iz = i / (gridSize * gridSize);
+    // int gridSize = 10;  // 10×10×10 = 1000 balls
+    // for (int i = 0; i < 1000; i++) {
+    //     int ix = i % gridSize;
+    //     int iy = (i / gridSize) % gridSize;
+    //     int iz = i / (gridSize * gridSize);
 
-        float x = ix * 3.0f - 15.0f;  // -15 to +15
-        float y = 5.0f + iy * 3.0f;   // 5 to 35 (not 2003!)
-        float z = -15.0f + iz * 3.0f; // -15 to +15
+    //     float x = ix * 3.0f - 15.0f;  // -15 to +15
+    //     float y = 5.0f + iy * 3.0f;   // 5 to 35 (not 2003!)
+    //     float z = -15.0f + iz * 3.0f; // -15 to +15
 
-        gpuCollision->addSphere(x, y, z, 1.0f, 1.0f);
+    //     gpuCollision->addSphere(x, y, z, 1.0f, 1.0f);
+    // }
+    // Left row: 10 balls moving right
+   // Left row: 10 balls moving right
+    for (int i = 0; i < 10; i++) {
+        float z = -15.0f + i * 3.0f;
+        gpuCollision->addSphere(-10.0f, 1.5f, z, 1.0f, 1.0f, 5.0f, 0.0f, 0.0f);
     }
+
+    // Right row: 10 balls moving left
+    for (int i = 0; i < 10; i++) {
+        float z = -15.0f + i * 3.0f;
+        gpuCollision->addSphere(10.0f, 1.5f, z, 1.0f, 1.0f, -5.0f, 0.0f, 0.0f);
+    }
+
     gpuCollision->endGroup();
     gpuCollision->sendToDevice(); //Very important! Must be called after adding bodies and before rendering!
     // // === DEBUG START ===

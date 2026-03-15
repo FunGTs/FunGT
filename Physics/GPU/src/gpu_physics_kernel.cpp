@@ -5,13 +5,6 @@
 
 gpu::PhysicsKernel::PhysicsKernel()
     : m_numBodies(0), m_capacity(0),
-    m_data{nullptr, nullptr, nullptr,
-           nullptr, nullptr, nullptr,
-           nullptr, nullptr, nullptr,
-           nullptr, nullptr, nullptr,
-           nullptr, nullptr, nullptr,
-           nullptr, nullptr, nullptr,
-           nullptr, nullptr, nullptr, nullptr},
     m_modelMatrixSSBO(0) {
    
 }
@@ -69,8 +62,8 @@ void gpu::PhysicsKernel::initMemoryAllocations(int maxBodies)
         << std::endl;
 
     std::cout << "Allocating GPU memory for " << maxBodies << " bodies..." << std::endl;
-    m_maxManifolds = maxBodies * 4;  // worst case: each body touches 4 others
-    m_hashTableSize = m_maxManifolds * 2;  // keep hash table sparse
+    m_maxManifolds = maxBodies * 8;  // worst case: each body touches 4 others
+    m_hashTableSize = m_maxManifolds * 4;  // keep hash table sparse
 
     m_manifolds = sycl::malloc_device<GPUManifold>(m_maxManifolds, m_queue);
     m_numManifolds = sycl::malloc_device<int>(1, m_queue);
@@ -117,6 +110,13 @@ void gpu::PhysicsKernel::initMemoryAllocations(int maxBodies)
 
     m_data.restitution = sycl::malloc_device<float>(maxBodies, m_queue);
     m_data.friction = sycl::malloc_device<float>(maxBodies, m_queue);
+
+    m_data.dx_vel = sycl::malloc_device<float>(maxBodies, m_queue);
+    m_data.dy_vel = sycl::malloc_device<float>(maxBodies, m_queue);
+    m_data.dz_vel = sycl::malloc_device<float>(maxBodies, m_queue);
+    m_data.dx_angVel = sycl::malloc_device<float>(maxBodies, m_queue);
+    m_data.dy_angVel = sycl::malloc_device<float>(maxBodies, m_queue);
+    m_data.dz_angVel = sycl::malloc_device<float>(maxBodies, m_queue);
     // Initialize all to zero
     int pairToManifold = -1;
     m_queue.memset(m_numManifolds, 0, sizeof(int)).wait();
@@ -182,7 +182,7 @@ void gpu::PhysicsKernel::initUniformGrid(){
     float worldSize = 100.0f;  // Adjust based on your simulation bounds
     float maxSphereRadius = 1.0f;  // Your largest sphere
 
-    m_gridData.cellSize = 2.0f * maxSphereRadius;
+    m_gridData.cellSize = 2.5f * maxSphereRadius;
     m_gridData.invCellSize = 1.0f / m_gridData.cellSize;
 
     m_gridData.gridDimX = static_cast<int>(worldSize / m_gridData.cellSize);
@@ -233,6 +233,12 @@ void gpu::PhysicsKernel::cleanup() {
     if (m_data.orientY) sycl::free(m_data.orientY, m_queue);
     if (m_data.orientZ) sycl::free(m_data.orientZ, m_queue);
     if (m_data.invMass) sycl::free(m_data.invMass, m_queue);
+    if (m_data.dx_vel) sycl::free(m_data.dx_vel, m_queue);
+    if (m_data.dy_vel) sycl::free(m_data.dy_vel, m_queue);
+    if (m_data.dz_vel) sycl::free(m_data.dz_vel, m_queue);
+    if (m_data.dx_angVel) sycl::free(m_data.dx_angVel, m_queue);
+    if (m_data.dy_angVel) sycl::free(m_data.dy_angVel, m_queue);
+    if (m_data.dz_angVel) sycl::free(m_data.dz_angVel, m_queue);
     if (m_data.invInertiaTensor) sycl::free(m_data.invInertiaTensor, m_queue);
     // NEW: Free grid memory
     if (m_gridInitialized) {
@@ -388,81 +394,7 @@ void gpu::PhysicsKernel::debugGrid()
     }
     std::cout << "================================\n\n";
 }
-
-// int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass, MODE mode) {
-//     if (m_numBodies >= m_capacity) {
-//         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
-//         return -1;
-//     }
-
-//     int id = m_numBodies++;
-    
-//     // Upload position
-//     m_queue.memcpy(&m_data.x_pos[id], &x, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_pos[id], &y, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_pos[id], &z, sizeof(float)).wait();
-
-//     // Initialize velocities/forces to zero
-//     float zero = 0.0f;
-//     // Random lateral velocity for natural spin on impact
-//     float lateralVelX = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
-//     float lateralVelZ = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;  // -2 to +2
-//     m_queue.memcpy(&m_data.x_vel[id], &lateralVelX, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_vel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_vel[id], &lateralVelZ, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.x_force[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_force[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_force[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.x_angVel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_angVel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_angVel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.x_torque[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_torque[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_torque[id], &zero, sizeof(float)).wait();
-
-//     // Initialize orientation to identity
-//     float one = 1.0f;
-//     m_queue.memcpy(&m_data.orientW[id], &one, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.orientX[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.orientY[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.orientZ[id], &zero, sizeof(float)).wait();
-
-//     // Set inverse mass
-//     float invMassVal = (mass > 0.0f) ? (1.0f / mass) : 0.0f;
-//     m_queue.memcpy(&m_data.invMass[id], &invMassVal, sizeof(float)).wait();
-
-//     // Calculate inverse inertia tensor for sphere: I = (2/5) * m * r²
-//     float invInertia = (mass > 0.0f) ? (2.5f / (mass * radius * radius)) : 0.0f;
-
-//     // Sphere inertia is diagonal
-//     float inertiaTensor[9] = {
-//         invInertia, 0.0f, 0.0f,
-//         0.0f, invInertia, 0.0f,
-//         0.0f, 0.0f, invInertia
-//     };
-
-//     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], inertiaTensor, 9 * sizeof(float)).wait();
-
-//     // Set shape type and geometry
-//     int shapeType = 0;  // sphere
-//     int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;
-//     m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
-//     m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();
-//     m_queue.memcpy(&m_data.radius[id], &radius, sizeof(float)).wait();
-
-//     float restitution = 0.8;
-//     float friction    = 0.3;
-//     m_queue.memcpy(&m_data.restitution[id], &restitution,sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
-//     // === DEBUG ===
-//     float readback_invMass;
-//     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
-//     std::cout << "addSphere: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
-//     // === END DEBUG ===
-
-//     return id;
-// }
-int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass, MODE mode) {
+int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float mass, float vx, float vy, float vz, MODE mode) {
     if (m_numBodies >= m_capacity) {
         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
         return -1;
@@ -476,11 +408,10 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
     m_staging.z_pos[id] = z;
 
     // Lateral velocity for natural spin on impact
-    float lateralVelX = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;
-    float lateralVelZ = ((rand() % 100) / 100.0f - 0.5f) * 4.0f;
-    m_staging.x_vel[id] = lateralVelX;
-    m_staging.y_vel[id] = 0.0f;
-    m_staging.z_vel[id] = lateralVelZ;
+
+    m_staging.x_vel[id] = vx;
+    m_staging.y_vel[id] = vy;
+    m_staging.z_vel[id] = vz;
 
     // Forces, angular velocity, torque all default to 0.0f from resize()
 
@@ -509,77 +440,6 @@ int gpu::PhysicsKernel::addSphere(float x, float y, float z, float radius, float
 
     return id;
 }
-// int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode) {
-//     if (m_numBodies >= m_capacity) {
-//         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
-//         return -1;
-//     }
-
-//     int id = m_numBodies++;
-
-//     // Same as sphere but different inertia
-//     m_queue.memcpy(&m_data.x_pos[id], &x, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_pos[id], &y, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_pos[id], &z, sizeof(float)).wait();
-
-//     float zero = 0.0f;
-//     m_queue.memcpy(&m_data.x_vel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_vel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_vel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.x_force[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_force[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_force[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.x_angVel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_angVel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_angVel[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.x_torque[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.y_torque[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.z_torque[id], &zero, sizeof(float)).wait();
-
-//     float one = 1.0f;
-//     m_queue.memcpy(&m_data.orientW[id], &one, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.orientX[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.orientY[id], &zero, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.orientZ[id], &zero, sizeof(float)).wait();
-
-//     float invMassVal = (mass > 0.0f) ? (1.0f / mass) : 0.0f;
-//     m_queue.memcpy(&m_data.invMass[id], &invMassVal, sizeof(float)).wait();
-
-//     // Box inertia tensor: I = (1/12) * m * (h² + d², w² + d², w² + h²)
-//     float invInertia[9] = { 0 };
-//     if (mass > 0.0f) {
-//         float w2 = width * width;
-//         float h2 = height * height;
-//         float d2 = depth * depth;
-//         invInertia[0] = 12.0f / (mass * (h2 + d2));  // Ixx
-//         invInertia[4] = 12.0f / (mass * (w2 + d2));  // Iyy
-//         invInertia[8] = 12.0f / (mass * (w2 + h2));  // Izz
-//     }
-
-//     m_queue.memcpy(&m_data.invInertiaTensor[id * 9], invInertia, 9 * sizeof(float)).wait();
-
-//     // Set shape type and geometry
-//     int shapeType = 1;  // box
-//     int bodyModeVal = (mode == MODE::DYNAMIC) ? 1 : 0;  // ADD THIS LINE
-//     m_queue.memcpy(&m_data.bodyMode[id], &bodyModeVal, sizeof(int)).wait();  // ADD THIS LINE
-//     m_queue.memcpy(&m_data.shapeType[id], &shapeType, sizeof(int)).wait();
-//     float halfX = width * 0.5f;
-//     float halfY = height * 0.5f;
-//     float halfZ = depth * 0.5f;
-//     m_queue.memcpy(&m_data.halfExtentX[id], &halfX, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.halfExtentY[id], &halfY, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.halfExtentZ[id], &halfZ, sizeof(float)).wait();
-
-//     float readback_invMass;
-//     m_queue.memcpy(&readback_invMass, &m_data.invMass[id], sizeof(float)).wait();
-
-//     float restitution = 0.5;
-//     float friction = 0.3;
-//     m_queue.memcpy(&m_data.restitution[id], &restitution, sizeof(float)).wait();
-//     m_queue.memcpy(&m_data.friction[id], &friction, sizeof(float)).wait();
-//     std::cout << "addBox: id=" << id << ", mass=" << mass << ", invMass=" << readback_invMass << std::endl;
-//     return id;
-// }
 int gpu::PhysicsKernel::addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode) {
     if (m_numBodies >= m_capacity) {
         std::cerr << "ERROR: Physics kernel is full!" << std::endl;
@@ -797,6 +657,12 @@ void gpu::PhysicsKernel::integrate(float dt) {
                         data.orientY[i] = ny * invLen;
                         data.orientZ[i] = nz * invLen;
                     }
+                    // data.x_vel[i] *= 0.98f;
+                    // data.y_vel[i] *= 0.98f;
+                    // data.z_vel[i] *= 0.98f;
+                    // data.x_angVel[i] *= 0.95f;
+                    // data.y_angVel[i] *= 0.95f;
+                    // data.z_angVel[i] *= 0.95f;
                 }
             });
         });
@@ -810,8 +676,73 @@ void gpu::PhysicsKernel::broadPhase() {
 void gpu::PhysicsKernel::narrowPhase() {
     std::cout << "narrowPhase() - TODO" << std::endl;
 }
+void gpu::PhysicsKernel::solveImpulsesB(float dt) {
+    DeviceData data = m_data;
+    GPUManifold* manifolds = m_manifolds;
+    int* numManifolds = m_numManifolds;
 
-void gpu::PhysicsKernel::solveImpulses(float dt) {
+    constexpr float ERP = 0.2f;
+    constexpr int ITERATIONS = 8;
+
+    int manifoldCount;
+    m_queue.memcpy(&manifoldCount, numManifolds, sizeof(int)).wait();
+
+    if (manifoldCount == 0) return;
+
+    std::size_t mxdim = 32;
+    std::size_t mydim = (manifoldCount + mxdim - 1) / mxdim;
+    std::size_t mn = static_cast<std::size_t>(manifoldCount);
+
+    std::size_t bxdim = 32;
+    std::size_t bydim = (m_numBodies + bxdim - 1) / bxdim;
+    std::size_t bn = static_cast<std::size_t>(m_numBodies);
+
+    for (int iter = 0; iter < ITERATIONS; iter++) {
+        // 1. Zero accumulators
+        m_queue.memset(data.dx_vel, 0, m_numBodies * sizeof(float));
+        m_queue.memset(data.dy_vel, 0, m_numBodies * sizeof(float));
+        m_queue.memset(data.dz_vel, 0, m_numBodies * sizeof(float));
+        m_queue.memset(data.dx_angVel, 0, m_numBodies * sizeof(float));
+        m_queue.memset(data.dy_angVel, 0, m_numBodies * sizeof(float));
+        m_queue.memset(data.dz_angVel, 0, m_numBodies * sizeof(float));
+        m_queue.wait();
+
+        // 2. Solve: read from velocities, write to accumulators
+        m_queue.submit([data, manifolds, mn, mxdim, mydim, dt, ERP](sycl::handler& h) {
+            h.parallel_for(sycl::range<2>(mydim, mxdim),
+                [data, manifolds, mn, mxdim, dt, ERP](sycl::item<2> item) {
+                    std::size_t i = item[0] * mxdim + item[1];
+                    if (i >= mn) return;
+
+                    GPUManifold* m = &manifolds[i];
+                    int bodyA = m->bodyA;
+                    int bodyB = m->bodyB;
+
+                    for (int p = 0; p < m->numPoints; p++) {
+                        solveContactImpulseJacobi(&m->points[p], data, bodyA, bodyB, dt, ERP);
+                    }
+                });
+            }).wait();
+
+        // 3. Apply accumulators to actual velocities
+        m_queue.submit([data, bn, bxdim, bydim](sycl::handler& h) {
+            h.parallel_for(sycl::range<2>(bydim, bxdim),
+                [data, bn, bxdim](sycl::item<2> item) {
+                    std::size_t i = item[0] * bxdim + item[1];
+                    if (i >= bn) return;
+                    if (data.bodyMode[i] == 0) return;
+
+                    data.x_vel[i] += data.dx_vel[i];
+                    data.y_vel[i] += data.dy_vel[i];
+                    data.z_vel[i] += data.dz_vel[i];
+                    data.x_angVel[i] += data.dx_angVel[i];
+                    data.y_angVel[i] += data.dy_angVel[i];
+                    data.z_angVel[i] += data.dz_angVel[i];
+                });
+            }).wait();
+    }
+}
+void gpu::PhysicsKernel::solveImpulsesA(float dt) {
     DeviceData data = m_data;
     GPUManifold* manifolds = m_manifolds;
     int* numManifolds = m_numManifolds;
@@ -864,18 +795,6 @@ void gpu::PhysicsKernel::buildMatrices() {
     std::size_t n = static_cast<std::size_t>(m_numBodies);
     std::size_t xdim = static_cast<std::size_t>(std::ceil(std::sqrt(n)));
     std::size_t ydim = xdim;
-
-    // // Get OpenCL context and queue for interop
-    // cl_context clcontext = flib::sycl_handler::get_clContext();
-    // cl_command_queue clqueue = sycl::get_native<sycl::backend::opencl>(m_queue);
-
-    // // Create OpenCL buffer from OpenGL SSBO
-    // cl_mem clbuffer = clCreateFromGLBuffer(clcontext, CL_MEM_WRITE_ONLY,
-    //     m_modelMatrixSSBO, NULL);
-    // if (clbuffer == NULL) {
-    //     std::cerr << "Failed to create CL buffer from GL SSBO!" << std::endl;
-    //     return;
-    // }
 
     // Finish OpenGL operations
     glFinish();
@@ -1020,19 +939,6 @@ void gpu::PhysicsKernel::detectStaticVsDynamic() {
     // BEFORE kernel - print body info
    //std::cout << "=== detectStaticVsDynamic ===" << std::endl;
    // std::cout << "numBodies: " << m_numBodies << std::endl;
-
-    // Check body modes on CPU
-    int* hostBodyMode = new int[m_numBodies];
-    int* hostShapeType = new int[m_numBodies];
-    m_queue.memcpy(hostBodyMode, m_data.bodyMode, m_numBodies * sizeof(int)).wait();
-    m_queue.memcpy(hostShapeType, m_data.shapeType, m_numBodies * sizeof(int)).wait();
-
-    // for (int i = 0; i < m_numBodies; i++) {
-    //     std::cout << "Body " << i << ": mode=" << hostBodyMode[i]
-    //         << " shape=" << hostShapeType[i] << std::endl;
-    // }
-    delete[] hostBodyMode;
-    delete[] hostShapeType;
     m_queue.submit([data, manifolds, pairToManifold, numManifolds, hashTableSize, maxManifolds, n, xdim,ydim](sycl::handler& h) {
         h.parallel_for(sycl::range<2>(ydim, xdim), [data, manifolds, pairToManifold, numManifolds, hashTableSize, maxManifolds, n, xdim](sycl::item<2> item) {
             std::size_t i = item[0] * xdim + item[1];
@@ -1230,5 +1136,78 @@ void gpu::PhysicsKernel::detectDynamicVsDynamic()
             }
             });
         }).wait();
+}
+void gpu::PhysicsKernel::projectPositions() {
+    int manifoldCount;
+    m_queue.memcpy(&manifoldCount, m_numManifolds, sizeof(int)).wait();
+    if (manifoldCount == 0) return;
 
+    DeviceData data = m_data;
+    GPUManifold* manifolds = m_manifolds;
+    std::size_t mn = static_cast<std::size_t>(manifoldCount);
+    std::size_t mxdim = 32;
+    std::size_t mydim = (mn + mxdim - 1) / mxdim;
+
+     float SLOP = 0.01f;
+     float CORRECTION_PERCENT = 0.4f;
+
+    m_queue.submit([data, manifolds, mn, mxdim, mydim](sycl::handler& h) {
+        h.parallel_for(sycl::range<2>(mydim, mxdim),
+            [data, manifolds, mn, mxdim](sycl::item<2> item) {
+                std::size_t i = item[0] * mxdim + item[1];
+                if (i >= mn) return;
+
+                GPUManifold* m = &manifolds[i];
+                int bodyA = m->bodyA;
+                int bodyB = m->bodyB;
+
+                float invMassA = data.invMass[bodyA];
+                float invMassB = data.invMass[bodyB];
+                float totalInvMass = invMassA + invMassB;
+
+                if (totalInvMass <= 0.0001f) return;
+
+                for (int p = 0; p < m->numPoints; p++) {
+                    GPUContactPoint* cp = &m->points[p];
+                    float pen = cp->penetration - 0.01f;
+                    if (pen <= 0.0f) continue;
+
+                    float correctionMag = pen * 0.8f / totalInvMass;
+
+                    float cx = correctionMag * cp->normalX;
+                    float cy = correctionMag * cp->normalY;
+                    float cz = correctionMag * cp->normalZ;
+
+                    if (data.bodyMode[bodyA] == 1) {
+                        sycl::atomic_ref<float, sycl::memory_order::relaxed,
+                            sycl::memory_scope::device,
+                            sycl::access::address_space::global_space> rx(data.x_pos[bodyA]);
+                        sycl::atomic_ref<float, sycl::memory_order::relaxed,
+                            sycl::memory_scope::device,
+                            sycl::access::address_space::global_space> ry(data.y_pos[bodyA]);
+                        sycl::atomic_ref<float, sycl::memory_order::relaxed,
+                            sycl::memory_scope::device,
+                            sycl::access::address_space::global_space> rz(data.z_pos[bodyA]);
+                        rx.fetch_add(-cx * invMassA);
+                        ry.fetch_add(-cy * invMassA);
+                        rz.fetch_add(-cz * invMassA);
+                    }
+
+                    if (data.bodyMode[bodyB] == 1) {
+                        sycl::atomic_ref<float, sycl::memory_order::relaxed,
+                            sycl::memory_scope::device,
+                            sycl::access::address_space::global_space> rx(data.x_pos[bodyB]);
+                        sycl::atomic_ref<float, sycl::memory_order::relaxed,
+                            sycl::memory_scope::device,
+                            sycl::access::address_space::global_space> ry(data.y_pos[bodyB]);
+                        sycl::atomic_ref<float, sycl::memory_order::relaxed,
+                            sycl::memory_scope::device,
+                            sycl::access::address_space::global_space> rz(data.z_pos[bodyB]);
+                        rx.fetch_add(cx * invMassB);
+                        ry.fetch_add(cy * invMassB);
+                        rz.fetch_add(cz * invMassB);
+                    }
+                }
+            });
+        }).wait();
 }
