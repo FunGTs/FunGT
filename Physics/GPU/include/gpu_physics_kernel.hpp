@@ -3,6 +3,7 @@
 
 #include "gpu_includes.hpp"
 #include "gpu_device_data.hpp"
+#include "gpu_host_data.hpp"
 #include "gpu_memory_utils.hpp"
 #include "gpu_manifold_contacts.hpp"
 #include "gpu_manifold_utils.hpp"
@@ -25,6 +26,9 @@ namespace gpu {
 
         // Rendering (SYCL-OpenGL interop)
         unsigned int m_modelMatrixSSBO;
+        cl_mem m_clInteropBuffer = nullptr;
+        cl_command_queue m_clQueue = nullptr;
+        bool m_interopInitialized = false;
         //Uniform Grid
         UniformGridData m_gridData;
         bool m_gridInitialized;
@@ -44,6 +48,10 @@ namespace gpu {
         int m_capacity;
         float m_worldSize = 200.f;
         float m_cellSize = 5.0f;
+
+
+        HostData m_staging;
+        bool m_flushed = false;
         void initMemoryAllocations(int maxBodies);
     public:
         PhysicsKernel();
@@ -54,12 +62,14 @@ namespace gpu {
        
         void initUniformGrid();
         void cleanup();
+        void sendToDevice();
         //Sorting:
         void sortBodiesByCell();
         void findCellBoundaries();
         void debugGrid();
         // Body management
-        int addSphere(float x, float y, float z, float radius, float mass, MODE mode); //Mode dynamic by default
+        int addSphere(float x, float y, float z, float radius, float mass,
+                      float vx, float vy , float vz, MODE mode); //Mode dynamic by default
         int addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode);
 
         // Physics pipeline (no parameters needed - uses member data)
@@ -68,9 +78,12 @@ namespace gpu {
         void integrate(float dt);
         void broadPhase();          // TODO: spatial hashing
         void narrowPhase();         // TODO: collision detection
-        void solveImpulses(float dt);               // TODO: impulse solver
+        void solveImpulsesA(float dt);               // TODO: impulse solver
+        void solveImpulsesB(float dt);               // TODO: impulse solver with angular
+        void projectPositions();
         void buildMatrices();       // Compute model matrices for rendering
-
+        void refreshManifolds();
+        void warmStart();
         // Getters
         int getNumBodies() const { return m_numBodies; }
         unsigned int getModelMatrixSSBO() const { return m_modelMatrixSSBO; }
