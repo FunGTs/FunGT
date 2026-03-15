@@ -68,7 +68,8 @@ namespace gpu {
         void findCellBoundaries();
         void debugGrid();
         // Body management
-        int addSphere(float x, float y, float z, float radius, float mass, MODE mode); //Mode dynamic by default
+        int addSphere(float x, float y, float z, float radius, float mass,
+                      float vx, float vy , float vz, MODE mode); //Mode dynamic by default
         int addBox(float x, float y, float z, float width, float height, float depth, float mass, MODE mode);
 
         // Physics pipeline (no parameters needed - uses member data)
@@ -77,7 +78,9 @@ namespace gpu {
         void integrate(float dt);
         void broadPhase();          // TODO: spatial hashing
         void narrowPhase();         // TODO: collision detection
-        void solveImpulses(float dt);               // TODO: impulse solver
+        void solveImpulsesA(float dt);               // TODO: impulse solver
+        void solveImpulsesB(float dt);               // TODO: impulse solver with angular
+        void projectPositions();
         void buildMatrices();       // Compute model matrices for rendering
 
         // Getters

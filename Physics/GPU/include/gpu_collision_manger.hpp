@@ -46,11 +46,11 @@ namespace gpu {
         }
 
         // Add sphere  //Mode dynamic by default
-        int addSphere(float x, float y, float z, float radius, float mass, MODE mode = MODE::DYNAMIC) {
+        int addSphere(float x, float y, float z, float radius, float mass,float vx = 0.0,float vy = 0.0, float vz = 0.0, MODE mode = MODE::DYNAMIC) {
             if (!m_isGroupOpen) {
                 throw std::runtime_error("CollisionManager::addSphere() - No group open! Call beginGroup() first.");
             }
-            return m_kernel->addSphere(x, y, z, radius, mass, mode);
+            return m_kernel->addSphere(x, y, z, radius, mass, vx, vy,vz,mode);
         }
 
         // Add box  //Mode dynamic by default

@@ -6,35 +6,42 @@ namespace gpu
   
     struct DeviceData {
             // Shape data
-        int*   shapeType;     // 0 = sphere, 1 = box
-        int*   bodyMode;      // 0 = STATIC, 1 = DYNAMIC
-        float* radius;        // for spheres
-        float* halfExtentX;   // for boxes
-        float* halfExtentY;
-        float* halfExtentZ;
-        float* x_pos;
-        float* y_pos;
-        float* z_pos;
-        float* x_vel;
-        float* y_vel;
-        float* z_vel;
-        float* x_force;
-        float* y_force;
-        float* z_force;
-        float* x_angVel;
-        float* y_angVel;
-        float* z_angVel;
-        float* x_torque;
-        float* y_torque;
-        float* z_torque;
-        float* orientW;
-        float* orientX;
-        float* orientY;
-        float* orientZ;
-        float* invMass;
-        float* invInertiaTensor;
-        float* restitution;       // 
-        float* friction;          // 
+        int*   shapeType = nullptr;     // 0 = sphere, 1 = box
+        int*   bodyMode = nullptr;      // 0 = STATIC, 1 = DYNAMIC
+        float* radius = nullptr;        // for spheres
+        float* halfExtentX = nullptr;   // for boxes
+        float* halfExtentY = nullptr;
+        float* halfExtentZ = nullptr;
+        float* x_pos = nullptr;
+        float* y_pos = nullptr;
+        float* z_pos = nullptr;
+        float* x_vel = nullptr;
+        float* y_vel = nullptr;
+        float* z_vel = nullptr;
+        float* x_force = nullptr;
+        float* y_force = nullptr;
+        float* z_force = nullptr;
+        float* x_angVel = nullptr;
+        float* y_angVel = nullptr;
+        float* z_angVel = nullptr;
+        float* x_torque = nullptr;
+        float* y_torque = nullptr;
+        float* z_torque = nullptr;
+        float* orientW = nullptr;
+        float* orientX = nullptr;
+        float* orientY = nullptr;
+        float* orientZ = nullptr;
+        float* invMass = nullptr;
+        float* invInertiaTensor = nullptr;
+        float* restitution = nullptr;       //
+        float* friction = nullptr;          //
+        // Jacobi solver accumulators
+        float* dx_vel = nullptr;
+        float* dy_vel = nullptr;
+        float* dz_vel = nullptr;
+        float* dx_angVel = nullptr;
+        float* dy_angVel = nullptr;
+        float* dz_angVel = nullptr;
     };
     
 } // namespace gpu
