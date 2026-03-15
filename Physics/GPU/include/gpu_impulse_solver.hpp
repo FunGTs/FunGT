@@ -295,6 +295,12 @@ namespace gpu {
             data.z_angVel[bodyB] += dAngVelBz;
         }
     }
+    inline void atomicAdd(float* addr, float val) {
+        sycl::atomic_ref<float, sycl::memory_order::relaxed,
+            sycl::memory_scope::device,
+            sycl::access::address_space::global_space> ref(*addr);
+        ref.fetch_add(val);
+    }
     inline void solveContactImpulse(
         GPUContactPoint* cp,
         DeviceData data,
@@ -370,7 +376,7 @@ namespace gpu {
         float relVelNormal = relVelx * nx + relVely * ny + relVelz * nz;
 
         // Skip if separating
-        if (relVelNormal > 0.0f) {
+        if (relVelNormal > 0.0f && cp->penetration < 0.02f) {
             return;
         }
 
@@ -569,6 +575,282 @@ namespace gpu {
             data.x_angVel[bodyB] += invIB[0] * torqueBx + invIB[1] * torqueBy + invIB[2] * torqueBz;
             data.y_angVel[bodyB] += invIB[3] * torqueBx + invIB[4] * torqueBy + invIB[5] * torqueBz;
             data.z_angVel[bodyB] += invIB[6] * torqueBx + invIB[7] * torqueBy + invIB[8] * torqueBz;
+        }
+    }
+    inline void solveContactImpulseJacobi(
+        GPUContactPoint* cp,
+        DeviceData data,
+        int bodyA,
+        int bodyB,
+        float dt,
+        float ERP)
+    {
+        if (cp->penetration <= 0.001f) {
+            return;
+        }
+
+        // Get contact normal
+        float nx = cp->normalX;
+        float ny = cp->normalY;
+        float nz = cp->normalZ;
+
+        // Get positions
+        float posAx = data.x_pos[bodyA];
+        float posAy = data.y_pos[bodyA];
+        float posAz = data.z_pos[bodyA];
+        float posBx = data.x_pos[bodyB];
+        float posBy = data.y_pos[bodyB];
+        float posBz = data.z_pos[bodyB];
+
+        // r vectors: from body center to contact point
+        float rAx = cp->worldPointAx - posAx;
+        float rAy = cp->worldPointAy - posAy;
+        float rAz = cp->worldPointAz - posAz;
+        float rBx = cp->worldPointBx - posBx;
+        float rBy = cp->worldPointBy - posBy;
+        float rBz = cp->worldPointBz - posBz;
+
+        // Read from CURRENT velocities (not deltas)
+        float velAx = data.x_vel[bodyA];
+        float velAy = data.y_vel[bodyA];
+        float velAz = data.z_vel[bodyA];
+        float velBx = data.x_vel[bodyB];
+        float velBy = data.y_vel[bodyB];
+        float velBz = data.z_vel[bodyB];
+
+        // Read from CURRENT angular velocities (not deltas)
+        float angVelAx = data.x_angVel[bodyA];
+        float angVelAy = data.y_angVel[bodyA];
+        float angVelAz = data.z_angVel[bodyA];
+        float angVelBx = data.x_angVel[bodyB];
+        float angVelBy = data.y_angVel[bodyB];
+        float angVelBz = data.z_angVel[bodyB];
+
+        // Velocity at contact point: v + angVel x r
+        float wAxrAx = angVelAy * rAz - angVelAz * rAy;
+        float wAxrAy = angVelAz * rAx - angVelAx * rAz;
+        float wAxrAz = angVelAx * rAy - angVelAy * rAx;
+
+        float wBxrBx = angVelBy * rBz - angVelBz * rBy;
+        float wBxrBy = angVelBz * rBx - angVelBx * rBz;
+        float wBxrBz = angVelBx * rBy - angVelBy * rBx;
+
+        float velAtContactAx = velAx + wAxrAx;
+        float velAtContactAy = velAy + wAxrAy;
+        float velAtContactAz = velAz + wAxrAz;
+
+        float velAtContactBx = velBx + wBxrBx;
+        float velAtContactBy = velBy + wBxrBy;
+        float velAtContactBz = velBz + wBxrBz;
+
+        // Relative velocity at contact (B relative to A)
+        float relVelx = velAtContactBx - velAtContactAx;
+        float relVely = velAtContactBy - velAtContactAy;
+        float relVelz = velAtContactBz - velAtContactAz;
+
+        // Relative velocity along normal
+        float relVelNormal = relVelx * nx + relVely * ny + relVelz * nz;
+
+        // Skip if separating
+        if (relVelNormal > 0.0f && cp->penetration < 0.02f) {
+            return;
+        }
+
+        // Inverse masses
+        float invMassA = data.invMass[bodyA];
+        float invMassB = data.invMass[bodyB];
+
+        float kNormal = invMassA + invMassB;
+
+        // rA x n
+        float rAxNx = rAy * nz - rAz * ny;
+        float rAxNy = rAz * nx - rAx * nz;
+        float rAxNz = rAx * ny - rAy * nx;
+
+        // rB x n
+        float rBxNx = rBy * nz - rBz * ny;
+        float rBxNy = rBz * nx - rBx * nz;
+        float rBxNz = rBx * ny - rBy * nx;
+
+        // Add angular contribution for body A (if dynamic)
+        float* invIA = &data.invInertiaTensor[bodyA * 9];
+        float* invIB = &data.invInertiaTensor[bodyB * 9];
+
+        if (data.bodyMode[bodyA] == 1) {
+            float tempAx = invIA[0] * rAxNx + invIA[1] * rAxNy + invIA[2] * rAxNz;
+            float tempAy = invIA[3] * rAxNx + invIA[4] * rAxNy + invIA[5] * rAxNz;
+            float tempAz = invIA[6] * rAxNx + invIA[7] * rAxNy + invIA[8] * rAxNz;
+            kNormal += rAxNx * tempAx + rAxNy * tempAy + rAxNz * tempAz;
+        }
+
+        if (data.bodyMode[bodyB] == 1) {
+            float tempBx = invIB[0] * rBxNx + invIB[1] * rBxNy + invIB[2] * rBxNz;
+            float tempBy = invIB[3] * rBxNx + invIB[4] * rBxNy + invIB[5] * rBxNz;
+            float tempBz = invIB[6] * rBxNx + invIB[7] * rBxNy + invIB[8] * rBxNz;
+            kNormal += rBxNx * tempBx + rBxNy * tempBy + rBxNz * tempBz;
+        }
+
+        if (kNormal <= 0.0001f) {
+            return;
+        }
+
+        float effectiveMass = 1.0f / kNormal;
+
+        // Restitution
+        float restA = data.restitution[bodyA];
+        float restB = data.restitution[bodyB];
+        float restitution = (restA < restB) ? restA : restB;
+
+        // Calculate impulse
+        float impulse = -relVelNormal * (1.0f + restitution) * effectiveMass;
+
+        // Position correction (Baumgarte)
+        float correction = (cp->penetration - 0.01f) / dt * 0.2f;
+        impulse += correction * effectiveMass;
+
+        // Clamp to prevent pulling
+        if (impulse < 0.0f) impulse = 0.0f;
+
+        // Store for friction
+        cp->normalImpulse = impulse;
+
+        // Impulse vector
+        float impulseX = impulse * nx;
+        float impulseY = impulse * ny;
+        float impulseZ = impulse * nz;
+
+        // Apply LINEAR impulse -> WRITE TO DELTA ACCUMULATORS
+        if (data.bodyMode[bodyA] == 1) {
+            atomicAdd(&data.dx_vel[bodyA], -impulseX * invMassA);
+            atomicAdd(&data.dy_vel[bodyA], -impulseY * invMassA);
+            atomicAdd(&data.dz_vel[bodyA], -impulseZ * invMassA);
+        }
+
+        if (data.bodyMode[bodyB] == 1) {
+            atomicAdd(&data.dx_vel[bodyB], impulseX * invMassB);
+            atomicAdd(&data.dy_vel[bodyB], impulseY * invMassB);
+            atomicAdd(&data.dz_vel[bodyB], impulseZ * invMassB);
+        }
+
+        // Apply ANGULAR impulse -> WRITE TO DELTA ACCUMULATORS
+        if (data.bodyMode[bodyA] == 1) {
+            float torqueAx = rAy * (-impulseZ) - rAz * (-impulseY);
+            float torqueAy = rAz * (-impulseX) - rAx * (-impulseZ);
+            float torqueAz = rAx * (-impulseY) - rAy * (-impulseX);
+
+            atomicAdd(&data.dx_angVel[bodyA], invIA[0] * torqueAx + invIA[1] * torqueAy + invIA[2] * torqueAz);
+            atomicAdd(&data.dy_angVel[bodyA], invIA[3] * torqueAx + invIA[4] * torqueAy + invIA[5] * torqueAz);
+            atomicAdd(&data.dz_angVel[bodyA], invIA[6] * torqueAx + invIA[7] * torqueAy + invIA[8] * torqueAz);
+        }
+
+        if (data.bodyMode[bodyB] == 1) {
+            float torqueBx = rBy * impulseZ - rBz * impulseY;
+            float torqueBy = rBz * impulseX - rBx * impulseZ;
+            float torqueBz = rBx * impulseY - rBy * impulseX;
+
+            atomicAdd(&data.dx_angVel[bodyB], invIB[0] * torqueBx + invIB[1] * torqueBy + invIB[2] * torqueBz);
+            atomicAdd(&data.dy_angVel[bodyB], invIB[3] * torqueBx + invIB[4] * torqueBy + invIB[5] * torqueBz);
+            atomicAdd(&data.dz_angVel[bodyB], invIB[6] * torqueBx + invIB[7] * torqueBy + invIB[8] * torqueBz);
+        }
+
+        // ========== FRICTION ==========
+        // Tangent velocity = relative velocity - normal component
+        float tangentVelx = relVelx - relVelNormal * nx;
+        float tangentVely = relVely - relVelNormal * ny;
+        float tangentVelz = relVelz - relVelNormal * nz;
+
+        float tangentSpeed = sycl::sqrt(tangentVelx * tangentVelx + tangentVely * tangentVely + tangentVelz * tangentVelz);
+
+        if (tangentSpeed < 0.0001f) {
+            return;  // No sliding
+        }
+
+        // Tangent direction
+        float tx = tangentVelx / tangentSpeed;
+        float ty = tangentVely / tangentSpeed;
+        float tz = tangentVelz / tangentSpeed;
+
+        // rA x t
+        float rAxTx = rAy * tz - rAz * ty;
+        float rAxTy = rAz * tx - rAx * tz;
+        float rAxTz = rAx * ty - rAy * tx;
+
+        // rB x t
+        float rBxTx = rBy * tz - rBz * ty;
+        float rBxTy = rBz * tx - rBx * tz;
+        float rBxTz = rBx * ty - rBy * tx;
+
+        float kTangent = invMassA + invMassB;
+
+        if (data.bodyMode[bodyA] == 1) {
+            float tempAx = invIA[0] * rAxTx + invIA[1] * rAxTy + invIA[2] * rAxTz;
+            float tempAy = invIA[3] * rAxTx + invIA[4] * rAxTy + invIA[5] * rAxTz;
+            float tempAz = invIA[6] * rAxTx + invIA[7] * rAxTy + invIA[8] * rAxTz;
+            kTangent += rAxTx * tempAx + rAxTy * tempAy + rAxTz * tempAz;
+        }
+
+        if (data.bodyMode[bodyB] == 1) {
+            float tempBx = invIB[0] * rBxTx + invIB[1] * rBxTy + invIB[2] * rBxTz;
+            float tempBy = invIB[3] * rBxTx + invIB[4] * rBxTy + invIB[5] * rBxTz;
+            float tempBz = invIB[6] * rBxTx + invIB[7] * rBxTy + invIB[8] * rBxTz;
+            kTangent += rBxTx * tempBx + rBxTy * tempBy + rBxTz * tempBz;
+        }
+
+        if (kTangent <= 0.0001f) {
+            return;
+        }
+
+        float effectiveMassTangent = 1.0f / kTangent;
+
+        // Friction coefficient
+        float frictionA = data.friction[bodyA];
+        float frictionB = data.friction[bodyB];
+        float friction = (frictionA < frictionB) ? frictionA : frictionB;
+
+        // Friction impulse
+        float frictionImpulse = -tangentSpeed * effectiveMassTangent;
+
+        // Coulomb clamp: |friction| <= mu * normalImpulse
+        float maxFriction = friction * cp->normalImpulse;
+        if (frictionImpulse < -maxFriction) frictionImpulse = -maxFriction;
+        if (frictionImpulse > maxFriction) frictionImpulse = maxFriction;
+
+        float fImpX = frictionImpulse * tx;
+        float fImpY = frictionImpulse * ty;
+        float fImpZ = frictionImpulse * tz;
+
+        // Apply LINEAR friction -> WRITE TO DELTA ACCUMULATORS
+        if (data.bodyMode[bodyA] == 1) {
+            atomicAdd(&data.dx_vel[bodyA], -fImpX * invMassA);
+            atomicAdd(&data.dy_vel[bodyA], -fImpY * invMassA);
+            atomicAdd(&data.dz_vel[bodyA], -fImpZ * invMassA);
+        }
+
+        if (data.bodyMode[bodyB] == 1) {
+            atomicAdd(&data.dx_vel[bodyB], fImpX * invMassB);
+            atomicAdd(&data.dy_vel[bodyB], fImpY * invMassB);
+            atomicAdd(&data.dz_vel[bodyB], fImpZ * invMassB);
+        }
+
+        // Apply ANGULAR friction -> WRITE TO DELTA ACCUMULATORS
+        if (data.bodyMode[bodyA] == 1) {
+            float torqueAx = rAy * (-fImpZ) - rAz * (-fImpY);
+            float torqueAy = rAz * (-fImpX) - rAx * (-fImpZ);
+            float torqueAz = rAx * (-fImpY) - rAy * (-fImpX);
+
+            atomicAdd(&data.dx_angVel[bodyA], invIA[0] * torqueAx + invIA[1] * torqueAy + invIA[2] * torqueAz);
+            atomicAdd(&data.dy_angVel[bodyA], invIA[3] * torqueAx + invIA[4] * torqueAy + invIA[5] * torqueAz);
+            atomicAdd(&data.dz_angVel[bodyA], invIA[6] * torqueAx + invIA[7] * torqueAy + invIA[8] * torqueAz);
+        }
+
+        if (data.bodyMode[bodyB] == 1) {
+            float torqueBx = rBy * fImpZ - rBz * fImpY;
+            float torqueBy = rBz * fImpX - rBx * fImpZ;
+            float torqueBz = rBx * fImpY - rBy * fImpX;
+
+            atomicAdd(&data.dx_angVel[bodyB], invIB[0] * torqueBx + invIB[1] * torqueBy + invIB[2] * torqueBz);
+            atomicAdd(&data.dy_angVel[bodyB], invIB[3] * torqueBx + invIB[4] * torqueBy + invIB[5] * torqueBz);
+            atomicAdd(&data.dz_angVel[bodyB], invIB[6] * torqueBx + invIB[7] * torqueBy + invIB[8] * torqueBz);
         }
     }
 } // namespace gpu
