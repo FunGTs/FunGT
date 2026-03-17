@@ -3,45 +3,16 @@
 Pyramid::Pyramid()
 : Primitive(){
 }
-Pyramid::Pyramid(glm::vec3 pos)
-: Primitive(pos){
-}
-Pyramid::Pyramid(float x, float y, float z)
-: Primitive(x,y,z){
-}
+
 Pyramid::~Pyramid()
 {
 }
+
 void Pyramid::draw(){
     texture.active();
     texture.bind();
     m_vao.bind();
     glDrawArrays(GL_TRIANGLES, 0, 18);
-}
-
-void Pyramid::create(const std::string &path)
-{
-    this->setData();
-
-    m_vao.genVAO(); //Generates a Vertex array object
-    m_vb.genVB(); //Generates the Vertex Buffer
-    m_vi.genVI(); //Generates the Vertex Buffer
-
-    m_vao.bind();
-
-    m_vb.bind();
-    m_vb.bufferData(this->getVertices(),this->sizeOfVertices());
-    
-    this->setAttribs();
-    
-    texture.genTexture(path);
-    //std::cout<<"Texture Path : "<<texture.getPath()<<std::endl; 
-    texture.bind();
-
-    //All binded above must be released
-    m_vao.unbind();
-    this->unsetAttribs();
-    m_vb.unbind();
 }
 
 void Pyramid::setData()

@@ -7,8 +7,7 @@
 #include "../VertexGL/vertexBuffers.hpp"
 #include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
-#include "../Renderable/renderable.hpp"
-#include "../Shaders/shader.hpp"
+#include "Shaders/shader.hpp"
 
 struct PrimitiveVertex{
     glm::vec3 position;
@@ -18,18 +17,11 @@ struct PrimitiveVertex{
 };
 
 
-class Primitive : public Renderable {
+class Primitive {
 
 private:
     std::vector<PrimitiveVertex> m_vertex;
     std::vector<GLuint> m_index;
-protected:
-    Shader m_Shader;
-    glm::mat4 m_ShapeModelMatrix = glm::mat4(1.f);
-    glm::vec3 m_ShapePos = glm::vec3(1.0);
-    glm::vec3 m_ShapeRot = glm::vec3(0.0);
-    glm::vec3 m_ShapeScale = glm::vec3(0.5f);
-
 
 public:
     VertexArrayObject m_vao;
@@ -40,8 +32,6 @@ public:
 
     public:
         Primitive();
-        Primitive(glm::vec3 shapePos);
-        Primitive(float xpos, float ypos, float zpos);
         virtual ~Primitive();
 
 
@@ -58,18 +48,16 @@ public:
 
         // Geometry-specific virtuals
         virtual void setData() = 0;
-        virtual void create(const std::string &pathToTexture) = 0;
 
-        // Renderable interface overrides
-        void draw() override = 0;
-        Shader& getShader() override;
-        glm::mat4 getModelMatrix() override;
-        void updateModelMatrix() override;
+        // Graphics initialization
+        void setTexture(const std::string &pathToTexture);
+        void InitGraphics();
 
-        // Transform setters
-        void setPosition(glm::vec3 pos);
-        void setRotation(glm::vec3 rot);
-        void setScale(glm::vec3 scale);
+        // Pure virtual draw method
+        virtual void draw() = 0;
+        virtual void IntancedDraw(Shader &shader, int instanceCount){
+
+        }
 
 
 }; 

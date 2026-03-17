@@ -4,51 +4,10 @@ Plane::Plane()
 : Primitive(){
     printf("Plane default constructor\n");
 }
-Plane::Plane(glm::vec3 planePos)
-: Primitive(planePos){
-    m_ShapeRot.x = 75;
-}
-Plane::Plane(float xpos, float ypos, float zpos)
-: Primitive(xpos,ypos,zpos){
-    printf("Plane constructor: pos params\n");
-    
-    m_ShapeRot.x = -70;
-}
+
 Plane::~Plane()
 {
     printf("USING Plane DESTRUCTOR\n");
-
-}
-
-
-void Plane::create(const std::string &pathToTexture)
-{
-    this->setData();
-	std::cout<<"Plane Create function : "<<std::endl;
-
-    std::cout<<"vertices : "<< this->getNumOfVertices()<<std::endl;
-
-	m_vao.genVAO(); //Generates a Vertex array object
-    m_vb.genVB(); //Generates the Vertex Buffer
-    m_vi.genVI(); //Generates the Vertex Buffer
-
-    m_vao.bind();
-
-    m_vb.bind();
-    m_vb.bufferData(this->getVertices(),this->sizeOfVertices());
-
-    this->setAttribs();
-	texture.genTexture(pathToTexture);
-    texture.active();
-    texture.bind();
-
-    //All binded above must be released
-    m_vao.unbind();
-    this->unsetAttribs();
-    m_vb.unbind();    
-
-    std::cout<<"End Plane Create function : "<<std::endl;
-
 }
 
 void Plane::draw()
