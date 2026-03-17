@@ -62,6 +62,7 @@ if (WIN32)
 endif()
 # Include directories
 include_directories(
+    ${FUNGT_BASE_DIR}
     ${FUNGT_BASE_DIR}/VertexGL
     ${FUNGT_BASE_DIR}/Shaders
     ${FUNGT_BASE_DIR}/funGT
@@ -86,6 +87,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/InfoWindow
     ${FUNGT_BASE_DIR}/GUI
     ${FUNGT_BASE_DIR}/SimpleModel
+    ${FUNGT_BASE_DIR}/SimpleGeometry
     ${FUNGT_BASE_DIR}/Physics/CollisionManager
     ${FUNGT_BASE_DIR}/Physics/Contact
     ${FUNGT_BASE_DIR}/Physics/RigidBody
@@ -96,6 +98,9 @@ include_directories(
     ${FUNGT_BASE_DIR}/Physics/Clothing
     ${FUNGT_BASE_DIR}/Quaternion
     ${FUNGT_BASE_DIR}/Vector
+    ${FUNGT_BASE_DIR}/Renders
+    ${FUNGT_BASE_DIR}/Physics/BroadPhase
+    ${FUNGT_BASE_DIR}/ComputationalGeom/
     
 
 )
@@ -118,8 +123,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp
     ${FUNGT_BASE_DIR}/Geometries/primitives.cpp
     ${FUNGT_BASE_DIR}/Geometries/pyramid.cpp
-    ${FUNGT_BASE_DIR}/Geometries/shape.cpp
     ${FUNGT_BASE_DIR}/Geometries/square.cpp
+    ${FUNGT_BASE_DIR}/Geometries/sphere.cpp
     ${FUNGT_BASE_DIR}/Model/model.cpp
     ${FUNGT_BASE_DIR}/Helpers/helpers.cpp
     ${FUNGT_BASE_DIR}/Animation/animation.cpp
@@ -128,17 +133,19 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
-    #${FUNGT_BASE_DIR}/Physics/ParticleSystem/particle_sys.cpp
-    #${FUNGT_BASE_DIR}/Physics/ParticleSystem/particle.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
     ${FUNGT_BASE_DIR}/GUI/gui.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
+    ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
+    ${FUNGT_BASE_DIR}/Physics/Collisions/manifold_collision.cpp
+    ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
+    ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
 )
 
 # Add executable
