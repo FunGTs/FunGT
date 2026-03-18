@@ -9,7 +9,7 @@ namespace syclexp = sycl::ext::oneapi::experimental;
 
 class ParticleRTC {
 public:
-    ParticleRTC(sycl::queue& q);
+    ParticleRTC();
 
     // Compile user lambda code
     bool compileKernel(const std::string& user_code, std::string& error_msg);
@@ -23,7 +23,7 @@ public:
     bool hasKernel() const { return has_kernel_; }
 
 private:
-    sycl::queue& queue_;
+    //sycl::queue& queue_;
     std::optional<sycl::kernel> compiled_kernel_;
     bool has_kernel_ = false;
 };
