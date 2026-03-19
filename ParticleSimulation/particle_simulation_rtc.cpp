@@ -6,7 +6,7 @@ ParticleRTC::ParticleRTC() {
 
 bool ParticleRTC::isSupported() {
     
-    return (flib::sycl_handler::is_rtc_available() && has_svm);
+    return (flib::sycl_handler::is_rtc_available());
 }
 
 bool ParticleRTC::compileKernel(const std::string& user_code, std::string& error_msg) {
