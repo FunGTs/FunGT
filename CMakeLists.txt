@@ -135,6 +135,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
+    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_rtc.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp

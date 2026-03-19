@@ -7,7 +7,7 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
     std::cout<<"Particle system constructor"<<std::endl;
     std::cout<<"Num particles: "<<m_pSet._particles.size()<<std::endl;
    
-    loadDemo(4);
+    loadDemo(3);
     //Print just the position of the firs 2 particles
     std::cout << "Particle positions:" << std::endl;
     for (std::size_t i = 0; i < 2; ++i) {
@@ -18,6 +18,37 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
     }
     //m_pSet.print();
     this->init();
+
+    if (ParticleRTC::isSupported()) {
+        //sycl::queue _queue = flib::sycl_handler::get_queue();
+        m_rtc = std::make_unique<ParticleRTC>();
+        std::cout << "ParticleRTC initialized successfully\n";
+
+        // Test with gravity
+        std::string gravity_test = R"""(
+        constexpr float gravity = -2.0f;
+        constexpr float drag = 0.99f;
+        p.velocity[2] += gravity * dt;
+        p.velocity[0] *= drag;
+        p.velocity[1] *= drag;
+        p.velocity[2] *= drag;
+        p.position[0] += p.velocity[0] * dt;
+        p.position[1] += p.velocity[1] * dt;
+        p.position[2] += p.velocity[2] * dt;
+    )""";
+
+        std::string error;
+        if (m_rtc->compileKernel(gravity_test, error)) {
+            std::cout << "Test gravity kernel compiled successfully!\n";
+        }
+        else {
+            std::cerr << "RTC compilation error: " << error << "\n";
+        }
+    }
+    else {
+        std::cout << "SYCL-RTC not supported on this device\n";
+    }
+
     m_shader.create(vertex_shader,fragment_shader);
 }
 
@@ -96,6 +127,14 @@ glm::mat4 ParticleSimulation::getModelMatrix()
 void ParticleSimulation::simulation()
 {
     int numParticles = m_pSet._particles.size();
+    // Use RTC kernel if available
+    if (m_rtc && m_rtc->hasKernel()) {
+        // Print BEFORE
+        
+        m_rtc->execute(numParticles, m_vbo.getId(), 0.005f);
+
+        return;
+    }
 
     switch (m_currentDemo) {
     case 0:
