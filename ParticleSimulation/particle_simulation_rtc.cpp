@@ -5,16 +5,8 @@ ParticleRTC::ParticleRTC() {
 }
 
 bool ParticleRTC::isSupported() {
-    // Check for SVM support
-    sycl::queue queue_ = flib::sycl_handler::get_queue();
-    cl_device_id cl_dev = sycl::get_native<sycl::backend::opencl>(queue_.get_device());
-    cl_device_svm_capabilities svm_caps;
-    clGetDeviceInfo(cl_dev, CL_DEVICE_SVM_CAPABILITIES, sizeof(svm_caps), &svm_caps, NULL);
-
-    bool has_svm = (svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) != 0;
-    std::string svm_support = has_svm ? "Yes" : "No";
-    std::cout << " SVM support: " << svm_support << "\n";
-    return flib::sycl_handler::is_rtc_available();;
+    
+    return (flib::sycl_handler::is_rtc_available() && has_svm);
 }
 
 bool ParticleRTC::compileKernel(const std::string& user_code, std::string& error_msg) {
