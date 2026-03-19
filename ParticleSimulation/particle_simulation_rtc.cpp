@@ -56,26 +56,11 @@ extern "C" SYCL_EXT_ONEAPI_FUNCTION_PROPERTY((
     sycl::ext::oneapi::experimental::nd_range_kernel<2>))
 void particle_rtc_kernel(flib::Particle<float>* particles, int n, int ydim, float dt) {
     auto item = sycl::ext::oneapi::this_work_item::get_nd_item<2>();
-    //std::size_t index = item.get_global_id(0) * ydim + item.get_global_id(1);
-    
-  // Print pointer value ONCE
-    if (item.get_global_id(0) == 0 && item.get_global_id(1) == 0) {
-        sycl::ext::oneapi::experimental::printf("Kernel received pointer: %p\n", particles);
-        sycl::ext::oneapi::experimental::printf("First particle before: (%f, %f, %f)\n", 
-            particles[0].position[0], particles[0].position[1], particles[0].position[2]);
-    }
-    
     std::size_t index = item.get_global_id(0) * ydim + item.get_global_id(1);
     
     if (index < n) {
-        particles[index].position[0] = 999.0f;
-        particles[index].position[1] = 999.0f;
-        particles[index].position[2] = 999.0f;
-    }
-    
-    if (item.get_global_id(0) == 0 && item.get_global_id(1) == 0) {
-        sycl::ext::oneapi::experimental::printf("First particle after: (%f, %f, %f)\n", 
-            particles[0].position[0], particles[0].position[1], particles[0].position[2]);
+        UserUpdate update;
+        update(particles[index], dt);
     }
 }
 )""";
@@ -155,18 +140,18 @@ void ParticleRTC::execute(int numParticles, unsigned int vbo, float dt) {
 
     {
       //  std::cout << "[DEBUG] creating buffer\n";
-        sycl::buffer<flib::Particle<float>> buf =
-            sycl::make_buffer<sycl::backend::opencl, flib::Particle<float>>(clbuffer, syclCtx);
+        // sycl::buffer<flib::Particle<float>> buf =
+        //     sycl::make_buffer<sycl::backend::opencl, flib::Particle<float>>(clbuffer, syclCtx);
         //std::cout << "[DEBUG] buffer created\n";
 
         queue_.submit([&](sycl::handler& cgh) {
           //  std::cout << "[DEBUG] in submit lambda\n";
-            auto acc = buf.template get_access<sycl::access::mode::read_write>(cgh);
+            //auto acc = buf.template get_access<sycl::access::mode::read_write>(cgh);
             //std::cout << "[DEBUG] got accessor\n";
             //auto multi_ptr = acc.template get_multi_ptr<sycl::access::decorated::no>();
             //auto particles_ptr = multi_ptr.get();
             
-            cgh.set_args(acc.template get_multi_ptr<sycl::access::decorated::no>(), static_cast<int>(n), static_cast<int>(ydim), dt);
+            cgh.set_args(clbuffer, static_cast<int>(n), static_cast<int>(ydim), dt);
             //std::cout << "[DEBUG] set args\n";
             cgh.parallel_for(
                 sycl::nd_range<2>{

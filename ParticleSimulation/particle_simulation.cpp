@@ -7,7 +7,7 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
     std::cout<<"Particle system constructor"<<std::endl;
     std::cout<<"Num particles: "<<m_pSet._particles.size()<<std::endl;
    
-    loadDemo(4);
+    loadDemo(3);
     //Print just the position of the firs 2 particles
     std::cout << "Particle positions:" << std::endl;
     for (std::size_t i = 0; i < 2; ++i) {
