@@ -4,9 +4,120 @@ ParticleRTC::ParticleRTC() {
 
 }
 
+bool ParticleRTC::compileInitKernel(const std::string& user_init_code, std::string& error_msg)
+{
+    try {
+        sycl::queue queue_ = flib::sycl_handler::get_queue();
+
+        std::string user_header = R"""(
+namespace flib {
+    template<typename T>
+    struct Particle {
+        T position[3];
+        T velocity[3];
+        T acceleration[3];
+        T mass;
+    };
+}
+
+struct UserInit {
+    void operator()(flib::Particle<float>& p, int index) const {
+        )""" + user_init_code + R"""(
+    }
+};
+)""";
+
+        static constexpr auto sycl_source = R"""(
+#include <sycl/sycl.hpp>
+#include "user_init.h"
+
+extern "C" SYCL_EXT_ONEAPI_FUNCTION_PROPERTY((
+    sycl::ext::oneapi::experimental::nd_range_kernel<2>))
+void particle_init_kernel(flib::Particle<float>* particles, int n, int ydim) {
+    auto item = sycl::ext::oneapi::this_work_item::get_nd_item<2>();
+    std::size_t index = item.get_global_id(0) * ydim + item.get_global_id(1);
+    
+    if (index < n) {
+        UserInit init;
+        init(particles[index], index);
+    }
+}
+)""";
+
+        syclexp::include_files includes{ "user_init.h", user_header };
+        auto source_bundle = syclexp::create_kernel_bundle_from_source(
+            queue_.get_context(),
+            syclexp::source_language::sycl,
+            sycl_source,
+            syclexp::properties{ includes }
+        );
+
+        syclexp::build_options opts{ "-fsycl" };
+        std::string compiler_log;
+        syclexp::save_log log{ &compiler_log };
+
+        auto exec_bundle = syclexp::build(source_bundle, syclexp::properties{ opts, log });
+
+        std::cout << "Init Kernel Compiler output:\n" << compiler_log << "\n";
+
+        compiled_init_kernel_ = exec_bundle.ext_oneapi_get_kernel("particle_init_kernel");
+
+        return true;
+
+    }
+    catch (sycl::exception& e) {
+        error_msg = std::string("Init kernel RTC failed: ") + e.what();
+        compiled_init_kernel_.reset();
+        return false;
+    }
+}
 bool ParticleRTC::isSupported() {
     
-    return (flib::sycl_handler::is_rtc_available());
+    return flib::sycl_handler::is_rtc_available();
+}
+
+void ParticleRTC::executeInit(int numParticles, unsigned int vbo)
+{
+    if (!compiled_init_kernel_.has_value()) {
+        throw std::runtime_error("No compiled init kernel available");
+    }
+
+    sycl::queue queue_ = flib::sycl_handler::get_queue();
+
+    std::size_t n = static_cast<std::size_t>(numParticles);
+    std::size_t xdim = static_cast<std::size_t>(std::ceil(std::sqrt(n)));
+    std::size_t ydim = xdim;
+
+    sycl::kernel& kernel_ref = compiled_init_kernel_.value();
+
+    // GL interop
+    cl_context clcontext = flib::sycl_handler::get_clContext();
+    cl_command_queue clqueue = sycl::get_native<sycl::backend::opencl>(queue_);
+    cl_mem clbuffer = clCreateFromGLBuffer(clcontext, CL_MEM_READ_WRITE, vbo, NULL);
+
+    glFinish();
+    cl_event acquire_event;
+    clEnqueueAcquireGLObjects(clqueue, 1, &clbuffer, 0, NULL, &acquire_event);
+    clWaitForEvents(1, &acquire_event);
+
+    // Execute init kernel
+    queue_.submit([&](sycl::handler& cgh) {
+        cgh.set_args(clbuffer, static_cast<int>(n), static_cast<int>(ydim));
+        cgh.parallel_for(sycl::nd_range<2>{
+            sycl::range<2>{xdim, ydim},
+                sycl::range<2>{1, 1}
+        }, kernel_ref);
+        });
+    queue_.wait();
+
+    clFinish(clqueue);
+    cl_event release_event;
+    clEnqueueReleaseGLObjects(clqueue, 1, &clbuffer, 0, NULL, &release_event);
+    clWaitForEvents(1, &release_event);
+    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+    clReleaseMemObject(clbuffer);
+
+    std::cout << "Particles initialized with RTC kernel\n";
 }
 
 bool ParticleRTC::compileKernel(const std::string& user_code, std::string& error_msg) {
