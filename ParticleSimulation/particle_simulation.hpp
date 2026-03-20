@@ -28,12 +28,13 @@ class ParticleSimulation : public Renderable {
     glm::mat4 m_projectionMatrix  = glm::mat4(1.f);
     glm::mat4 m_ModelMatrix = glm::mat4(1.f);
     int m_currentDemo;
+    bool m_useRTC;
     
 
     public:
         flib::ParticleSet<float> m_pSet;
 
-        ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader);
+        ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader, bool use_rtc = false);
         float random_between(float min, float max) {
             return min + static_cast<float>(rand()) / RAND_MAX * (max - min);
         }
@@ -41,6 +42,7 @@ class ParticleSimulation : public Renderable {
         void  loadDemo(int index);
 
         void init();
+        void initRTC();
         void simulation();
         //methods from the Renderable class
         void draw() override;

@@ -33,7 +33,7 @@ int main(){
 
     flib::sycl_handler::get_device_info();
 
-    std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000,ps_vs,ps_fs);
+    std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000,ps_vs,ps_fs,true);
     
 
     myGame->set([&](){ // Sets up all the scenes in your game
