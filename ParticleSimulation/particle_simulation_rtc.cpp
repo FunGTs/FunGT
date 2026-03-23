@@ -7,10 +7,10 @@ ParticleRTC::ParticleRTC() {
 bool ParticleRTC::compileInitKernel(const std::string& user_init_code, std::string& error_msg)
 {
     try {
-        sycl::queue queue_ = flib::sycl_handler::get_queue();
+        sycl::queue queue_ = flib::sycl_handler::get_queue("gl_queue");
 
         std::string user_header = R"""(
-namespace flib {
+namespace fgt {
     template<typename T>
     struct Particle {
         T position[3];
@@ -21,7 +21,7 @@ namespace flib {
 }
 
 struct UserInit {
-    void operator()(flib::Particle<float>& p, int index) const {
+    void operator()(fgt::Particle<float>& p, int index) const {
         )""" + user_init_code + R"""(
     }
 };
@@ -33,7 +33,7 @@ struct UserInit {
 
 extern "C" SYCL_EXT_ONEAPI_FUNCTION_PROPERTY((
     sycl::ext::oneapi::experimental::nd_range_kernel<2>))
-void particle_init_kernel(flib::Particle<float>* particles, int n, int ydim) {
+void particle_init_kernel(fgt::Particle<float>* particles, int n, int ydim) {
     auto item = sycl::ext::oneapi::this_work_item::get_nd_item<2>();
     std::size_t index = item.get_global_id(0) * ydim + item.get_global_id(1);
     
@@ -82,7 +82,7 @@ void ParticleRTC::executeInit(int numParticles, unsigned int vbo)
         throw std::runtime_error("No compiled init kernel available");
     }
 
-    sycl::queue queue_ = flib::sycl_handler::get_queue();
+    sycl::queue queue_ = flib::sycl_handler::get_queue("gl_queue");
 
     std::size_t n = static_cast<std::size_t>(numParticles);
     std::size_t xdim = static_cast<std::size_t>(std::ceil(std::sqrt(n)));
@@ -122,9 +122,9 @@ void ParticleRTC::executeInit(int numParticles, unsigned int vbo)
 
 bool ParticleRTC::compileKernel(const std::string& user_code, std::string& error_msg) {
     try {
-        sycl::queue queue_ = flib::sycl_handler::get_queue();
+        sycl::queue queue_ = flib::sycl_handler::get_queue("gl_queue");
         std::string user_header = R"""(
-namespace flib {
+namespace fgt {
     template<typename T>
     struct Particle {
         T position[3];
@@ -144,7 +144,7 @@ namespace flib {
 }
 
 struct UserUpdate {
-    void operator()(flib::Particle<float>& p, float dt) const {
+    void operator()(fgt::Particle<float>& p, float dt) const {
         )""" + user_code + R"""(
     }
 };
@@ -157,7 +157,7 @@ struct UserUpdate {
 
 extern "C" SYCL_EXT_ONEAPI_FUNCTION_PROPERTY((
     sycl::ext::oneapi::experimental::nd_range_kernel<2>))
-void particle_rtc_kernel(flib::Particle<float>* particles, int n, int ydim, float dt) {
+void particle_rtc_kernel(fgt::Particle<float>* particles, int n, int ydim, float dt) {
     auto item = sycl::ext::oneapi::this_work_item::get_nd_item<2>();
     std::size_t index = item.get_global_id(0) * ydim + item.get_global_id(1);
     
@@ -200,8 +200,8 @@ void particle_rtc_kernel(flib::Particle<float>* particles, int n, int ydim, floa
 }
 
 void ParticleRTC::execute(int numParticles, unsigned int vbo, float dt) {
-    std::cout << "[DEBUG] execute() called\n";
-    sycl::queue queue_ = flib::sycl_handler::get_queue();
+
+    sycl::queue queue_ = flib::sycl_handler::get_queue("gl_queue");
     if (!compiled_kernel_.has_value()) {
         throw std::runtime_error("No compiled kernel available");
     }
@@ -243,8 +243,8 @@ void ParticleRTC::execute(int numParticles, unsigned int vbo, float dt) {
 
     {
       //  std::cout << "[DEBUG] creating buffer\n";
-        // sycl::buffer<flib::Particle<float>> buf =
-        //     sycl::make_buffer<sycl::backend::opencl, flib::Particle<float>>(clbuffer, syclCtx);
+        // sycl::buffer<fgt::Particle<float>> buf =
+        //     sycl::make_buffer<sycl::backend::opencl, fgt::Particle<float>>(clbuffer, syclCtx);
         //std::cout << "[DEBUG] buffer created\n";
 
         queue_.submit([&](sycl::handler& cgh) {

@@ -90,10 +90,10 @@ void ParticleSimulation::init()
     m_vao.bind();
 
     m_vbo.bind();
-    //m_vbo.bufferData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(flib::Particle<float>),GL_DYNAMIC_DRAW);
-    m_vbo.bufferData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(flib::Particle<float>),GL_DYNAMIC_DRAW); 
+    //m_vbo.bufferData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(fgt::Particle<float>),GL_DYNAMIC_DRAW);
+    m_vbo.bufferData(m_pSet._particles.data(),m_pSet._particles.size()*sizeof(fgt::Particle<float>),GL_DYNAMIC_DRAW); 
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(flib::Particle<float>), (void*)offsetof(flib::Particle<float>, position));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(fgt::Particle<float>), (void*)offsetof(fgt::Particle<float>, position));
     glEnableVertexAttribArray(0);
 
     m_vao.unbind();
@@ -108,12 +108,12 @@ void ParticleSimulation::initRTC()
 
     // Allocate empty VBO (no CPU data needed for RTC)
     m_vbo.bufferData(nullptr,
-        m_pSet._particles.size() * sizeof(flib::Particle<float>),
+        m_pSet._particles.size() * sizeof(fgt::Particle<float>),
         GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-        sizeof(flib::Particle<float>),
-        (void*)offsetof(flib::Particle<float>, position));
+        sizeof(fgt::Particle<float>),
+        (void*)offsetof(fgt::Particle<float>, position));
     glEnableVertexAttribArray(0);
 
     m_vao.unbind();
@@ -178,31 +178,31 @@ void ParticleSimulation::simulation()
 
     switch (m_currentDemo) {
     case 0:
-        flib::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
+        fgt::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::spiralExplosionUpdate, 0.005f);
         break;
     case 1:
-        flib::ParticleSystem<float, decltype(fgt::blackHoleUpdate)>::update(
+        fgt::ParticleSystem<float, decltype(fgt::blackHoleUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::blackHoleUpdate, 0.005f);
         break;
     case 2:
-        flib::ParticleSystem<float, decltype(fgt::vortexUpdate)>::update(
+        fgt::ParticleSystem<float, decltype(fgt::vortexUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::vortexUpdate, 0.005f);
         break;
     case 3:
-        flib::ParticleSystem<float, decltype(fgt::fireworkUpdate)>::update(
+        fgt::ParticleSystem<float, decltype(fgt::fireworkUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::fireworkUpdate, 0.005f);
         break;
     case 4:
-        flib::ParticleSystem<float, decltype(fgt::waveUpdate)>::update(
+        fgt::ParticleSystem<float, decltype(fgt::waveUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::waveUpdate, 0.005f);
         break;
     case 5:
-        flib::ParticleSystem<float, decltype(fgt::smokeUpdate)>::update(
+        fgt::ParticleSystem<float, decltype(fgt::smokeUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::smokeUpdate, 0.005f);
         break;
     default:
-        flib::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
+        fgt::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::spiralExplosionUpdate, 0.005f);
         break;
     }

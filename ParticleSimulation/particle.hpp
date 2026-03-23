@@ -1,7 +1,7 @@
 #if !defined(_PARTICLE_H_)
 #define _PARTICLE_H_
 #include <vector>
-namespace fungt
+namespace fgt
 {
     template <typename T>
     struct Particle
