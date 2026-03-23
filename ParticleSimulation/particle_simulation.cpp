@@ -108,12 +108,12 @@ void ParticleSimulation::initRTC()
 
     // Allocate empty VBO (no CPU data needed for RTC)
     m_vbo.bufferData(nullptr,
-        m_pSet._particles.size() * sizeof(flib::Particle<float>),
+        m_pSet._particles.size() * sizeof(fgt::Particle<float>),
         GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-        sizeof(flib::Particle<float>),
-        (void*)offsetof(flib::Particle<float>, position));
+        sizeof(fgt::Particle<float>),
+        (void*)offsetof(fgt::Particle<float>, position));
     glEnableVertexAttribArray(0);
 
     m_vao.unbind();
