@@ -11,6 +11,7 @@
 #include "gpu_impulse_solver.hpp"
 #include "gpu_uniform_grid.hpp"
 #include "gpu_radix_sort.hpp"
+#include "gpu_spatial_grid.hpp"
 enum class MODE {
     STATIC,
     DYNAMIC
@@ -43,6 +44,7 @@ namespace gpu {
                 
         // NEW: RadixSort instance
         std::unique_ptr<RadixSort> m_radixSort;
+        std::unique_ptr<gpu::SpatialGrid> m_spatialGrid; 
         // Metadata
         int m_numBodies;
         int m_capacity;

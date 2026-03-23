@@ -19,19 +19,23 @@ void gpu::PhysicsKernel::debugVelocity(int bodyId) {
     std::cout << "Body " << bodyId << " velY: " << velY << std::endl;
 }
 void gpu::PhysicsKernel::init(int maxBodies) {
-    
+    //Set the queue:
+    m_queue = flib::sycl_handler::get_queue();
     //Kernel memory allocations
     initMemoryAllocations(maxBodies);
-    initUniformGrid( );
-    //Initialize RadixSort
+    //CPU   DATA
     m_staging.resize(maxBodies);
-    m_radixSort = std::make_unique<RadixSort>(m_queue);    
-    if(m_radixSort){
-        m_radixSort->init(maxBodies);
+
+    m_spatialGrid = std::make_unique<SpatialGrid>(m_queue);
+    if(m_spatialGrid==nullptr){
+        std::cout << "Error allocating spatial grid pointer" << std::endl;
+        return;
     }
+    m_spatialGrid->init(maxBodies,2.0,100.f);
     // Create persistent CL interop from GL SSBO
     m_clQueue = sycl::get_native<sycl::backend::opencl>(m_queue);
 
+    
     m_clInteropBuffer = clCreateFromGLBuffer(
         flib::sycl_handler::get_clContext(),
         CL_MEM_WRITE_ONLY,
@@ -52,7 +56,7 @@ void gpu::PhysicsKernel::initMemoryAllocations(int maxBodies)
     m_capacity = maxBodies;
     m_numBodies = 0;
 
-    m_queue = flib::sycl_handler::get_queue();
+    
     if (!checkGPUMemory(m_queue, maxBodies, m_worldSize, m_cellSize)) {
         throw std::runtime_error("Not enough GPU memory for requested body count");
     }
