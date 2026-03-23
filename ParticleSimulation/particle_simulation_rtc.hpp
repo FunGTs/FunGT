@@ -2,6 +2,7 @@
 #define _PARTICLE_SIM_RTC_H_
 #include <GL/glew.h>
 #include <funlib/funlib.hpp>
+#include "particle.hpp"
 #include <string>
 #include <optional>
 #include <CL/cl_gl.h>
