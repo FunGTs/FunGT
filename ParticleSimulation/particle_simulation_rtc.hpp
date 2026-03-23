@@ -11,9 +11,11 @@ class ParticleRTC {
 public:
     ParticleRTC();
 
+    bool compileInitKernel(const std::string& user_init_code, std::string& error_msg);
+    void executeInit(int numParticles, unsigned int vbo);
     // Compile user lambda code
     bool compileKernel(const std::string& user_code, std::string& error_msg);
-
+    
     // Execute compiled kernel on particles
     void execute(int numParticles, unsigned int vbo, float dt);
 
@@ -21,10 +23,12 @@ public:
     static bool isSupported();
 
     bool hasKernel() const { return has_kernel_; }
+    bool hasInitKernel() const { return compiled_init_kernel_.has_value(); }
 
 private:
     //sycl::queue& queue_;
     std::optional<sycl::kernel> compiled_kernel_;
+    std::optional<sycl::kernel> compiled_init_kernel_;
     bool has_kernel_ = false;
 };
 
