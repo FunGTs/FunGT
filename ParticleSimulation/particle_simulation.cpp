@@ -1,55 +1,70 @@
 #include "particle_simulation.hpp"
 
-ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader)
+ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader, bool use_rtc)
 : m_NumParticles{num}{
     
     m_pSet.SetNumParticles(m_NumParticles);
-    std::cout<<"Particle system constructor"<<std::endl;
-    std::cout<<"Num particles: "<<m_pSet._particles.size()<<std::endl;
-   
-    loadDemo(3);
-    //Print just the position of the firs 2 particles
-    std::cout << "Particle positions:" << std::endl;
-    for (std::size_t i = 0; i < 2; ++i) {
-        std::cout << "Particle "<< i << ": ("
-                  << m_pSet._particles[i].position[0] << ", "
-                  << m_pSet._particles[i].position[1] << ", "
-                  << m_pSet._particles[i].position[2] << ")" << std::endl;
-    }
-    //m_pSet.print();
-    this->init();
+    std::cout << "Particle system constructor" << std::endl;
+    std::cout << "Num particles: " << m_pSet._particles.size() << std::endl;
 
-    if (ParticleRTC::isSupported()) {
-        //sycl::queue _queue = flib::sycl_handler::get_queue();
-        m_rtc = std::make_unique<ParticleRTC>();
-        std::cout << "ParticleRTC initialized successfully\n";
+    bool m_useRTC  = use_rtc;
+    bool allowRTC = false;
+    // Try RTC first
+    if(m_useRTC){
 
-        // Test with gravity
-        std::string gravity_test = R"""(
-        constexpr float gravity = -2.0f;
-        constexpr float drag = 0.99f;
-        p.velocity[2] += gravity * dt;
-        p.velocity[0] *= drag;
-        p.velocity[1] *= drag;
-        p.velocity[2] *= drag;
-        p.position[0] += p.velocity[0] * dt;
-        p.position[1] += p.velocity[1] * dt;
-        p.position[2] += p.velocity[2] * dt;
-    )""";
+        if (ParticleRTC::isSupported()) {
+            m_rtc = std::make_unique<ParticleRTC>();
+            std::cout << "ParticleRTC initialized successfully\n";
 
-        std::string error;
-        if (m_rtc->compileKernel(gravity_test, error)) {
-            std::cout << "Test gravity kernel compiled successfully!\n";
+            std::string init_code = R"""(
+            float theta = index * 0.061803f;
+            float phi = index * 0.123f;
+            float speed = 2.0f + (index % 100) * 0.01f;
+            
+            p.position[0] = 0.0f;
+            p.position[1] = 0.0f;
+            p.position[2] = 0.0f;
+            
+            p.velocity[0] = speed * sycl::sin(phi) * sycl::cos(theta);
+            p.velocity[1] = speed * sycl::sin(phi) * sycl::sin(theta);
+            p.velocity[2] = speed * sycl::cos(phi);
+        )""";
+
+            std::string update_code = R"""(
+            constexpr float gravity = -2.0f;
+            constexpr float drag = 0.99f;
+            p.velocity[2] += gravity * dt;
+            p.velocity[0] *= drag;
+            p.velocity[1] *= drag;
+            p.velocity[2] *= drag;
+            p.position[0] += p.velocity[0] * dt;
+            p.position[1] += p.velocity[1] * dt;
+            p.position[2] += p.velocity[2] * dt;
+        )""";
+
+            std::string error;
+            bool init_ok = m_rtc->compileInitKernel(init_code, error);
+            bool update_ok = m_rtc->compileKernel(update_code, error);
+
+            if (init_ok && update_ok) {
+                std::cout << "Using RTC path\n";
+                this->initRTC();
+            }
+            else {
+                std::cerr << "RTC compilation failed: " << error << "\n";
+                std::cout << "Falling back to compile-time demos\n";
+            }
         }
         else {
-            std::cerr << "RTC compilation error: " << error << "\n";
+            std::cout << "RTC not supported, using compile-time demos\n";
         }
     }
-    else {
-        std::cout << "SYCL-RTC not supported on this device\n";
-    }
+    else{
 
-    m_shader.create(vertex_shader,fragment_shader);
+        loadDemo(3);
+        this->init();
+    }
+    m_shader.create(vertex_shader, fragment_shader);
 }
 
 void ParticleSimulation::loadDemo(int demo_index)
@@ -82,6 +97,31 @@ void ParticleSimulation::init()
     glEnableVertexAttribArray(0);
 
     m_vao.unbind();
+}
+void ParticleSimulation::initRTC()
+{
+    m_vao.genVAO();
+    m_vbo.genVB();
+
+    m_vao.bind();
+    m_vbo.bind();
+
+    // Allocate empty VBO (no CPU data needed for RTC)
+    m_vbo.bufferData(nullptr,
+        m_pSet._particles.size() * sizeof(flib::Particle<float>),
+        GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+        sizeof(flib::Particle<float>),
+        (void*)offsetof(flib::Particle<float>, position));
+    glEnableVertexAttribArray(0);
+
+    m_vao.unbind();
+
+    // GPU kernel fills the VBO
+    if (m_rtc && m_rtc->hasInitKernel()) {
+        m_rtc->executeInit(m_pSet._particles.size(), m_vbo.getId());
+    }
 }
 void ParticleSimulation::draw()
 {
