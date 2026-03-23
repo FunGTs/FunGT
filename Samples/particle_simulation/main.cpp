@@ -28,10 +28,10 @@ int main(){
     FunGTInfoWindow infowindow = myGame->getInfoWindow();
 
     //This selects the SYCL backend and device to use for parallel computation
-    flib::sycl_handler::select_backend_device("OpenCL","GPU");
-    flib::sycl_handler::create_gl_interop_context();
+    flib::sycl_handler::register_queue("gl_queue", flib::device::GPU, flib::vendor::INTEL, flib::backend::OPENCL);
+    flib::sycl_handler::create_gl_interop_context("gl_queue"); // replaces that queue's context in-place
 
-    flib::sycl_handler::get_device_info();
+    flib::sycl_handler::get_device_info("gl_queue");
 
     std::shared_ptr<ParticleSimulation> pSys = std::make_shared<ParticleSimulation>(10000,ps_vs,ps_fs,true);
     
