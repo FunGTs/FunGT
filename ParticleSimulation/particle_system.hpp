@@ -1,12 +1,12 @@
-#if !defined(_PARTICLE_SYSTEM_H)
-#define _PARTICLE_SYSTEM_H
+#if !defined(_PARTICLE_SYSTEM_FGT_H)
+#define _PARTICLE_SYSTEM_FGT_H
 #include <funlib/sycl/sycl_handler.hpp>
 #include <vector>
 #include <functional>
 #include <cmath>
 #include "particle.hpp"
 #include <CL/cl_gl.h>
-namespace fungt {
+namespace fgt {
 
     template <typename T, typename Func>
     class ParticleSystem
@@ -67,4 +67,4 @@ namespace fungt {
 
 }
 
-#endif // _PARTICLE_SYSTEM_H
+#endif // _PARTICLE_SYSTEM_FGT_H

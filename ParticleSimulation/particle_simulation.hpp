@@ -5,7 +5,9 @@
 #include "VertexGL/vertexBuffers.hpp"
 #include "VertexGL/vertexIndices.hpp"
 #include "Shaders/shader.hpp"
+#include "particle.hpp"
 #include "particle_demos.hpp"
+#include "particle_system.hpp"
 #include "particle_simulation_rtc.hpp"
 
 class ParticleSimulation : public Renderable {
@@ -32,7 +34,7 @@ class ParticleSimulation : public Renderable {
     
 
     public:
-        flib::ParticleSet<float> m_pSet;
+        fgt::ParticleSet<float> m_pSet;
 
         ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader, bool use_rtc = false);
         float random_between(float min, float max) {
