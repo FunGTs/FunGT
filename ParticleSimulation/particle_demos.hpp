@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <funlib/funlib.hpp>
+#include "particle.hpp"
 #include "perlin_noise_gpu.hpp"
 
 #ifndef M_PI
@@ -25,7 +26,7 @@ namespace fgt {
     };
 
     // Update lambdas (GPU-compatible, no std::function)
-    auto spiralExplosionUpdate = [](flib::Particle<float>& p, float dt) {
+    auto spiralExplosionUpdate = [](fgt::Particle<float>& p, float dt) {
         constexpr float central_force_strength = 0.5f;
         constexpr float spiral_speed = 0.5f;
         float distance = std::sqrt(p.position[0] * p.position[0] + p.position[1] * p.position[1]);
@@ -38,7 +39,7 @@ namespace fgt {
         p.position[1] += p.velocity[1] * dt;
         p.position[2] += p.velocity[2] * dt;
     };
-    auto blackHoleUpdate = [](flib::Particle<float>& p, float dt) {
+    auto blackHoleUpdate = [](fgt::Particle<float>& p, float dt) {
         constexpr float gravity = 5.0f;
         constexpr float event_horizon = 0.1f;
         float dx = -p.position[0];
@@ -62,7 +63,7 @@ namespace fgt {
         p.position[2] += p.velocity[2] * dt;
         };
 
-    auto vortexUpdate = [](flib::Particle<float>& p, float dt) {
+    auto vortexUpdate = [](fgt::Particle<float>& p, float dt) {
         constexpr float vortex_strength = 2.0f;
         constexpr float lift_force = 0.3f;
         constexpr float damping = 0.98f;
@@ -80,7 +81,7 @@ namespace fgt {
         p.position[2] += p.velocity[2] * dt;
     };
 
-    auto fireworkUpdate = [](flib::Particle<float>& p, float dt) {
+    auto fireworkUpdate = [](fgt::Particle<float>& p, float dt) {
         constexpr float gravity = -2.0f;
         constexpr float drag = 0.99f;
         p.velocity[2] += gravity * dt;
@@ -92,7 +93,7 @@ namespace fgt {
         p.position[2] += p.velocity[2] * dt;
         };
 
-    auto waveUpdate = [](flib::Particle<float>& p, float dt) {
+    auto waveUpdate = [](fgt::Particle<float>& p, float dt) {
         // Remove static time - just use particle position as time offset
         constexpr float wave_speed = 2.0f;
         constexpr float amplitude = 0.5f;
@@ -106,7 +107,7 @@ namespace fgt {
         p.position[2] += p.velocity[2] * dt;
     };
 
-    auto smokeUpdate = [](flib::Particle<float>& p, float dt) {
+    auto smokeUpdate = [](fgt::Particle<float>& p, float dt) {
         // Remove static time - use particle Z position as time proxy
         constexpr float buoyancy = 0.8f;
         constexpr float drag = 0.98f;
@@ -172,11 +173,11 @@ namespace fgt {
     };
 
     // Init functions (CPU-side, can use std::function)
-    using InitFunc = std::function<void(std::vector<flib::Particle<float>>&)>;
+    using InitFunc = std::function<void(std::vector<fgt::Particle<float>>&)>;
 
     static std::vector<InitFunc> demoInits = {
         // Spiral Explosion
-        [](std::vector<flib::Particle<float>>& particles) {
+        [](std::vector<fgt::Particle<float>>& particles) {
             float radius = 0.5f;
             for (std::size_t i = 0; i < particles.size(); ++i) {
                 float angle = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;
@@ -190,7 +191,7 @@ namespace fgt {
             }
         },
         // Black Hole
-        [](std::vector<flib::Particle<float>>& particles) {
+        [](std::vector<fgt::Particle<float>>& particles) {
             float radius = 3.0f;
             for (std::size_t i = 0; i < particles.size(); ++i) {
                 float theta = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;
@@ -205,7 +206,7 @@ namespace fgt {
             }
         },
         // Vortex
-        [](std::vector<flib::Particle<float>>& particles) {
+        [](std::vector<fgt::Particle<float>>& particles) {
             float radius = 2.0f;
             float height = 3.0f;
             for (std::size_t i = 0; i < particles.size(); ++i) {
@@ -221,7 +222,7 @@ namespace fgt {
             }
         },
         // Firework
-        [](std::vector<flib::Particle<float>>& particles) {
+        [](std::vector<fgt::Particle<float>>& particles) {
             for (std::size_t i = 0; i < particles.size(); ++i) {
                 particles[i].position[0] = 0.0f;
                 particles[i].position[1] = 0.0f;
@@ -235,7 +236,7 @@ namespace fgt {
             }
         },
         // Wave Field
-        [](std::vector<flib::Particle<float>>& particles) {
+        [](std::vector<fgt::Particle<float>>& particles) {
             float grid_size = 4.0f;
             int grid_dim = std::sqrt(particles.size());
             for (std::size_t i = 0; i < particles.size(); ++i) {
@@ -250,7 +251,7 @@ namespace fgt {
             }
         },
         // Smoke Plume
-        [](std::vector<flib::Particle<float>>& particles) {
+        [](std::vector<fgt::Particle<float>>& particles) {
             float radius = 0.3f;
             for (std::size_t i = 0; i < particles.size(); ++i) {
                 float angle = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;
