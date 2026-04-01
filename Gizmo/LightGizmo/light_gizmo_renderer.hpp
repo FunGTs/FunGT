@@ -6,18 +6,28 @@
 #include "Camera/camera.hpp"
 #include "include/prerequisites.hpp"
 #include "include/glmath.hpp"
+#include <vector>
+
+struct GizmoMesh {
+    GLuint vao = 0;
+    GLuint vbo = 0;
+    int    vertexCount = 0;
+    GLenum drawMode = GL_LINES;
+};
 
 class LightGizmoRenderer {
 
-    SceneManager* m_sceneManager;
+    SceneManager* m_sceneManager;   
     Camera* m_camera;
     Shader        m_shader;
-    GLuint        m_vao;
-    GLuint        m_vbo;
-    GLuint        m_ebo;
+    GizmoMesh     m_sphereMesh;
+    GizmoMesh     m_quadMesh;
     bool          m_initialized;
-    std::string gizmo_vs;
-    std::string gizmo_fs;
+    std::string m_vs;
+    std::string m_fs;
+    static void buildSphere(float radius, int segments, std::vector<float>& out);
+    static void uploadMesh(GizmoMesh& mesh, const std::vector<float>& vertices, GLenum drawMode);
+
 public:
     LightGizmoRenderer(SceneManager* sceneManager, Camera* camera);
     ~LightGizmoRenderer();

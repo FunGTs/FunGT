@@ -218,6 +218,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/PBR/BVH
     ${FUNGT_BASE_DIR}/Triangle
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo
+    ${FUNGT_BASE_DIR}/Lights
 )
 
 # ════════════════════════════════════════════════════════════════════════════

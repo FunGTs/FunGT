@@ -92,6 +92,14 @@ std::shared_ptr<SceneManager> FunGT::getSceneManager()
 }
 void FunGT::set(const std::function<void()>& renderLambda){
     std::cout << "Starting FunGT Setting process..." << std::endl;
+    //Lights:
+    SceneLight defaultLight;
+    defaultLight.name = "Point Light";
+    defaultLight.type = SceneLightType::Point;
+    defaultLight.position = glm::vec3(-5.0f, 8.0f, 4.0f);
+    defaultLight.color = glm::vec3(1.f, 1.f, 1.f);
+    defaultLight.power = 10.f;
+    m_sceneManager->addLight(defaultLight);
     m_grid = std::make_shared<InfiniteGrid>();
     std::string grid_vs = getAssetPath("shaders/grid_vs.glsl");
     std::string grid_fs = getAssetPath("shaders/grid_fs.glsl");
