@@ -15,6 +15,7 @@
 #include "SimpleGeometry/simple_geometry.hpp"
 #include "Physics/AnimationCreator/animation_controller.hpp"
 #include "Physics/PhysicsWorld/physics_world.hpp"
+#include "Gizmo/LightGizmo/light_gizmo_renderer.hpp"
 #include <memory>
 #include <unordered_map>
 
@@ -51,7 +52,8 @@ class FunGT : public GraphicsTool{
     std::unique_ptr<ViewPort> m_ViewPortLayer;     
     std::unique_ptr<ImGuiLayer> m_imguiLayer;
     std::shared_ptr<fungt::SimulationController> m_simController;
-    std::unique_ptr<PhysicsDebugRenderer> m_physicsDebugRenderer;   
+    std::unique_ptr<PhysicsDebugRenderer> m_physicsDebugRenderer;
+    std::unique_ptr<LightGizmoRenderer> m_lightGizmoRenderer;
     LayerStack m_layerStack;
 
     std::shared_ptr<InfiniteGrid> m_grid;  // ← ADD (shared_ptr for SceneManager)
