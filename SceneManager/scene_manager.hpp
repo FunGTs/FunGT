@@ -18,6 +18,7 @@ class SceneManager{
         glm::mat4 m_ModelMatrix = glm::mat4(1.f);
         //Lights!
         std::vector<SceneLight> m_lights;
+        glm::vec3 m_viewPos = glm::vec3(0.f);
         // Default light properties
         glm::vec3 m_lightPosition = glm::vec3(5.0f, 5.0f, 5.0f);
         glm::vec3 m_lightAmbient = glm::vec3(0.3f, 0.3f, 0.3f);
@@ -33,6 +34,7 @@ class SceneManager{
         void updateViewMatrix(const glm::mat4 &viewMatrix);
         void updateProjectionMatrix(const glm::mat4 &projectionMatrix);
         void updateModelMatrix(const glm::mat4 &modelMatrix); 
+        void updateViewPos(const glm::vec3& pos) { m_viewPos = pos; }
         void renderScene();
         void addRenderableObj(std::shared_ptr<Renderable> node);
         void setDeltaTime(float deltaT); 

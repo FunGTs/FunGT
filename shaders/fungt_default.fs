@@ -1,80 +1,68 @@
 #version 440
 
-// ============================================================================
-// FunGT Default Shader - Universal Material & Texture Support
-// Handles: Materials only, Textures only, or Both
-// ============================================================================
-
 struct Material {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    vec3  ambient;
+    vec3  diffuse;
+    vec3  specular;
     float shininess;
     float emission;
 };
 
 struct Light {
-    vec3 position;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    vec3  position;
+    vec3  color;
+    float power;
 };
 
-// Inputs from vertex shader
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 textureCoords;
 
-// Output
 out vec4 vs_color;
 
-// Uniforms
-uniform vec3 viewPos;
+uniform vec3     viewPos;
 uniform Material material;
-uniform Light light;
-
-// Texture support
+uniform Light    light[8];
+uniform int      numLights;
 uniform sampler2D texture_diffuse1;
-uniform bool hasTexture;
+uniform bool     hasTexture;
 
-void main() {
-    // ========================================================================
-    // 1. GET BASE COLOR (Texture or Material)
-    // ========================================================================
+void main()
+{
     vec3 baseColor;
-    if (hasTexture) {
-        // Use texture as base color
+    if (hasTexture)
         baseColor = texture(texture_diffuse1, textureCoords).rgb;
-    } else {
-        // Use material diffuse as base color
+    else
         baseColor = material.diffuse;
-    }
-    
-    // ========================================================================
-    // 2. AMBIENT LIGHTING
-    // ========================================================================
-    vec3 ambient = light.ambient * material.ambient * baseColor;
-    
-    // ========================================================================
-    // 3. DIFFUSE LIGHTING
-    // ========================================================================
-    vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(light.position - FragPos);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * baseColor;
-    
-    // ========================================================================
-    // 4. SPECULAR LIGHTING
-    // ========================================================================
+
+    vec3 norm    = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * (spec * material.specular);
-    
-    // ========================================================================
-    // 5. COMBINE LIGHTING
-    // ========================================================================
+
+    vec3 totalAmbient  = vec3(0.0);
+    vec3 totalDiffuse  = vec3(0.0);
+    vec3 totalSpecular = vec3(0.0);
+
+    for (int i = 0; i < numLights; i++)
+    {
+        vec3  lightDir   = normalize(light[i].position - FragPos);
+        float dist   = length(light[i].position - FragPos);
+        float attenuation = 1.0 / (dist * dist + 1e-6f);
+        vec3  radiance   = light[i].color * light[i].power * attenuation;
+
+        // Ambient
+        totalAmbient += radiance * 0.05 * material.ambient;
+
+        // Diffuse
+        float diff = max(dot(norm, lightDir), 0.0);
+        totalDiffuse += radiance * diff * baseColor;
+
+        // Specular
+        vec3  reflectDir = reflect(-lightDir, norm);
+        float spec       = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+        totalSpecular += radiance * spec * material.specular;
+    }
+
     vec3 emissive = baseColor * material.emission;
-    vec3 result = ambient + diffuse + specular + emissive;
+    vec3 result   = totalAmbient + totalDiffuse + totalSpecular + emissive;
     vs_color = vec4(result, 1.0);
 }

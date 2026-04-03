@@ -230,6 +230,7 @@ void FunGT::update(const std::function<void()> &renderLambda)
     }
 
     m_sceneManager->updateViewMatrix(m_camera.getViewMatrix());
+    m_sceneManager->updateViewPos(m_camera.getPosition());
     m_sceneManager->updateProjectionMatrix(ProjectionMatrix);
 
     renderLambda();

@@ -2,13 +2,14 @@
 #define _SPACE_H_
 #include<vector>
 
-#include "../../Triangle/triangle.hpp"
-#include "../../SimpleModel/simple_model.hpp"
-#include "../Intersection/intersection.hpp"
-#include "../../SimpleModel/simple_model.hpp"
-#include "../../Path_Manager/path_manager.hpp"
-#include "../../Random/random.hpp"
+#include "Triangle/triangle.hpp"
+#include "SimpleModel/simple_model.hpp"
+#include "PBR/Intersection/intersection.hpp"
+#include "SimpleModel/simple_model.hpp"
+#include "Path_Manager/path_manager.hpp"
+#include "Random/random.hpp"
 #include "defualt_geometries.hpp"
+#include "Lights/scene_light.hpp"
 #include "PBR/Light/light.hpp"
 #include "PBR/Render/include/compute_backends.hpp"
 #include "PBR/Render/include/icompute_renderer.hpp"
@@ -56,6 +57,7 @@ class Space {
         void InitComputeRenderBackend();
         void LoadModelToRender(const SimpleModel& model);
         void LoadGeometryToRender(const SimpleGeometry& geometry);
+        void loadLightsFromScene(const std::vector<SceneLight>& sceneLights);
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
         static void SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer,
             int width, int height,
