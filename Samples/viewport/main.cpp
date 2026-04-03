@@ -7,10 +7,12 @@ const unsigned int SCREEN_HEIGHT = 1200;
 int main() {
     //std::string path = findProjectRoot();
     //Path to your shaders and models:
-    ModelPaths model_ball, model_lamp;
+    ModelPaths model_ball, model_lamp, model_hamm;
 
     model_lamp.path = getAssetPath("Obj/LuxoLamp/Luxo.obj");
     model_ball.path = getAssetPath("Obj/LuxoBall/luxoball.obj");
+    model_hamm.path = getAssetPath("Obj/Hamm/Hamm.obj");
+
     //Creates a FunGT Scene to display 
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
     //Background color, use 255.f for pure white, 
@@ -34,7 +36,11 @@ int main() {
     pixarBall->position(0.f, 2.3f, 10.f);
     pixarBall->rotation(0.f, 0.f, 0.f);
     pixarBall->scale(2.3);
-
+    FunGTSModel hamm = SimpleModel::create();
+    hamm->load(model_hamm);
+    hamm->position(10.f, 0.f, 0.f);
+    hamm->rotation(0.f, 45.f, 0.f);
+    hamm->scale(0.03f);
     FunGTSGeom ground = SimpleGeometry::create(Geometry::Plane);
     ground->load(getAssetPath("img/floor.png"));
     ground->position(0.0,0.0,0.0);
@@ -57,6 +63,7 @@ int main() {
         scene_manager->addRenderableObj(left_Wall);
         scene_manager->addRenderableObj(pixarLamp);
         scene_manager->addRenderableObj(pixarBall);
+        scene_manager->addRenderableObj(hamm);
         });
     myGame->render([&]() {
 
