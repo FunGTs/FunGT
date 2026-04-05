@@ -58,11 +58,13 @@ public:
         ImGui::Text("Lights (%d)", (int)lights.size());
         ImGui::BeginChild("LightList", ImVec2(0, 120), true);
         for (int i = 0; i < (int)lights.size(); i++) {
+            ImGui::PushID(i);
             char label[64];
             snprintf(label, sizeof(label), "[%s] %s", lightTypeName(lights[i].type), lights[i].name.c_str());
             if (ImGui::Selectable(label, m_selectedIndex == i)) {
                 m_selectedIndex = i;
             }
+            ImGui::PopID();
         }
         ImGui::EndChild();
 
