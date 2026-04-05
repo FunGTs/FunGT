@@ -30,11 +30,11 @@ void ProgressivePathTracer::initialize(Camera* viewportCam,
 
     // Create PBR camera
     PBRCamera pbrCam(pbrPos, pbrLookAt, pbrUp, fov, aspect);
-
     // Create space
     m_space = std::make_unique<Space>(pbrCam);
     m_space->InitComputeRenderBackend();
-
+    //Lights from Scene
+    m_space->loadLightsFromScene(sceneManager->getLights());
     // Load scene objects
     const auto& objects = sceneManager->getRenderable();
     int modelCount = 0;

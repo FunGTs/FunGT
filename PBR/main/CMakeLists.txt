@@ -128,6 +128,7 @@ set(FUNGT_INCLUDES
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/Renders
     ${FUNGT_BASE_DIR}/Matrix
+    ${FUNGT_BASE_DIR}/Lights
     ${FUNGT_BASE_DIR}/gpu/data
     ${FUNGT_BASE_DIR}/gpu/include
 )
