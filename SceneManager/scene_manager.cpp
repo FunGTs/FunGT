@@ -40,10 +40,17 @@ void SceneManager::renderScene()
         node->setViewMatrix(m_ViewMatrix);
         node->updateModelMatrix();
         node->updateTime(m_deltaTime);
-        node->getShader().setUniformVec3f(m_lightPosition, "light.position");
-        node->getShader().setUniformVec3f(m_lightAmbient, "light.ambient");
-        node->getShader().setUniformVec3f(m_lightDiffuse, "light.diffuse");
-        node->getShader().setUniformVec3f(m_lightSpecular, "light.specular");
+        node->getShader().setUniform1i("numLights", (int)m_lights.size());
+        node->getShader().setUniformVec3f(m_viewPos, "viewPos");
+
+        for (size_t i = 0; i < m_lights.size(); ++i)
+        {
+            const SceneLight& light = m_lights[i];
+            std::string idx = std::to_string(i);
+            node->getShader().setUniformVec3f(light.position, "light[" + idx + "].position");
+            node->getShader().setUniformVec3f(light.color, "light[" + idx + "].color");
+            node->getShader().setUniformVec1f(light.power, "light[" + idx + "].power");
+        }
         node->getShader().setUniformMat4fv("ViewMatrix",node->getViewMatrix());
         node->getShader().setUniformMat4fv("ProjectionMatrix",m_ProjectionMatrix);
         node->getShader().setUniformMat4fv("ModelMatrix",node->getModelMatrix());

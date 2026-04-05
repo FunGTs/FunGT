@@ -19,6 +19,7 @@ FunGT::FunGT(int _width, int _height)
     //Progressive Path Tracer
     m_progressiveTracer = std::make_unique<ProgressivePathTracer>();
     
+    
 }
 FunGT::~FunGT(){
     std::cout<<"FunGT destructor"<<std::endl; 
@@ -91,6 +92,14 @@ std::shared_ptr<SceneManager> FunGT::getSceneManager()
 }
 void FunGT::set(const std::function<void()>& renderLambda){
     std::cout << "Starting FunGT Setting process..." << std::endl;
+    //Lights:
+    SceneLight defaultLight;
+    defaultLight.name = "Point Light";
+    defaultLight.type = SceneLightType::Point;
+    defaultLight.position = glm::vec3(-5.0f, 8.0f, 4.0f);
+    defaultLight.color = glm::vec3(1.f, 1.f, 1.f);
+    defaultLight.power = 10.f;
+    m_sceneManager->addLight(defaultLight);
     m_grid = std::make_shared<InfiniteGrid>();
     std::string grid_vs = getAssetPath("shaders/grid_vs.glsl");
     std::string grid_fs = getAssetPath("shaders/grid_fs.glsl");
@@ -122,6 +131,9 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_animationController = std::make_shared<fungt::AnimationController>(m_sceneManager);
        
    }
+   //Light gizmo renderer
+   m_lightGizmoRenderer = std::make_unique<LightGizmoRenderer>(m_sceneManager.get(), &m_camera);
+   m_lightGizmoRenderer->init();
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
@@ -151,6 +163,9 @@ void FunGT::set(const std::function<void()>& renderLambda){
                 // Second: Render wireframes ON TOP of scene (before ImGui!)
                 if (m_physicsDebugRenderer) {
                     m_physicsDebugRenderer->render();
+                }
+                if (m_lightGizmoRenderer) {
+                    m_lightGizmoRenderer->render(ProjectionMatrix);
                 }
         });
         m_ViewPortLayer->setPathTraceFunction([this](int width, int height, int sample) {
@@ -215,6 +230,7 @@ void FunGT::update(const std::function<void()> &renderLambda)
     }
 
     m_sceneManager->updateViewMatrix(m_camera.getViewMatrix());
+    m_sceneManager->updateViewPos(m_camera.getPosition());
     m_sceneManager->updateProjectionMatrix(ProjectionMatrix);
 
     renderLambda();

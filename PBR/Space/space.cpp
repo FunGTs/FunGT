@@ -370,6 +370,24 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
     std::cout << "Geometry loaded. Total triangles in scene: " << m_triangles.size() << std::endl;
     sendTexturesToRender();
 }
+void Space::loadLightsFromScene(const std::vector<SceneLight>& sceneLights)
+{
+    m_lights.clear();
+    for (const auto& sl : sceneLights)
+    {
+        fungt::Vec3 pos(sl.position.x, sl.position.y, sl.position.z);
+        fungt::Vec3 intensity(
+            sl.color.x * sl.power,
+            sl.color.y * sl.power,
+            sl.color.z * sl.power);
+
+        LightType type = LightType::Point;
+        if (sl.type == SceneLightType::Area)        type = LightType::Area;
+        if (sl.type == SceneLightType::Sun)         type = LightType::Directional;
+
+        m_lights.push_back(Light(pos, intensity, type));
+    }
+}
 void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height)
 {
     std::vector<unsigned char> pixels(width * height * 3);

@@ -44,7 +44,7 @@ namespace flib
         static void create_gl_interop_context(const std::string& name);
         static bool is_rtc_available(const std::string& name = "");
         static void register_queue(const std::string& name, flib::device device_type,
-                                   flib::vendor vendor_type, flib::backend backend_type);
+                                   flib::vendor vendor_type, flib::backend backend_type, bool profiling = false);
         static sycl::queue get_queue();
         static sycl::queue get_queue(const std::string& name);
         static cl_context get_clContext();

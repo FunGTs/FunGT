@@ -2,16 +2,24 @@
 #define _LIGHT_EDITOR_WINDOW_H_
 
 #include "imgui_window.hpp"
-#include "../SceneManager/scene_manager.hpp"
+#include "SceneManager/scene_manager.hpp"
+#include "Lights/scene_light.hpp"
 #include <memory>
 
-/**
- * Light Editor Window - Edit scene lighting in real-time
- * Works with lights stored in SceneManager
- */
 class LightEditorWindow : public ImGuiWindow {
 private:
     std::shared_ptr<SceneManager> m_sceneManager;
+    int m_selectedIndex = -1;
+
+    const char* lightTypeName(SceneLightType type) {
+        switch (type) {
+        case SceneLightType::Point: return "Point";
+        case SceneLightType::Sun:   return "Sun";
+        case SceneLightType::Spot:  return "Spot";
+        case SceneLightType::Area:  return "Area";
+        }
+        return "Unknown";
+    }
 
 public:
     LightEditorWindow(std::shared_ptr<SceneManager> sceneManager)
@@ -20,10 +28,8 @@ public:
     }
 
     void onImGuiRender() override {
-        // Set initial size if window hasn't been created yet
-        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
-
-        ImGui::Begin("Light Editor");
+        ImGui::SetNextWindowSize(ImVec2(320, 500), ImGuiCond_FirstUseEver);
+        ImGui::Begin("SceneLight Editor");
 
         if (!m_sceneManager) {
             ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No scene manager");
@@ -31,92 +37,117 @@ public:
             return;
         }
 
-        ImGui::Text("Scene Light");
-        ImGui::Separator();
-        ImGui::Spacing();
+        auto& lights = m_sceneManager->getLights();
 
         // ====================================================================
-        // LIGHT POSITION
+        // ADD LIGHT BUTTONS
         // ====================================================================
+        if (ImGui::Button("Add Point")) { SceneLight l; l.type = SceneLightType::Point; l.name = "Point Light";  m_sceneManager->addLight(l); m_selectedIndex = (int)lights.size() - 1; }
+        ImGui::SameLine();
+        if (ImGui::Button("Add Sun")) { SceneLight l; l.type = SceneLightType::Sun;   l.name = "Sun Light";    m_sceneManager->addLight(l); m_selectedIndex = (int)lights.size() - 1; }
+        ImGui::SameLine();
+        if (ImGui::Button("Add Spot")) { SceneLight l; l.type = SceneLightType::Spot;  l.name = "Spot Light";   m_sceneManager->addLight(l); m_selectedIndex = (int)lights.size() - 1; }
+        ImGui::SameLine();
+        if (ImGui::Button("Add Area")) { SceneLight l; l.type = SceneLightType::Area;  l.name = "Area Light";   m_sceneManager->addLight(l); m_selectedIndex = (int)lights.size() - 1; }
+
+        ImGui::Separator();
+
+        // ====================================================================
+        // LIGHT LIST
+        // ====================================================================
+        ImGui::Text("Lights (%d)", (int)lights.size());
+        ImGui::BeginChild("LightList", ImVec2(0, 120), true);
+        for (int i = 0; i < (int)lights.size(); i++) {
+            ImGui::PushID(i);
+            char label[64];
+            snprintf(label, sizeof(label), "[%s] %s", lightTypeName(lights[i].type), lights[i].name.c_str());
+            if (ImGui::Selectable(label, m_selectedIndex == i)) {
+                m_selectedIndex = i;
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndChild();
+
+        // ====================================================================
+        // REMOVE
+        // ====================================================================
+        if (m_selectedIndex >= 0 && m_selectedIndex < (int)lights.size()) {
+            if (ImGui::Button("Remove Selected")) {
+                lights.erase(lights.begin() + m_selectedIndex);
+                m_selectedIndex = -1;
+                ImGui::End();
+                return;
+            }
+        }
+
+        ImGui::Separator();
+
+        // ====================================================================
+        // PROPERTIES OF SELECTED LIGHT
+        // ====================================================================
+        if (m_selectedIndex < 0 || m_selectedIndex >= (int)lights.size()) {
+            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Select a light to edit");
+            ImGui::End();
+            return;
+        }
+
+        SceneLight& light = lights[m_selectedIndex];
+
+        ImGui::Text("Type: %s", lightTypeName(light.type));
+        ImGui::Spacing();
+
+        // Name
+        char nameBuf[64];
+        strncpy(nameBuf, light.name.c_str(), sizeof(nameBuf));
+        if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) {
+            light.name = nameBuf;
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        // Common properties
         ImGui::Text("Position");
-        auto& lightPos = m_sceneManager->getLightPosition();
-        if (ImGui::DragFloat3("##LightPos", &lightPos.x, 0.1f, -20.0f, 20.0f)) {
-            // Light position changed - will update on next render automatically!
-        }
+        ImGui::DragFloat3("##Pos", &light.position.x, 0.1f);
+
+        ImGui::Text("Color");
+        ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_Float);
+
+        ImGui::Text("Power");
+        ImGui::DragFloat("##Power", &light.power, 0.1f, 0.0f, 10000.f);
 
         ImGui::Spacing();
         ImGui::Separator();
-        ImGui::Spacing();
 
-        // ====================================================================
-        // AMBIENT COLOR
-        // ====================================================================
-        ImGui::Text("Ambient");
-        auto& ambient = m_sceneManager->getLightAmbient();
-        ImGui::ColorEdit3("##Ambient", &ambient.x, ImGuiColorEditFlags_Float);
+        // Type specific properties
+        switch (light.type)
+        {
+        case SceneLightType::Point:
+            ImGui::Text("Radius");
+            ImGui::DragFloat("##Radius", &light.radius, 0.01f, 0.0f, 100.f);
+            break;
 
-        ImGui::Spacing();
+        case SceneLightType::Sun:
+            ImGui::Text("Direction");
+            ImGui::DragFloat3("##Dir", &light.direction.x, 0.01f, -1.f, 1.f);
+            break;
 
-        // ====================================================================
-        // DIFFUSE COLOR
-        // ====================================================================
-        ImGui::Text("Diffuse (Main Color)");
-        auto& diffuse = m_sceneManager->getLightDiffuse();
-        ImGui::ColorEdit3("##Diffuse", &diffuse.x, ImGuiColorEditFlags_Float);
+        case SceneLightType::Spot:
+            ImGui::Text("Direction");
+            ImGui::DragFloat3("##SpotDir", &light.direction.x, 0.01f, -1.f, 1.f);
+            ImGui::Text("Inner Angle");
+            ImGui::DragFloat("##Inner", &light.innerAngle, 0.5f, 0.f, light.outerAngle);
+            ImGui::Text("Outer Angle");
+            ImGui::DragFloat("##Outer", &light.outerAngle, 0.5f, light.innerAngle, 90.f);
+            break;
 
-        ImGui::Spacing();
-
-        // ====================================================================
-        // SPECULAR COLOR
-        // ====================================================================
-        ImGui::Text("Specular (Highlights)");
-        auto& specular = m_sceneManager->getLightSpecular();
-        ImGui::ColorEdit3("##Specular", &specular.x, ImGuiColorEditFlags_Float);
-
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        // ====================================================================
-        // PRESETS
-        // ====================================================================
-        ImGui::Text("Presets:");
-
-        if (ImGui::Button("Daylight", ImVec2(-1, 0))) {
-            lightPos = glm::vec3(5.0f, 10.0f, 5.0f);
-            ambient = glm::vec3(0.3f, 0.3f, 0.3f);
-            diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-            specular = glm::vec3(1.0f, 1.0f, 1.0f);
+        case SceneLightType::Area:
+            ImGui::Text("Normal");
+            ImGui::DragFloat3("##Normal", &light.normal.x, 0.01f, -1.f, 1.f);
+            ImGui::Text("Size");
+            ImGui::DragFloat2("##Size", &light.size.x, 0.1f, 0.1f, 100.f);
+            break;
         }
-
-        if (ImGui::Button("Sunset", ImVec2(-1, 0))) {
-            lightPos = glm::vec3(5.0f, 3.0f, 5.0f);
-            ambient = glm::vec3(0.2f, 0.15f, 0.1f);
-            diffuse = glm::vec3(1.0f, 0.6f, 0.3f);
-            specular = glm::vec3(1.0f, 0.8f, 0.6f);
-        }
-
-        if (ImGui::Button("Night", ImVec2(-1, 0))) {
-            lightPos = glm::vec3(0.0f, 5.0f, 5.0f);
-            ambient = glm::vec3(0.05f, 0.05f, 0.1f);
-            diffuse = glm::vec3(0.3f, 0.3f, 0.5f);
-            specular = glm::vec3(0.5f, 0.5f, 0.8f);
-        }
-
-        if (ImGui::Button("Studio (3-Point)", ImVec2(-1, 0))) {
-            lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
-            ambient = glm::vec3(0.2f, 0.2f, 0.2f);
-            diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
-            specular = glm::vec3(1.0f, 1.0f, 1.0f);
-        }
-
-        // ====================================================================
-        // INFO
-        // ====================================================================
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Tip:");
-        ImGui::TextWrapped("Changes apply immediately to all objects in the scene");
 
         ImGui::End();
     }
