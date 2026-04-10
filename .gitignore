@@ -1,5 +1,5 @@
 # Ignore build artifacts
-.fungt_config.json
+.fungt_config*.json
 # Build directories
 build/
 release/
