@@ -42,9 +42,9 @@ namespace fgt {
                     auto acc = buf.template get_access<sycl::access::mode::read_write>(cgh);
                     cgh.parallel_for(sycl::range<2>(sycl::range<2>{static_cast<size_t>(xdim), static_cast<size_t>(ydim)}),
                         [=](sycl::item<2> item) {
-                            //user defined lambda function
                             std::size_t index = item[0] * ydim + item[1];
                             if (index < n) {
+                                //user defined lambda function
                                 update_function(acc[index], dt);
                             }
                         });
@@ -64,7 +64,6 @@ namespace fgt {
         }
 
     };
-
 }
 
 #endif // _PARTICLE_SYSTEM_FGT_H
