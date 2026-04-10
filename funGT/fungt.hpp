@@ -91,6 +91,10 @@ class FunGT : public GraphicsTool{
         std::shared_ptr<fungt::AnimationController> getAnimationController() {
             return m_animationController;
         }
+        ImGuiLayer& getImGuiLayer() const {
+            // Optional: assert(m_imguiLayer != nullptr);
+            return *m_imguiLayer;
+        }
         void createPhysicsWorld() {
             m_physicsWorld = std::make_shared<PhysicsWorld>();
             if(m_physicsWorld) {

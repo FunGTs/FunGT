@@ -1,6 +1,6 @@
 #include "particle_simulation.hpp"
 
-ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader, bool use_rtc)
+ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader)
 : m_NumParticles{num}{
     // INITIALIZE SYCL WITH GL INTEROP (ParticleSimulation owns this responsibility)
     std::cout << "Initializing SYCL for ParticleSimulation..." << std::endl;
@@ -11,63 +11,9 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
     std::cout << "Particle system constructor" << std::endl;
     std::cout << "Num particles: " << m_pSet._particles.size() << std::endl;
 
-    bool m_useRTC  = use_rtc;
-    bool allowRTC = false;
-    // Try RTC first
-    if(m_useRTC){
+    loadDemo(3);
+    this->init();
 
-        if (ParticleRTC::isSupported()) {
-            m_rtc = std::make_unique<ParticleRTC>();
-            std::cout << "ParticleRTC initialized successfully\n";
-
-            std::string init_code = R"""(
-            float theta = index * 0.061803f;
-            float phi = index * 0.123f;
-            float speed = 2.0f + (index % 100) * 0.01f;
-            
-            p.position[0] = 0.0f;
-            p.position[1] = 0.0f;
-            p.position[2] = 0.0f;
-            
-            p.velocity[0] = speed * sycl::sin(phi) * sycl::cos(theta);
-            p.velocity[1] = speed * sycl::sin(phi) * sycl::sin(theta);
-            p.velocity[2] = speed * sycl::cos(phi);
-        )""";
-
-            std::string update_code = R"""(
-            constexpr float gravity = -2.0f;
-            constexpr float drag = 0.99f;
-            p.velocity[2] += gravity * dt;
-            p.velocity[0] *= drag;
-            p.velocity[1] *= drag;
-            p.velocity[2] *= drag;
-            p.position[0] += p.velocity[0] * dt;
-            p.position[1] += p.velocity[1] * dt;
-            p.position[2] += p.velocity[2] * dt;
-        )""";
-
-            std::string error;
-            bool init_ok = m_rtc->compileInitKernel(init_code, error);
-            bool update_ok = m_rtc->compileKernel(update_code, error);
-
-            if (init_ok && update_ok) {
-                std::cout << "Using RTC path\n";
-                this->initRTC();
-            }
-            else {
-                std::cerr << "RTC compilation failed: " << error << "\n";
-                std::cout << "Falling back to compile-time demos\n";
-            }
-        }
-        else {
-            std::cout << "RTC not supported, using compile-time demos\n";
-        }
-    }
-    else{
-
-        loadDemo(3);
-        this->init();
-    }
     m_shader.create(vertex_shader, fragment_shader);
 }
 
@@ -108,31 +54,7 @@ void ParticleSimulation::init()
 
     m_vao.unbind();
 }
-void ParticleSimulation::initRTC()
-{
-    m_vao.genVAO();
-    m_vbo.genVB();
 
-    m_vao.bind();
-    m_vbo.bind();
-
-    // Allocate empty VBO (no CPU data needed for RTC)
-    m_vbo.bufferData(nullptr,
-        m_pSet._particles.size() * sizeof(fgt::Particle<float>),
-        GL_DYNAMIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-        sizeof(fgt::Particle<float>),
-        (void*)offsetof(fgt::Particle<float>, position));
-    glEnableVertexAttribArray(0);
-
-    m_vao.unbind();
-
-    // GPU kernel fills the VBO
-    if (m_rtc && m_rtc->hasInitKernel()) {
-        m_rtc->executeInit(m_pSet._particles.size(), m_vbo.getId());
-    }
-}
 void ParticleSimulation::draw()
 {
     this->simulation();
@@ -177,15 +99,7 @@ glm::mat4 ParticleSimulation::getModelMatrix() const
 void ParticleSimulation::simulation()
 {
     int numParticles = m_pSet._particles.size();
-    // Use RTC kernel if available
-    if (m_rtc && m_rtc->hasKernel()) {
-        // Print BEFORE
-        
-        m_rtc->execute(numParticles, m_vbo.getId(), 0.005f);
-
-        return;
-    }
-
+ 
     switch (m_currentDemo) {
     case 0:
         fgt::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
@@ -212,6 +126,7 @@ void ParticleSimulation::simulation()
             numParticles, m_vbo.getId(), fgt::smokeUpdate, 0.005f);
         break;
     default:
+
         fgt::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
             numParticles, m_vbo.getId(), fgt::spiralExplosionUpdate, 0.005f);
         break;

@@ -217,6 +217,8 @@ include_directories(
     ${FUNGT_BASE_DIR}/PBR/TriangleExtractor
     ${FUNGT_BASE_DIR}/PBR/BVH
     ${FUNGT_BASE_DIR}/Triangle
+    ${FUNGT_BASE_DIR}/Gizmo/LightGizmo
+    ${FUNGT_BASE_DIR}/Lights
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -260,6 +262,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
     ${FUNGT_BASE_DIR}/GUI/gui.cpp
+    ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/simulation_controller_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/debug_rigidbody_renderer.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
@@ -280,6 +283,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
     ${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
+    ${FUNGT_BASE_DIR}/Gizmo/LightGizmo/light_gizmo_renderer.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════
