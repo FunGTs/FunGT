@@ -8,10 +8,10 @@
 #include <device_launch_parameters.h>
 #endif
 #else
-    // Define dummy type for non-CUDA builds
+    // Define dummy type for non CUDA builds
 using cudaTextureObject_t = unsigned long long;
 #endif
-// NOW include your headers - they'll see FUNGT_USE_CUDA
+
 #include <iostream>
 #include "icompute_renderer.hpp"
 #include "gpu/include/fgt_cpu_device.hpp"
