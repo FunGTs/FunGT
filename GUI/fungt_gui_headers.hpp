@@ -11,4 +11,5 @@
 #include "GUI/physics_control_window.hpp"
 #include "GUI/physics/physics_debug_layer_window.hpp"
 #include "GUI/animation/animation_control_window.hpp"
+#include "GUI/particle_rtc_window.hpp"
 #endif // _FUNGT_GUI_HEADERS_H_

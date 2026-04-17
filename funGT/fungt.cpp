@@ -142,6 +142,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
        m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
        m_imguiLayer->addWindow(std::make_unique<LightEditorWindow>(m_sceneManager));
        m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
+       //m_imguiLayer->addWindow(std::make_unique<ParticleRTCWindow>());
        if(m_ViewPortLayer){
            ViewPort* viewportPtr = m_ViewPortLayer.get();
            m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager, &m_camera, viewportPtr, m_imguiLayer->getGPUManager()));

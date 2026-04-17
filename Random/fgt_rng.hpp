@@ -1,6 +1,6 @@
 #if !defined(_FGT_RNG_H_)
 #define _FGT_RNG_H_
-#include "../gpu/include/fgt_cpu_device.hpp"
+#include "gpu/include/fgt_cpu_device.hpp"
 namespace fungt{
 
     class RNG{
