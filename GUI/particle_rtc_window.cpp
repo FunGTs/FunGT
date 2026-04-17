@@ -10,48 +10,51 @@ ParticleRTCWindow::ParticleRTCWindow(std::shared_ptr<ParticleRTC> particleRTC)
 
 
 
-    // Load API key from config
-    std::ifstream config_file(".fungt_config.json");
+    // Load LLM config
+    std::string config_location = getAssetPath(".fungt_config.json");
+    std::ifstream config_file(config_location);
     if (config_file.is_open()) {
         std::string line;
         while (std::getline(config_file, line)) {
-            // Simple parse: find "anthropic_api_key": "sk-..."
-            size_t key_pos = line.find("\"anthropic_api_key\"");
-            if (key_pos != std::string::npos) {
-                size_t start = line.find('"', key_pos + 20) + 1;
-                size_t end = line.find('"', start);
-                m_apiKey = line.substr(start, end - start);
-                break;
-            }
+            auto extractValue = [&](const std::string& field, std::string& dest) {
+                size_t pos = line.find("\"" + field + "\"");
+                if (pos != std::string::npos) {
+                    size_t start = line.find('"', pos + field.size() + 2) + 1;
+                    size_t end = line.find('"', start);
+                    dest = line.substr(start, end - start);
+                }
+            };
+            extractValue("llm_ax", m_llmAx);
+            extractValue("llm_url", m_llmUrl);
         }
         config_file.close();
     }
 
-    if (m_apiKey.empty()) {
-        std::cout << "Warning: No API key found. Copy .fungt_config.example.json to .fungt_config.json and add your key.\n";
+    if (m_llmAx.empty() || m_llmUrl.empty()) {
+        std::cout << "Warning: LLM config incomplete. Check .fungt_config.json.\n";
     }
 
-    m_initCode = R"(float theta = index * 0.061803f;
-float phi = index * 0.123f;
-float speed = 2.0f + (index % 100) * 0.01f;
+//     m_initCode = R"(float theta = index * 0.061803f;
+// float phi = index * 0.123f;
+// float speed = 2.0f + (index % 100) * 0.01f;
 
-p.position[0] = 0.0f;
-p.position[1] = 0.0f;
-p.position[2] = 0.0f;
+// p.position[0] = 0.0f;
+// p.position[1] = 0.0f;
+// p.position[2] = 0.0f;
 
-p.velocity[0] = speed * sycl::sin(phi) * sycl::cos(theta);
-p.velocity[1] = speed * sycl::sin(phi) * sycl::sin(theta);
-p.velocity[2] = speed * sycl::cos(phi);)";
+// p.velocity[0] = speed * sycl::sin(phi) * sycl::cos(theta);
+// p.velocity[1] = speed * sycl::sin(phi) * sycl::sin(theta);
+// p.velocity[2] = speed * sycl::cos(phi);)";
 
-    m_updateCode = R"(constexpr float gravity = -2.0f;
-constexpr float drag = 0.99f;
-p.velocity[2] += gravity * dt;
-p.velocity[0] *= drag;
-p.velocity[1] *= drag;
-p.velocity[2] *= drag;
-p.position[0] += p.velocity[0] * dt;
-p.position[1] += p.velocity[1] * dt;
-p.position[2] += p.velocity[2] * dt;)";
+//     m_updateCode = R"(constexpr float gravity = -2.0f;
+// constexpr float drag = 0.99f;
+// p.velocity[2] += gravity * dt;
+// p.velocity[0] *= drag;
+// p.velocity[1] *= drag;
+// p.velocity[2] *= drag;
+// p.position[0] += p.velocity[0] * dt;
+// p.position[1] += p.velocity[1] * dt;
+// p.position[2] += p.velocity[2] * dt;)";
 
     m_statusMessage = "Ready";
 }
@@ -136,12 +139,12 @@ void ParticleRTCWindow::onImGuiRender() {
     ImGui::InputTextMultiline("##prompt",
         const_cast<char*>(m_userPrompt.c_str()),
         m_userPrompt.capacity(),
-        ImVec2(-1, 60),
+        ImVec2(-1, 200),
         ImGuiInputTextFlags_CallbackResize,
         InputTextCallback,
         &m_userPrompt);
 
-    if (ImGui::Button("Generate from Prompt", ImVec2(150, 0))) {
+    if (ImGui::Button("Generate from Prompt", ImVec2(250, 0))) {
         generateFromPrompt();
     }
     ImGui::SameLine();
@@ -150,7 +153,7 @@ void ParticleRTCWindow::onImGuiRender() {
     }
 
     ImGui::Separator();
-    ImGui::Begin("Runtime Kernel Compiler", &m_isVisible);
+    ImGui::Text("Runtime Kernel Compiler", &m_isVisible);
 
     switch (m_status) {
     case CompileStatus::Idle:
@@ -244,44 +247,33 @@ void ParticleRTCWindow::generateFromPrompt() {
         [this, prompt]() -> std::pair<bool, std::string> {
 
             std::string systemPrompt = R"(
-You translate particle effect descriptions into C++ code bodies.
-
-User describes effect like "fireworks" or "rain" or "spiral galaxy"
-You generate plain C++ code that manipulates particle data.
+You generate C++ code for particle simulations.
 
 Particle struct: fgt::Particle<float> with position[3], velocity[3], acceleration[3], mass
 
-INIT BODY - available: Particle& p, int index
-Sets initial state (position, velocity)
+TOOLS AVAILABLE:
+- fungt::RNG rng(index, 0); float r = rng.nextFloat01();
+- SYCL math: sycl::sin, sycl::cos, sycl::sqrt, sycl::acos
 
-UPDATE BODY - available: Particle& p, float dt  
-Physics simulation step
+INIT BODY (vars: Particle& p, int index):
+Set initial positions and velocities
 
-Use sycl:: prefix for math: sycl::sin, sycl::cos, sycl::sqrt, sycl::acos
-
-Example - "rain falling":
-INIT:
-p.position[0] = (index % 100) * 0.5f;
-p.position[1] = 10.0f;
-p.position[2] = (index / 100) * 0.5f;
-p.velocity[1] = -2.0f;
-
-UPDATE:
-p.velocity[1] += -9.8f * dt;
+UPDATE BODY (vars: Particle& p, float dt):
+ALWAYS update ALL position components:
 p.position[0] += p.velocity[0] * dt;
 p.position[1] += p.velocity[1] * dt;
 p.position[2] += p.velocity[2] * dt;
+Then add physics (gravity, respawn, etc)
 
-Return ONLY code bodies, no wrappers, no markdown.
+Return PLAIN CODE, NO markdown, NO backticks, NO ```cpp
 Format:
 INIT:
 <code>
 UPDATE:
 <code>
 )";
-
             try {
-                std::string response = callClaudeAPI(systemPrompt, prompt);
+                std::string response = reqToLLM(systemPrompt, prompt);
                 parseAndSetCode(response);
                 return { true, "" };
             }
@@ -290,9 +282,9 @@ UPDATE:
             }
         });
 }
-std::string ParticleRTCWindow::callClaudeAPI(const std::string& systemPrompt, const std::string& userPrompt) {
-    if (m_apiKey.empty()) {
-        throw std::runtime_error("Gemini API key not configured");
+std::string ParticleRTCWindow::reqToLLM(const std::string& systemPrompt, const std::string& userPrompt) {
+    if (m_llmAx.empty() || m_llmUrl.empty()) {
+        throw std::runtime_error("LLM not configured");
     }
 
     CURL* curl = curl_easy_init();
@@ -300,9 +292,7 @@ std::string ParticleRTCWindow::callClaudeAPI(const std::string& systemPrompt, co
         throw std::runtime_error("Failed to initialize cURL");
     }
 
-    // Build URL with API key
-    std::string url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + m_apiKey;
-
+    std::string url = m_llmUrl;
     // Escape JSON strings
     auto escapeJson = [](const std::string& s) {
         std::string escaped = s;
@@ -322,7 +312,7 @@ std::string ParticleRTCWindow::callClaudeAPI(const std::string& systemPrompt, co
     std::string escapedSystem = escapeJson(systemPrompt);
     std::string escapedUser = escapeJson(userPrompt);
 
-    // Gemini JSON format
+    // JSON format
     std::string payload = R"({
         "contents": [{
             "parts": [{
@@ -331,12 +321,13 @@ std::string ParticleRTCWindow::callClaudeAPI(const std::string& systemPrompt, co
         }],
         "generationConfig": {
             "temperature": 0.7,
-            "maxOutputTokens": 2000
+            "maxOutputTokens": 4000
         }
     })";
 
     struct curl_slist* headers = NULL;
     headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, ("x-goog-api-key: " + m_llmAx).c_str());
 
     std::string response;
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -356,11 +347,11 @@ std::string ParticleRTCWindow::callClaudeAPI(const std::string& systemPrompt, co
     return response;
 }
 void ParticleRTCWindow::parseAndSetCode(const std::string& response) {
-    // Gemini response format: {"candidates":[{"content":{"parts":[{"text":"..."}]}}]}
-
+    
+    std::cout << "=== LLM RESPONSE ===\n" << response << "\n=== END ===\n";
     size_t text_pos = response.find("\"text\":");
     if (text_pos == std::string::npos) {
-        throw std::runtime_error("No text field in Gemini response");
+        throw std::runtime_error("No text field in LLM response");
     }
 
     size_t start = response.find('"', text_pos + 7) + 1;
@@ -373,7 +364,41 @@ void ParticleRTCWindow::parseAndSetCode(const std::string& response) {
         content.replace(pos, 2, "\n");
         pos += 1;
     }
+    // Unescape \n
+    pos = 0;
+    while ((pos = content.find("\\n", pos)) != std::string::npos) {
+        content.replace(pos, 2, "\n");
+        pos += 1;
+    }
 
+    // Unescape \u003c → 
+    pos = 0;
+    while ((pos = content.find("\\u003c", pos)) != std::string::npos) {
+        content.replace(pos, 6, "<");
+        pos += 1;
+    }
+
+    // Unescape \u003e → >
+    pos = 0;
+    while ((pos = content.find("\\u003e", pos)) != std::string::npos) {
+        content.replace(pos, 6, ">");
+        pos += 1;
+    }
+    // Strip markdown code fences
+    auto stripMarkdown = [](std::string& code) {
+        size_t start = code.find("```cpp");
+        if (start != std::string::npos) {
+            code.erase(start, 6);
+        }
+        start = code.find("```");
+        if (start != std::string::npos) {
+            code.erase(start, 3);
+        }
+        size_t end = code.rfind("```");
+        if (end != std::string::npos) {
+            code.erase(end, 3);
+        }
+        };
     // Extract INIT and UPDATE sections
     size_t init_pos = content.find("INIT:");
     size_t update_pos = content.find("UPDATE:");

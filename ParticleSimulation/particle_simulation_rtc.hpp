@@ -34,13 +34,13 @@ class ParticleRTC : public Renderable {
 public:
     fgt::ParticleSet<float> m_pSet;
     ParticleRTC(std::size_t numOfParticles);
-
+    //Compile user lambda to init the particle positions
     bool compileInitKernel(const std::string& user_init_code, std::string& error_msg);
+    //Executes the inital positions
     void executeInitKernel();
-    // Compile user lambda code
+    // Compiles user lambda code to update particles
     bool compileKernel(const std::string& user_code, std::string& error_msg);
-    
-    // Execute compiled kernel on particles
+    // Executes compiled kernel to update particles
     void executeKernel();
 
     // Check if device supports RTC
