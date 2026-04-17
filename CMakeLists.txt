@@ -422,7 +422,12 @@ elseif (UNIX)
 
     endif()
 
-    
+    find_package(CURL REQUIRED)
+    if (CURL_FOUND)
+        message(STATUS "CURL found")
+    else()
+        message(FATAL_ERROR "CURL library not found!")
+    endif()
     find_package(OpenGL REQUIRED)
     if (OpenGL_FOUND)
         message(STATUS "OpenGL found")
@@ -462,6 +467,7 @@ elseif (UNIX)
     target_include_directories(FunGT PRIVATE ${OpenCL_INCLUDE_DIRS})
     target_link_libraries(FunGT
         PRIVATE
+        CURL::libcurl
         OpenGL::GL
         glfw
         GLEW::GLEW

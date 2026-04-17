@@ -36,6 +36,7 @@ struct UserInit {
         static constexpr auto sycl_source = R"""(
 #include <sycl/sycl.hpp>
 #include "ParticleSimulation/particle.hpp"  // Physical file!
+#include "Random/fgt_rng.hpp"
 #include "user_init.h"                      // Virtual file
 
 extern "C" SYCL_EXT_ONEAPI_FUNCTION_PROPERTY((
@@ -52,11 +53,9 @@ void particle_init_kernel(fgt::Particle<float>* particles, int n, int ydim) {
 )""";
 
         syclexp::include_files includes{ "user_init.h", user_header };
-
         // Add include path for physical headers
         std::string include_path = "-I" + getAssetPath("");  // Points to project root
         syclexp::build_options opts{ "-fsycl " + include_path };
-
         std::string compiler_log;
         syclexp::save_log log{ &compiler_log };
 
@@ -66,11 +65,8 @@ void particle_init_kernel(fgt::Particle<float>* particles, int n, int ydim) {
             sycl_source,
             syclexp::properties{ includes }
         );
-
         auto exec_bundle = syclexp::build(source_bundle, syclexp::properties{ opts, log });
-
         // std::cout << "Init Kernel Compiled output:\n" << compiler_log << "\n";
-
         compiled_init_kernel_ = exec_bundle.ext_oneapi_get_kernel("particle_init_kernel");
 
         return true;
@@ -137,34 +133,36 @@ bool ParticleRTC::compileKernel(const std::string& user_code, std::string& error
         sycl::queue queue_ = flib::sycl_handler::get_queue("gl_queue");
         
         std::string user_header = R"""(
-struct UserUpdate {
-    void operator()(fgt::Particle<float>& p, float dt) const {
-        )""" + user_code + R"""(
-    }
-};
-)""";
+        struct UserUpdate {
+            void operator()(fgt::Particle<float>& p, float dt) const {
+                )""" + user_code + R"""(
+            }
+        };
+        )""";
 
         static constexpr auto sycl_source = R"""(
-#include <sycl/sycl.hpp>
-#include "ParticleSimulation/particle.hpp"  // Physical file
-#include "user_update.h"                    // Virtual file
+        #include <sycl/sycl.hpp>
+        #include "ParticleSimulation/particle.hpp"  // Physical file
+        #include "Random/fgt_rng.hpp"
+        #include "user_update.h"                    // Virtual file
 
-extern "C" SYCL_EXT_ONEAPI_FUNCTION_PROPERTY((
-    sycl::ext::oneapi::experimental::nd_range_kernel<2>))
-void particle_rtc_kernel(fgt::Particle<float>* particles, int n, int ydim, float dt) {
-    auto item = sycl::ext::oneapi::this_work_item::get_nd_item<2>();
-    std::size_t index = item.get_global_id(0) * ydim + item.get_global_id(1);
-    
-    if (index < n) {
-        UserUpdate update;
-        update(particles[index], dt);
-    }
-}
-)""";
+        extern "C" SYCL_EXT_ONEAPI_FUNCTION_PROPERTY((
+            sycl::ext::oneapi::experimental::nd_range_kernel<2>))
+        void particle_rtc_kernel(fgt::Particle<float>* particles, int n, int ydim, float dt) {
+            auto item = sycl::ext::oneapi::this_work_item::get_nd_item<2>();
+            std::size_t index = item.get_global_id(0) * ydim + item.get_global_id(1);
+            
+            if (index < n) {
+                UserUpdate update;
+                update(particles[index], dt);
+            }
+        }
+        )""";
 
         syclexp::include_files includes{ "user_update.h", user_header };
 
         std::string include_path = "-I" + getAssetPath("");
+        std::cout << "Include path: " << include_path << "\n";
         syclexp::build_options opts{ "-fsycl " + include_path };
 
         std::string compiler_log;

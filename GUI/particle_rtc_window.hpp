@@ -22,7 +22,8 @@ private:
     std::string m_errorMessage;
     std::string m_userPrompt;
     bool m_isVisible = true;
-    std::string m_apiKey;
+    std::string m_llmAx;
+    std::string m_llmUrl;
     // Threading
     std::atomic<bool> m_isCompiling{ false };
     std::atomic<bool> m_isGenerating{ false };
@@ -44,7 +45,7 @@ private:
     void checkCompilationStatus();
     void generateFromPrompt();  
     void checkGenerationStatus(); 
-    std::string callClaudeAPI(const std::string& systemPrompt, const std::string& userPrompt);
+    std::string reqToLLM(const std::string& systemPrompt, const std::string& userPrompt);
     void parseAndSetCode(const std::string& response);
 
 public:
