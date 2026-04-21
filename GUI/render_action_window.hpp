@@ -291,6 +291,8 @@ private:
             // ================================================================
             Space space(pbrCam);
             space.InitComputeRenderBackend();
+            // ADD LIGHT FROM THE SceneManager config
+            space.loadLightsFromScene(m_sceneManager->getLights());
             // ================================================================
             // 4. LOAD ALL MODELS FROM SCENE
             // ================================================================
