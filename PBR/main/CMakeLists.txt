@@ -197,7 +197,9 @@ if(FUNGT_USE_CUDA)
     )
 
     add_library(pbr_cuda STATIC ${CUDA_FILES})
-
+    target_compile_options(pbr_cuda PRIVATE 
+        $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>
+    )
     target_include_directories(pbr_cuda PUBLIC
         ${FUNGT_INCLUDES}
         ${FUNLIB_DIR}/include
