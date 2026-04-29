@@ -41,22 +41,19 @@ void geometry::Sphere::setData() {
 
     // Generate vertices for each stack and sector
     for (int i = 0; i <= m_stackCount; ++i) {
-        float stackAngle = M_PI / 2 - i * stackStep;  // Starting from pi/2 to -pi/2
-        float xy = m_radius * cosf(stackAngle);       // r * cos(u)
-        float y = m_radius * sinf(stackAngle);        // r * sin(u)
+        float stackAngle = M_PI / 2 - i * stackStep;
+        float xy = m_radius * cosf(stackAngle);
+        float y = m_radius * sinf(stackAngle);
 
         for (int j = 0; j <= m_sectorCount; ++j) {
-            float sectorAngle = j * sectorStep;       // Starting from 0 to 2pi
+            float sectorAngle = j * sectorStep;
 
-            // Vertex position
-            float x = xy * cosf(sectorAngle);         // r * cos(u) * cos(v)
-            float z = xy * sinf(sectorAngle);         // r * cos(u) * sin(v)
+            float x = xy * cosf(sectorAngle);
+            float z = xy * sinf(sectorAngle);
             glm::vec3 position(x, y, z);
 
-            // Normal (for sphere, normalized position is the normal)
             glm::vec3 normal = glm::normalize(position);
 
-            // Texture coordinates
             float u = (float)j / m_sectorCount;
             float v = (float)i / m_stackCount;
             glm::vec2 texCoord(u, v);
@@ -74,14 +71,14 @@ void geometry::Sphere::setData() {
         for (int j = 0; j < m_sectorCount; ++j, ++k1, ++k2) {
             if (i != 0) {
                 indices.push_back(k1);
-                indices.push_back(k2);
                 indices.push_back(k1 + 1);
+                indices.push_back(k2);
             }
 
             if (i != (m_stackCount - 1)) {
                 indices.push_back(k1 + 1);
-                indices.push_back(k2);
                 indices.push_back(k2 + 1);
+                indices.push_back(k2);
             }
         }
     }
