@@ -41,11 +41,11 @@ int main() {
     // pixarBall->position(0.f, 2.3f, 10.f);
     // pixarBall->rotation(0.f, 0.f, 0.f);
     // pixarBall->scale(2.3);
-    FunGTSModel monkey = SimpleModel::create();
-    monkey->load(model_monkey);
-    monkey->position(-10.f, 1.f, 5.f);
-    monkey->rotation(-40.f, 20.f, 0.f);
-    monkey->scale(2.f);
+    // FunGTSModel monkey = SimpleModel::create();
+    // monkey->load(model_monkey);
+    // monkey->position(-10.f, 1.f, 5.f);
+    // monkey->rotation(-40.f, 20.f, 0.f);
+    // monkey->scale(2.f);
     FunGTSGeom ground = SimpleGeometry::create(Geometry::Plane);
     ground->load(getAssetPath("img/floor.png"));
     ground->position(0.0,0.0,0.0);
@@ -59,10 +59,10 @@ int main() {
     left_Wall->load(getAssetPath("img/wall.png"));
     left_Wall->rotation(90.0f, 0.0f, -90.0f);
     left_Wall->position(-40.0f, 0.0f, 0.0f);
-    // FunGTSGeom ball = SimpleGeometry::create(Geometry::Sphere);
-    // ball->load(getAssetPath("img/ball.jpg"));
-    // ball->position(0.f, 2.3f, 10.f);
-    // ball->scale(2.3);
+    FunGTSGeom ball = SimpleGeometry::create(Geometry::Sphere);
+    ball->load(getAssetPath("img/ball.jpg"));
+    ball->position(0.f, 2.0f, 10.f);
+    ball->scale(2.0f);
     myGame->set([&]() { // Sets up all the scenes in your game
         // Adds the renderable objects to the SceneManager
                 // Adds the renderable objects to the SceneManager
@@ -71,8 +71,8 @@ int main() {
         scene_manager->addRenderableObj(left_Wall);
         scene_manager->addRenderableObj(iwocl_model);
         scene_manager->addRenderableObj(pixarLamp);
-        //scene_manager->addRenderableObj(ball);
-        scene_manager->addRenderableObj(monkey);
+        scene_manager->addRenderableObj(ball);
+        //scene_manager->addRenderableObj(monkey);
         });
     myGame->render([&]() {
 

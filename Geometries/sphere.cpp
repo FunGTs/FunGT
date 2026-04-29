@@ -20,22 +20,15 @@ void geometry::Sphere::draw() {
     texture.bind();
     m_vao.bind();
 
-    // Calculate number of triangles
-    int triangleCount = m_sectorCount * m_stackCount * 2;
-    glDrawArrays(GL_TRIANGLES, 0, triangleCount * 3);
+    glDrawElements(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0);
 }
 void geometry::Sphere::InstancedDraw(Shader& shader, int instanceCount)
 {
-
     texture.active();
     texture.bind();
     m_vao.bind();
 
-    // Get vertex count from primitive!
-    int vertexCount = getNumOfVertices();
-
-
-    glDrawArraysInstanced(GL_TRIANGLES, 0, vertexCount, instanceCount);
+    glDrawElementsInstanced(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0, instanceCount);
 
     m_vao.unbind();
 }
@@ -72,32 +65,27 @@ void geometry::Sphere::setData() {
         }
     }
 
-    // Generate triangle indices
-    std::vector<PrimitiveVertex> triangleVertices;
+    std::vector<GLuint> indices;
 
     for (int i = 0; i < m_stackCount; ++i) {
-        int k1 = i * (m_sectorCount + 1);      // Beginning of current stack
-        int k2 = k1 + m_sectorCount + 1;       // Beginning of next stack
+        int k1 = i * (m_sectorCount + 1);
+        int k2 = k1 + m_sectorCount + 1;
 
         for (int j = 0; j < m_sectorCount; ++j, ++k1, ++k2) {
-            // 2 triangles per sector excluding first and last stacks
             if (i != 0) {
-                // Triangle 1 (k1, k2, k1+1)
-                triangleVertices.push_back(vertices[k1]);
-                triangleVertices.push_back(vertices[k2]);
-                triangleVertices.push_back(vertices[k1 + 1]);
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
             }
 
             if (i != (m_stackCount - 1)) {
-                // Triangle 2 (k1+1, k2, k2+1)
-                triangleVertices.push_back(vertices[k1 + 1]);
-                triangleVertices.push_back(vertices[k2]);
-                triangleVertices.push_back(vertices[k2 + 1]);
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
             }
         }
     }
 
-    unsigned nOfvertices = triangleVertices.size();
-    this->set(triangleVertices.data(), nOfvertices);
+    this->set(vertices.data(), (unsigned)vertices.size(), indices.data(), (unsigned)indices.size());
 }
 
