@@ -327,6 +327,9 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
     else {
         std::cout << "  No texture (using base color)" << std::endl;
     }
+    std::cout << "Material baseColor: " << material.baseColor.x << " "
+        << material.baseColor.y << " " << material.baseColor.z << std::endl;
+    std::cout << "baseColorTexId: " << baseColorTexId << std::endl;
     for (size_t i = 0; i < indices.size(); i += 3) {
         const PrimitiveVertex& v0 = vertices[indices[i]];
         const PrimitiveVertex& v1 = vertices[indices[i + 1]];
@@ -363,7 +366,6 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
         tri.material.roughness = material.roughness;
         tri.material.metallic = material.metallic;
         tri.material.baseColorTexIdx = baseColorTexId;
-
         m_triangles.push_back(tri);
     }
 
