@@ -4,10 +4,13 @@
     SYCLTexture::SYCLTexture(sycl::queue& queue)
     :m_queue{&queue}{
 
+        auto currDevice = m_queue->get_device();
         std::cout << "SYCLTexture: Initialized with queue for device: "
-            << queue.get_device().get_info<sycl::info::device::name>()
+            << currDevice.get_info<sycl::info::device::name>()
             << std::endl;
-
+        
+        m_useBindlessImages = currDevice.has(sycl::aspect::ext_oneapi_bindless_images);
+        std::cout << "Bindless Image support: " << (m_useBindlessImages ? "YES" : "NO") << std::endl;
     }
     SYCLTexture::~SYCLTexture() {
         cleanup();
@@ -29,40 +32,17 @@
         std::cout << "SYCLTexture: Loaded " << path
             << " (" << width << "x" << height << ", " << channels << " channels)"
             << std::endl;
-
         try{
-            const unsigned int numChannels = 4;
-            const auto channelType = sycl::image_channel_type::unorm_int8;
-            syclexp::image_descriptor desc(
-                { static_cast<size_t>(width), static_cast<size_t>(height) },
-                numChannels,
-                channelType
-            );
-            syclexp::image_mem imgMem(desc, *m_queue);
+           
 
-            auto cpyToDeviceEvent = m_queue->ext_oneapi_copy(
-                data, //Source
-                imgMem.get_handle(), //Destination
-                desc //Image descriptor
-            );
-            cpyToDeviceEvent.wait_and_throw();
-            syclexp::bindless_image_sampler sampler(
-                sycl::addressing_mode::repeat,
-                sycl::coordinate_normalization_mode::normalized,
-                sycl::filtering_mode::linear
-            );
-            syclexp::sampled_image_handle imgHandle =
-                syclexp::create_image(imgMem, sampler,desc, *m_queue);
+            int index = -1;
 
-            SYCLTextureData texData;
-            texData.imgHandle = imgHandle;
-            texData.imgMem = std::move(imgMem);
-            texData.width = width;
-            texData.height = height;
-            texData.path = path;
-            int index = textures.size();
-            textures.push_back(std::move(texData));
-            pathToIndex[path] = index;
+            if (m_useBindlessImages) {
+                index = loadBindlessTexture(data, width, height, path);
+            }
+            else {
+                index = loadBufferTexture(data, width, height, path);
+            }
 
             stbi_image_free(data);
 
@@ -97,16 +77,24 @@
             // Wait for all operations to complete
             m_queue->wait_and_throw();
 
-            for (size_t i = 0; i < textures.size(); i++) {
-                auto& tex = textures[i];
-                std::cout << "SYCLTexture: Destroying texture " << i << std::endl;
+            if(m_useBindlessImages){
+                for (size_t i = 0; i < textures.size(); i++) {
+                    auto& tex = textures[i];
+                    std::cout << "SYCLTexture: Destroying texture " << i << std::endl;
 
-                try {
-                    syclexp::destroy_image_handle(tex.imgHandle, *m_queue);
+                    try {
+                        syclexp::destroy_image_handle(tex.imgHandle, *m_queue);
+                    }
+                    catch (const sycl::exception& e) {
+                        std::cerr << "SYCLTexture: Error destroying texture " << i
+                            << ": " << e.what() << std::endl;
+                    }
                 }
-                catch (const sycl::exception& e) {
-                    std::cerr << "SYCLTexture: Error destroying texture " << i
-                        << ": " << e.what() << std::endl;
+            }
+            else{
+                for (auto& tex : m_bufferTextures) {
+                    std::cout << "SYCLTexture: Destroying buffer texture " << i << std::endl;
+                    sycl::free(tex.deviceData, *m_queue);
                 }
             }
 
@@ -118,4 +106,67 @@
 
         textures.clear();
         pathToIndex.clear();
+    }
+
+    int SYCLTexture::loadBindlessTexture(unsigned char* data, int width, int height, const std::string& path)
+    {
+        const unsigned int numChannels = 4;
+        const auto channelType = sycl::image_channel_type::unorm_int8;
+        syclexp::image_descriptor desc(
+            { static_cast<size_t>(width), static_cast<size_t>(height) },
+            numChannels,
+            channelType
+        );
+        syclexp::image_mem imgMem(desc, *m_queue);
+
+        auto cpyToDeviceEvent = m_queue->ext_oneapi_copy(
+            data, //Source
+            imgMem.get_handle(), //Destination
+            desc //Image descriptor
+        );
+        cpyToDeviceEvent.wait_and_throw();
+        syclexp::bindless_image_sampler sampler(
+            sycl::addressing_mode::repeat,
+            sycl::coordinate_normalization_mode::normalized,
+            sycl::filtering_mode::linear
+        );
+        syclexp::sampled_image_handle imgHandle =
+            syclexp::create_image(imgMem, sampler, desc, *m_queue);
+
+        SYCLTextureData texData;
+        texData.imgHandle = imgHandle;
+        texData.imgMem = std::move(imgMem);
+        texData.width = width;
+        texData.height = height;
+        texData.path = path;
+        int index = textures.size();
+        textures.push_back(std::move(texData));
+        pathToIndex[path] = index;
+
+        return index;
+    }
+
+    int SYCLTexture::loadBufferTexture(unsigned char* data, int w, int h, const std::string& path)
+    {
+        std::vector<float> floatData(w * h * 4);
+        for (int i = 0; i < w * h * 4; i++) {
+            floatData[i] = data[i] / 255.0f;
+        }
+
+        float* devData = sycl::malloc_device<float>(w * h * 4, *m_queue); //m_queue is of type pointer
+        m_queue->memcpy(devData, floatData.data(), w * h * 4 * sizeof(float)).wait();
+
+
+        BufferTextureData tex;
+        tex.deviceData = devData;
+        tex.width = w;
+        tex.height = h;
+        tex.path = path;
+
+        
+        int index = m_bufferTextures.size();
+        m_bufferTextures.push_back(tex);
+
+        std::cout << "Loaded buffer texture " << index << " (" << path << ")" << std::endl;
+        return index;
     }

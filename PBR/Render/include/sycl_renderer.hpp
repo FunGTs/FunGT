@@ -16,13 +16,15 @@
 #include "PBR/Render/brdf/cook_torrance.hpp"
 #include "PBR/HitData/hit_data.hpp"
 #include "PBR/Render/shared/core_renderer.hpp"
+#include "PBR/TextureManager/general_gpu_texture.hpp"
 namespace syclexp = sycl::ext::oneapi::experimental;
 class SYCL_Renderer : public IComputeRenderer {
 private:
     sycl::ext::oneapi::experimental::sampled_image_handle* m_textureHandles = nullptr;
+    GPUTexture* m_bufferTextures = nullptr; // For devices with no bindless image supportGPUTexture
     int m_numTextures = 0;
     sycl::queue m_queue;
-
+    bool m_useBindlessImage = true;
 public:
 
     SYCL_Renderer(){
@@ -74,10 +76,30 @@ public:
             std::cout << "  Uploaded " << m_numTextures << " texture handles to GPU" << std::endl;
         }
     }
+    void setGPUBufferTextures(const std::vector<GPUTexture>& textures) {
+        if (m_bufferTextures) {
+            sycl::free(m_bufferTextures,m_queue);
+            m_bufferTextures = nullptr;
+        }
+        m_useBindlessImage = false;
+        m_numTextures = textures.size();
+
+        m_bufferTextures = sycl::malloc_device<GPUTexture>(
+            m_numTextures, m_queue
+        );
+        m_queue.memcpy(m_bufferTextures, textures.data(),
+            m_numTextures * sizeof(GPUTexture)).wait();
+
+        std::cout << "  Uploaded " << m_numTextures << "buffer textures to GPU" << std::endl;
+    }
     ~SYCL_Renderer() {
         if (m_textureHandles) {
             sycl::free(m_textureHandles, m_queue);
             m_textureHandles = nullptr;
+        }
+        if(m_bufferTextures){
+            sycl::free(m_bufferTextures, m_queue);
+            m_bufferTextures = nullptr;
         }
     }
 };
