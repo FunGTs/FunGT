@@ -20,22 +20,15 @@ void geometry::Sphere::draw() {
     texture.bind();
     m_vao.bind();
 
-    // Calculate number of triangles
-    int triangleCount = m_sectorCount * m_stackCount * 2;
-    glDrawArrays(GL_TRIANGLES, 0, triangleCount * 3);
+    glDrawElements(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0);
 }
 void geometry::Sphere::InstancedDraw(Shader& shader, int instanceCount)
 {
-
     texture.active();
     texture.bind();
     m_vao.bind();
 
-    // Get vertex count from primitive!
-    int vertexCount = getNumOfVertices();
-
-
-    glDrawArraysInstanced(GL_TRIANGLES, 0, vertexCount, instanceCount);
+    glDrawElementsInstanced(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0, instanceCount);
 
     m_vao.unbind();
 }
@@ -48,22 +41,19 @@ void geometry::Sphere::setData() {
 
     // Generate vertices for each stack and sector
     for (int i = 0; i <= m_stackCount; ++i) {
-        float stackAngle = M_PI / 2 - i * stackStep;  // Starting from pi/2 to -pi/2
-        float xy = m_radius * cosf(stackAngle);       // r * cos(u)
-        float y = m_radius * sinf(stackAngle);        // r * sin(u)
+        float stackAngle = M_PI / 2 - i * stackStep;
+        float xy = m_radius * cosf(stackAngle);
+        float y = m_radius * sinf(stackAngle);
 
         for (int j = 0; j <= m_sectorCount; ++j) {
-            float sectorAngle = j * sectorStep;       // Starting from 0 to 2pi
+            float sectorAngle = j * sectorStep;
 
-            // Vertex position
-            float x = xy * cosf(sectorAngle);         // r * cos(u) * cos(v)
-            float z = xy * sinf(sectorAngle);         // r * cos(u) * sin(v)
+            float x = xy * cosf(sectorAngle);
+            float z = xy * sinf(sectorAngle);
             glm::vec3 position(x, y, z);
 
-            // Normal (for sphere, normalized position is the normal)
             glm::vec3 normal = glm::normalize(position);
 
-            // Texture coordinates
             float u = (float)j / m_sectorCount;
             float v = (float)i / m_stackCount;
             glm::vec2 texCoord(u, v);
@@ -72,32 +62,27 @@ void geometry::Sphere::setData() {
         }
     }
 
-    // Generate triangle indices
-    std::vector<PrimitiveVertex> triangleVertices;
+    std::vector<GLuint> indices;
 
     for (int i = 0; i < m_stackCount; ++i) {
-        int k1 = i * (m_sectorCount + 1);      // Beginning of current stack
-        int k2 = k1 + m_sectorCount + 1;       // Beginning of next stack
+        int k1 = i * (m_sectorCount + 1);
+        int k2 = k1 + m_sectorCount + 1;
 
         for (int j = 0; j < m_sectorCount; ++j, ++k1, ++k2) {
-            // 2 triangles per sector excluding first and last stacks
             if (i != 0) {
-                // Triangle 1 (k1, k2, k1+1)
-                triangleVertices.push_back(vertices[k1]);
-                triangleVertices.push_back(vertices[k2]);
-                triangleVertices.push_back(vertices[k1 + 1]);
+                indices.push_back(k1);
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
             }
 
             if (i != (m_stackCount - 1)) {
-                // Triangle 2 (k1+1, k2, k2+1)
-                triangleVertices.push_back(vertices[k1 + 1]);
-                triangleVertices.push_back(vertices[k2]);
-                triangleVertices.push_back(vertices[k2 + 1]);
+                indices.push_back(k1 + 1);
+                indices.push_back(k2 + 1);
+                indices.push_back(k2);
             }
         }
     }
 
-    unsigned nOfvertices = triangleVertices.size();
-    this->set(triangleVertices.data(), nOfvertices);
+    this->set(vertices.data(), (unsigned)vertices.size(), indices.data(), (unsigned)indices.size());
 }
 
