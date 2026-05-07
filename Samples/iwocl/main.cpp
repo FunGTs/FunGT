@@ -47,21 +47,21 @@ int main() {
     // monkey->rotation(-40.f, 20.f, 0.f);
     // monkey->scale(2.f);
     FunGTSGeom ground = SimpleGeometry::create(Geometry::Plane);
-    ground->load(getAssetPath("img/floor.png"));
+    ground->load(getAssetPath("img/iwocl_floor.jpg"));
     ground->position(0.0,0.0,0.0);
 
 
     FunGTSGeom backWall = SimpleGeometry::create(Geometry::Plane);
-    backWall->load(getAssetPath("img/wall.png"));
+    backWall->load(getAssetPath("img/iwocl_wall.jpg"));
     backWall->rotation(90.0f, 0.0f, 0.0f);
     backWall->position(0.0f, 0.0f, -40.0f);
     FunGTSGeom left_Wall = SimpleGeometry::create(Geometry::Plane);
-    left_Wall->load(getAssetPath("img/wall.png"));
+    left_Wall->load(getAssetPath("img/iwocl_wall.jpg"));
     left_Wall->rotation(90.0f, 0.0f, -90.0f);
     left_Wall->position(-40.0f, 0.0f, 0.0f);
     FunGTSGeom ball = SimpleGeometry::create(Geometry::Sphere);
     ball->load(getAssetPath("img/ball.jpg"));
-    ball->position(0.f, 2.0f, 10.f);
+    ball->position(2.f, 2.0f, 6.f);
     ball->scale(2.0f);
     myGame->set([&]() { // Sets up all the scenes in your game
         // Adds the renderable objects to the SceneManager
