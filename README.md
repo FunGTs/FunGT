@@ -36,7 +36,7 @@ The project focuses on making advanced 3D graphics capabilities accessible by su
 ## Screenshots
 ### PBR Path Tracing
 
-![Path Traced Render](demos/sycl.png)
+![Path Traced Render](demos/iwocl_2026.png)
 *Cook-Torrance BRDF with emissive materials - rendered on integrated GPU via SYCL*
 
 
