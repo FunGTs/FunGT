@@ -1,7 +1,7 @@
 # FunGT (Fun Graphics Tool)
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/juanchuletas/FunGL/blob/main/fungt_logo.png?raw=true">
-  <img src="https://github.com/juanchuletas/FunGL/blob/main/fungl_logo.png?raw=true" alt="Alt text for your logo">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/FunGTs/FunGT/blob/main/fungt_logo.png?raw=true">
+  <img src="https://github.com/FunGTs/FunGT/blob/main/fungl_logo.png?raw=true" alt="Alt text for your logo">
 </picture>
 
 
@@ -66,8 +66,8 @@ sudo apt install build-essential libgl-dev libglfw3-dev libglew-dev
 sudo apt install ocl-icd-libopencl1
 sudo apt-get install libstdc++-12-dev
 sudo apt-get install zlib1g-dev
-
 ```
+
 ### ASSIMP installation
 
 We strongly recommend the installation from source
@@ -79,69 +79,55 @@ git clone https://github.com/assimp/assimp.git
 Build: this will take a while based on your system
 
 ```bash
-
 cd assimp
 cmake CMakeLists.txt
 cmake --build .
-
 ```
-
-
 
 ```bash
 sudo make install
 ```
+
 ### GLM installation
 
 Please do a from source install:
 
-Got to https://github.com/g-truc/glm/releases/tag/1.0.1 and download the source code (zip).
-
+Go to https://github.com/g-truc/glm/releases/tag/1.0.1 and download the source code (zip).
 
 1. Unzip the file
 
-
 2. Install
 
-    ```bash
-    cd cd glm-1.0.1
+```bash
+    cd glm-1.0.1
     cmake \
         -DGLM_BUILD_TESTS=OFF \
         -DBUILD_SHARED_LIBS=OFF \
         -B build .
     cmake --build build -- all
     cmake --build build -- install
-    ```
-
-
-
+```
 
 
 ## Clone the repository
 
 ```bash
-
-git clone https://github.com/juanchuletas/FunGT.git
+git clone https://github.com/FunGTs/FunGT.git
 cd FunGT
-
 ```
-
 
 #### Installing dependencies for SYCL toolchain:
 
 In order to avoid issues first install the OpenCL GPU runtime:
 
 ```bash
-
-    ./install_intel_opencl_gpu.sh
-
+./install_intel_opencl_gpu.sh
 ```
+
 Then run the script for the OpenCL CPU Runtime
 
 ```bash
-
-    ./install_intel_opencl_cpu.sh
-
+./install_intel_opencl_cpu.sh
 ```
 
 ### SYCL Toolchain (Required)
@@ -156,51 +142,54 @@ From the FunGT root directory:
 ```bash
 make fungt-deps
 ```
+
 This will download and add the toolchain from the official FunGT GitHub Releases under:
 
 `toolchain/sycl/linux_x64/dpcpp`
 
 ### Build Instructions
 
-
-
 ```bash
-
 # In the FunGT root folder export the proper libraries
-
 export LD_LIBRARY_PATH=$PWD/toolchain/sycl/linux_x64/dpcpp/lib:$LD_LIBRARY_PATH
 
-# Go to the Samples folder and create a build directory inside one of the available directories:
+# Go to the iwocl sample to build and test
+cd Samples/iwocl
 mkdir build && cd build
 
-# Configure and build: Use path of  FunGT 
+# Configure and build: Use path of FunGT
 cmake -DFUNGT_BASE_DIR=/path/to/FunGT ..
 make
-
 
 # Run FunGT
 ./FunGT
 ```
 
+### Test Assets
+
+FunGT does not bundle licensed 3D assets in the repository. To test with your own models and textures, place them in the `assets_local/` directory at the project root. This directory is gitignored and will not be tracked.
+
+For freely usable CC0 assets, we recommend:
+- [Polyhaven](https://polyhaven.com) (PBR textures, HDRIs, 3D models)
+- [ambientCG](https://ambientcg.com) (PBR materials and textures)
+
 ## Usage
 
-1. **Load a Model**: Use File → Open to import 3D models (FBX, OBJ, GLTF supported)
-2. **Navigate Viewport**: Middle-mouse to rotate, Shift+Middle-mouse to pan, scroll to zoom
-3. **Edit Materials**: Open Material Editor window to adjust surface properties
-4. **Setup Lighting**: Use Light Editor to position and configure scene lights
-5. **Play Animations**: If your model contains animations, use the timeline controls
+1. **Navigate Viewport**: Middle-mouse to rotate, Shift+Middle-mouse to pan, scroll to zoom
+2. **Edit Materials**: Open Material Editor window to adjust surface properties
+3. **Setup Lighting**: Use Light Editor to position and configure scene lights
 
 ## Experimental Features
 
 Advanced physics simulation and particle systems are available in the `experimental` branch, featuring:
 
 - **GPU-Accelerated Physics** using SYCL
-- **10,000+ Particle Simulations** 
+- **10,000+ Particle Simulations**
 - **Rigid Body Dynamics** with collision detection
 
 ### Physics Demos (Experimental Branch)
 
-The goal of this branch is to test new implementations (Physcis focused) without laoding the full user interface (UI)
+The goal of this branch is to test new implementations (Physics focused) without loading the full user interface (UI)
 
 A demo of our full GPU pipeline physics is at:
 
