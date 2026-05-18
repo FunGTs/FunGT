@@ -151,7 +151,8 @@ fgt_device fungt::Vec3 shadeNormal(const fungt::Vec3& normal) {
 }
 fgt_global void render_kernel(
     fungt::Vec3* framebuffer,
-    const Triangle* triangles,
+    const gpu::TriangleGeometry *hotTris,
+    const gpu::TriangleShadingData *coldTris,
     const BVHNode * nodes,
     const Light *lights,
     const int *emissiveTris,
@@ -163,7 +164,7 @@ fgt_global void render_kernel(
     int numOfEmissiveTris,
     int width,
     int height,
-    PBRCamera cam,
+    const PBRCamera* cam,
     int samplesPerPixel,
     int seed
 ) {
@@ -181,9 +182,9 @@ fgt_global void render_kernel(
         //float v = (y + randomFloat(&randomState)) / (height - 1);
         float u = (x + rng.nextFloat()) / (width - 1);
         float v = (y + rng.nextFloat()) / (height - 1);
-        fungt::Ray ray = cam.getRay(u, v);
+        fungt::Ray ray = cam->getRay(u, v);
 
-        pixel += pathTracer_CookTorrance(ray, triangles,nodes, lights, emissiveTris,
+        pixel += pathTracer_CookTorrance(ray, hotTris,coldTris,nodes, lights, emissiveTris,
                                         textures,numTextures, numOfTriangles,
                                         numOfNodes, numOfLights,numOfEmissiveTris,rng);
     }
@@ -194,7 +195,8 @@ fgt_global void render_kernel(
 }
 std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     int width, int height,
-    const std::vector<Triangle>& triangleList,
+    const std::vector<gpu::TriangleGeometry>    &hotTriangles,
+    const std::vector<gpu::TriangleShadingData> &coldTriangles,
     const std::vector<BVHNode> &nodes,
     const std::vector<Light> &lightsList,
     const std::vector<int>& emissiveTriIndices,
@@ -223,10 +225,16 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
         CUDA_CHECK(cudaMemcpy(device_emissiveTris, emissiveTriIndices.data(), emissiveLightsSize, cudaMemcpyHostToDevice));
     }
 
-    Triangle* device_Tlist = nullptr;
-    size_t TlistSize = triangleList.size() * sizeof(Triangle);
-    CUDA_CHECK(cudaMalloc(&device_Tlist, TlistSize));
-    CUDA_CHECK(cudaMemcpy(device_Tlist, triangleList.data(), TlistSize, cudaMemcpyHostToDevice));
+    //Memory allocation for hot and cold triangles:
+    gpu::TriangleGeometry *device_hTList = nullptr;
+    size_t hotTlistSize = hotTriangles.size() * sizeof(gpu::TriangleGeometry);
+    CUDA_CHECK(cudaMalloc(&device_hTList,hotTlistSize));
+    CUDA_CHECK(cudaMemcpy(device_hTList,hotTriangles.data(),hotTlistSize,cudaMemcpyHostToDevice));
+
+    gpu::TriangleShadingData *devive_cTList  = nullptr;
+    size_t coldTlistSize = coldTriangles.size() * sizeof(gpu::TriangleShadingData);
+    CUDA_CHECK(cudaMalloc(&devive_cTList,coldTlistSize));
+    CUDA_CHECK(cudaMemcpy(devive_cTList,coldTriangles.data(),coldTlistSize,cudaMemcpyHostToDevice));
 
     BVHNode* device_bvhNode = nullptr;
     size_t BvhNodeSize = nodes.size()*sizeof(BVHNode);
@@ -253,23 +261,25 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     else{
         std::cout << "WARNING: CUDA Textures ptr is NUL " << std::endl;
     }
-    
-
+    PBRCamera *dCamera = nullptr;
+    cudaMalloc(&dCamera, sizeof(PBRCamera));
+    cudaMemcpy(dCamera, &camera, sizeof(PBRCamera), cudaMemcpyHostToDevice);
     render_kernel << <grid, block >> > (
         device_buff,
-        device_Tlist,
+        device_hTList,
+        devive_cTList,
         device_bvhNode,
         device_lights,
         device_emissiveTris,
         m_textureObj,
         m_numTextures,
-        int(triangleList.size()),
+        int(coldTriangles.size()),
         int(nodes.size()),
         int(lightsList.size()),
         numEmissiveTris,
         width,
         height,
-        camera,
+        dCamera,
         samplesPerPixel,
         seed
     );
@@ -285,10 +295,11 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
         CUDA_CHECK(cudaFree(device_emissiveTris));
     }
     CUDA_CHECK(cudaFree(device_buff));
-    CUDA_CHECK(cudaFree(device_Tlist));
+    CUDA_CHECK(cudaFree(device_hTList));
+    CUDA_CHECK(cudaFree(devive_cTList));
     CUDA_CHECK(cudaFree(device_bvhNode));
     CUDA_CHECK(cudaFree(device_lights));
-
+    CUDA_CHECK(cudaFree(dCamera));
     return framebuffer;
 
 }

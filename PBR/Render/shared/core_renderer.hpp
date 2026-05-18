@@ -52,6 +52,43 @@ fgt_device_gpu void sampleEmissiveLight(
     if (area < 1e-8f) area = 1e-8f;
     pdf = 1.0f / (numEmissiveTris * area);
 }
+fgt_device_gpu void sampleEmissiveLight(
+    const gpu::TriangleGeometry* hotTris,
+    const gpu::TriangleShadingData* coldTris,
+    const int* emissiveTris,
+    int numEmissiveTris,
+    fungt::RNG& rng,
+    fungt::Vec3& lightPos,
+    fungt::Vec3& lightNormal,
+    fungt::Vec3& lightEmission,
+    float& pdf)
+{
+    if (numEmissiveTris == 0) { pdf = 0.0f; return; }
+
+    uint32_t randInt = rng.nextU32();
+    int idx = randInt % numEmissiveTris;
+    int triIdx = emissiveTris[idx];
+
+    const gpu::TriangleGeometry& hot = hotTris[triIdx];
+    const gpu::TriangleShadingData& cold = coldTris[triIdx];
+
+    float r1 = rng.nextFloat();
+    float r2 = rng.nextFloat();
+    if (r1 + r2 > 1.0f) { r1 = 1.0f - r1; r2 = 1.0f - r2; }
+    float r3 = 1.0f - r1 - r2;
+
+    lightPos = fungt::multiply(hot.v0, r1) + fungt::multiply(hot.v1, r2) + fungt::multiply(hot.v2, r3);
+    lightNormal = (fungt::multiply(cold.n0, r1) + fungt::multiply(cold.n1, r2) + fungt::multiply(cold.n2, r3)).normalize();
+    lightEmission = fungt::Vec3(cold.material.baseColor[0],
+        cold.material.baseColor[1],
+        cold.material.baseColor[2]) * cold.material.emission;
+
+    fungt::Vec3 edge1 = fungt::sub(hot.v1, hot.v0);
+    fungt::Vec3 edge2 = fungt::sub(hot.v2, hot.v0);
+    float area = 0.5f * edge1.cross(edge2).length();
+    if (area < 1e-8f) area = 1e-8f;
+    pdf = 1.0f / (numEmissiveTris * area);
+}
 fgt_device_gpu inline fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, fungt::RNG& fgtRNG) {
 
     float u = fgtRNG.nextFloat();
@@ -96,14 +133,14 @@ fgt_device fungt::Vec3 skyColor(const fungt::Ray& ray) {
 }
 // Shadow ray traversal - returns TRUE if anything blocks the ray
 // Unlike traceRayBVH, this exits immediately on ANY hit (no closest hit needed)
-fgt_device_gpu bool traceShadowRayBVH(
+fgt_device_gpu_noinline bool traceShadowRayBVH(
     const fungt::Ray& ray,
-    const Triangle* tris,
+    const gpu::TriangleGeometry * tris,
     const BVHNode* bvhNodes,
     int numNodes,
     float maxDist)  // Only check hits closer than this (distance to light)
 {
-    int stack[64];
+    int stack[32];
     int stackPtr = 0;
     stack[stackPtr++] = 0;  // Start with root
 
@@ -134,9 +171,10 @@ fgt_device_gpu bool traceShadowRayBVH(
 
     return false;  // Nothing blocked the ray
 }
-fgt_device_gpu bool inline traceRayBVH(
+fgt_device_gpu_noinline  bool traceRayBVH(
     const fungt::Ray& ray,
-    const Triangle* tris,
+    const gpu::TriangleGeometry *hotTris,
+    const gpu::TriangleShadingData *coldTris,
     const BVHNode* bvhNodes,
     int numNodes,
     const TextureDeviceObject* textures,
@@ -148,7 +186,7 @@ fgt_device_gpu bool inline traceRayBVH(
     float closest = FLT_MAX;
 
     // Stack-based traversal (no recursion on GPU!)
-    int stack[64];  // Stack to track nodes to visit
+    int stack[32];  // Stack to track nodes to visit
     int stackPtr = 0;
     stack[stackPtr++] = 0;  // Start with root node (index 0)
 
@@ -169,36 +207,38 @@ fgt_device_gpu bool inline traceRayBVH(
                 int triIdx = node.firstTriIdx + i;
                 HitData temp;
 
-                if (Intersection::MollerTrumbore(ray, tris[triIdx], 0.001f, closest, temp)) {
+                if (Intersection::MollerTrumbore(ray, hotTris[triIdx], 0.001f, closest, temp)) {
                     hitSomething = true;
                     closest = temp.dis;
                     hit = temp;
 
-                    // Calculate geometric normal
-                    fungt::Vec3 e1 = tris[triIdx].v1 - tris[triIdx].v0;
-                    fungt::Vec3 e2 = tris[triIdx].v2 - tris[triIdx].v0;
+                    const gpu::TriangleGeometry& hot = hotTris[triIdx];
+                    const gpu::TriangleShadingData& cold = coldTris[triIdx];
+
+                    const float bx = temp.bary.x;
+                    const float by = temp.bary.y;
+                    const float bz = temp.bary.z;
+
+                    // Vec4 direct subtraction — no .xyz() temporaries
+                    // fungt::Vec3 e1 = hot.v1 - hot.v0;
+                    // fungt::Vec3 e2 = hot.v2 - hot.v0;
+                    fungt::Vec3 e1 = fungt::sub(hot.v1, hot.v0);
+                    fungt::Vec3 e2 = fungt::sub(hot.v2, hot.v0);
                     hit.geometricNormal = e1.cross(e2).normalize();
 
-                    // Interpolate shading normal
-                    hit.normal = (tris[triIdx].n0 * temp.bary.x +
-                        tris[triIdx].n1 * temp.bary.y +
-                        tris[triIdx].n2 * temp.bary.z).normalize();
-
-                    // Ensure normal faces same hemisphere
-                    if (hit.normal.dot(hit.geometricNormal) < 0.0f) {
+                    // Reuse cached barycentrics
+                    hit.normal = (fungt::multiply(cold.n0, bx) +
+                        fungt::multiply(cold.n1, by) +
+                        fungt::multiply(cold.n2, bz)).normalize();
+                    if (hit.normal.dot(hit.geometricNormal) < 0.0f)
                         hit.normal = hit.normal * -1.0f;
-                    }
 
-                    hit.material = tris[triIdx].material;
+                    hit.material = cold.material;
 
                     // Texture sampling (if applicable)
                     if (hit.material.baseColorTexIdx >= 0 && textures != nullptr) {
-                        float u = tris[triIdx].uvs[0][0] * temp.bary.x +
-                            tris[triIdx].uvs[1][0] * temp.bary.y +
-                            tris[triIdx].uvs[2][0] * temp.bary.z;
-                        float v = tris[triIdx].uvs[0][1] * temp.bary.x +
-                            tris[triIdx].uvs[1][1] * temp.bary.y +
-                            tris[triIdx].uvs[2][1] * temp.bary.z;
+                        float u = cold.uvs[0][0] * bx + cold.uvs[1][0] * by + cold.uvs[2][0] * bz;
+                        float v = cold.uvs[0][1] * bx + cold.uvs[1][1] * by + cold.uvs[2][1] * bz;
 
                         fungt::Vec3 texColor = sampleTexture2D(textures[hit.material.baseColorTexIdx], u, v);
                         texColor.x = powf(texColor.x, 2.2f);
@@ -226,7 +266,8 @@ fgt_device_gpu bool inline traceRayBVH(
 }
 fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
     const fungt::Ray& initialRay,
-    const Triangle* tris,
+    const gpu::TriangleGeometry* hotTris,
+    const gpu::TriangleShadingData* coldTris,
     const BVHNode* nodes,
     const Light* lights,
     const int* emissiveTris,
@@ -244,7 +285,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
     for (int bounce = 0; bounce < 6; ++bounce) {
         HitData hit;
-        bool hitAny = traceRayBVH(currRay, tris, nodes, numOfNodes, textures, hit);
+        bool hitAny = traceRayBVH(currRay, hotTris, coldTris, nodes, numOfNodes, textures, hit);
 
         if (!hitAny) {
             radiance += throughput * skyColor(currRay);
@@ -280,7 +321,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
             // OPTIMIZED: Early-exit shadow ray
             fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
-            if (traceShadowRayBVH(shadowRay, tris, nodes, numOfNodes, dist)) {
+            if (traceShadowRayBVH(shadowRay, hotTris, nodes, numOfNodes, dist)) {
                 continue;  // Blocked
             }
 
@@ -294,7 +335,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
             fungt::Vec3 lightPos, lightNormal, lightEmission;
             float lightPdf;
 
-            sampleEmissiveLight(tris, emissiveTris, numOfEmissiveTris, fgtRng,
+            sampleEmissiveLight(hotTris,coldTris, emissiveTris, numOfEmissiveTris, fgtRng,
                 lightPos, lightNormal, lightEmission, lightPdf);
 
             if (lightPdf > 0.0f) {
@@ -310,7 +351,7 @@ fgt_device_gpu fungt::Vec3 pathTracer_CookTorrance(
 
                     // OPTIMIZED: Early-exit shadow ray
                     fungt::Ray shadowRay(hit.point + hit.geometricNormal * 0.001f, L);
-                    bool occluded = traceShadowRayBVH(shadowRay, tris, nodes, numOfNodes,
+                    bool occluded = traceShadowRayBVH(shadowRay, hotTris, nodes, numOfNodes,
                         distToLight - 0.001f);
 
                     if (!occluded) {
