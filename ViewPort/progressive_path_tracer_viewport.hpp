@@ -4,12 +4,11 @@
 #include "include/prerequisites.hpp"
 #include "Camera/camera.hpp"
 #include "SceneManager/scene_manager.hpp"
-#include "PBR/Space/space.hpp"
 #include "PBR/PBRCamera/pbr_camera.hpp"
 #include "PBR/Render/include/compute_backends.hpp"
 #include <vector>
 #include <memory>
-
+class Space;
 class ProgressivePathTracer {
 private:
     std::unique_ptr<Space> m_space;
@@ -19,8 +18,8 @@ private:
     bool m_initialized = false;
 
 public:
-    ProgressivePathTracer() = default;
-    ~ProgressivePathTracer() = default;
+    ProgressivePathTracer();
+    ~ProgressivePathTracer();
 
     // Initialize with camera and scene
     void initialize(Camera* viewportCam,

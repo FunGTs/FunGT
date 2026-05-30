@@ -104,13 +104,14 @@ private:
     }
 };
 
-
-#endif // _PBR_CAMERA_H_
-
-#if defined(FUNGT_USE_SYCL) && !defined(PBRCAMERA_SYCL_DEVICE_COPYABLE_DEFINED)
-#define PBRCAMERA_SYCL_DEVICE_COPYABLE_DEFINED
+#if defined(SYCL_LANGUAGE_VERSION) || defined(__SYCL_DEVICE_ONLY__)
+#include <sycl/sycl.hpp>
 namespace sycl {
-    template<>
-    struct is_device_copyable<PBRCamera> : std::true_type {};
+    inline namespace _V1 {
+        template <>
+        struct is_device_copyable<PBRCamera> : std::true_type {};
+    }
 }
 #endif
+
+#endif // _PBR_CAMERA_H_

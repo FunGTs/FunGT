@@ -264,6 +264,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/GUI/gui.cpp
     ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/simulation_controller_window.cpp
+    ${FUNGT_BASE_DIR}/GUI/demo_particles_window.cpp
+    ${FUNGT_BASE_DIR}/GUI/render_action_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/debug_rigidbody_renderer.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
@@ -271,8 +273,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/Collisions/manifold_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
-    ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
     ${FUNGT_BASE_DIR}/Physics/AnimationCreator/key_frame_recorder.cpp
+    ${FUNGT_BASE_DIR}/Physics/AnimationCreator/animation_exporter.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
     ${FUNGT_BASE_DIR}/ViewPort/progressive_path_tracer_viewport.cpp
     ${FUNGT_BASE_DIR}/Renders/framebuffer.cpp
@@ -494,9 +496,24 @@ elseif (UNIX)
     else()
         set(SYCL_TARGETS spir64)
     endif()
-    target_compile_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
+    set(SYCL_SOURCES
+        ${FUNGT_BASE_DIR}/InfoDevice/sycl_backend.cpp
+        ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
+        ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_rtc.cpp
+        ${FUNGT_BASE_DIR}/Physics/AnimationCreator/animation_exporter.cpp
+        ${FUNGT_BASE_DIR}/GUI/demo_particles_window.cpp
+        ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
+        ${FUNGT_BASE_DIR}/GUI/demo_particles_window.cpp     
+        ${FUNGT_BASE_DIR}/GUI/render_action_window.cpp 
+        ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
+        ${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
+        ${FUNGT_BASE_DIR}/ViewPort/progressive_path_tracer_viewport.cpp
+    )
+
+    set_source_files_properties(${SYCL_SOURCES}
+        PROPERTIES COMPILE_FLAGS "-fsycl -fsycl-targets=${SYCL_TARGETS}"
+    )
     target_link_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
-    
     if(FUNGT_USE_SYCL)
         target_compile_definitions(FunGT PRIVATE FUNGT_USE_SYCL)
     endif()

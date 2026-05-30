@@ -6,6 +6,7 @@
 #include <memory>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 #include "Vector/vector3.hpp"
 
 namespace fungt {

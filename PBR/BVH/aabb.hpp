@@ -3,6 +3,7 @@
 #include "Vector/vector3.hpp"
 #include "gpu/include/fgt_cpu_device.hpp"
 #include <cmath>
+#include <cfloat>
 class AABB {
 
 public:    

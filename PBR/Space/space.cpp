@@ -1,4 +1,5 @@
 #include "space.hpp"
+#include "Vector/vector3_glm.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../../vendor/stb_image/stb_image_write.h"
 Space::Space(){

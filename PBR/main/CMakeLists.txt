@@ -175,9 +175,6 @@ target_include_directories(pbr_core PUBLIC
     ${FUNLIB_DIR}/include
 )
 
-target_compile_options(pbr_core PRIVATE -fsycl)
-target_link_options(pbr_core PRIVATE -fsycl)
-
 message(STATUS "Core PBR library configured (compiler: Intel clang + -fsycl)")
 
 # ────────────────────────────────────────────────────────

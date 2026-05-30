@@ -1,5 +1,11 @@
 #include "progressive_path_tracer_viewport.hpp"
-
+#include "PBR/Space/space.hpp"
+ProgressivePathTracer::ProgressivePathTracer()
+{
+}
+ProgressivePathTracer::~ProgressivePathTracer()
+{
+}
 void ProgressivePathTracer::initialize(Camera* viewportCam,
     std::shared_ptr<SceneManager> sceneManager,
     int width, int height)
