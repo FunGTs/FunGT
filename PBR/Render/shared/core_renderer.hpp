@@ -58,7 +58,7 @@ fgt_device_gpu inline fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, fu
     float v = fgtRNG.nextFloat();
 
     float theta = acosf(sqrtf(1.0f - u));
-    float phi = 2.0f * M_PI * v;
+    float phi = 2.0f * FGT_PI * v;
 
     float xs = sinf(theta) * cosf(phi);
     float ys = sinf(theta) * sinf(phi);

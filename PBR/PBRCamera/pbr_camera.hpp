@@ -46,7 +46,7 @@ public:
         float focusDist = 1.0f     // Focus distance
     ) {
         // Convert FOV to radians
-        float theta = vfov * M_PI / 180.0f;
+        float theta = vfov * FGT_PI / 180.0f;
         float h = tanf(theta / 2.0f);
         float viewportHeight = 2.0f * h * focusDist;
         float viewportWidth = aspectRatio * viewportHeight;

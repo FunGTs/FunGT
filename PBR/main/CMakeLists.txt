@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(pbr_render)
 
-option(FUNGT_USE_CUDA "Enable CUDA backend" ON)
+option(FUNGT_USE_CUDA "Enable CUDA backend" OFF)
 option(FUNGT_USE_SYCL "Enable SYCL backend" ON)
 
 # ────────────────────────────────────────────────────────

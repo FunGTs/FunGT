@@ -12,7 +12,7 @@ fgt_device_forceinline float D_GGX(float NoH, float roughness) {
     float NoH2 = NoH * NoH;
     float denom = NoH2 * (a2 - 1.0f) + 1.0f;
     denom = fmaxf(denom, 1e-6f);
-    return a2 / (M_PI * denom * denom + 1e-8f);
+    return a2 / (FGT_PI * denom * denom + 1e-8f);
 }
 fgt_device_forceinline float G_SchlickGGX(float NoV, float k) {
     return NoV / (NoV * (1.0f - k) + k + 1e-8f);
@@ -80,7 +80,7 @@ fgt_device_forceinline fungt::Vec3 evaluateCookTorrance(
     // Diffuse (Lambert) scaled by (1 - F) and (1 - metallic)
     fungt::Vec3 kS = F;
     fungt::Vec3 kD = (fungt::Vec3(1.0f, 1.0f, 1.0f) - kS) * (1.0f - metallic);
-    fungt::Vec3 diffuse = (baseColor / M_PI);
+    fungt::Vec3 diffuse = (baseColor / FGT_PI);
 
     fungt::Vec3 Lo = (kD * diffuse + specular) * radiance * NoL;
 

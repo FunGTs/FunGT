@@ -41,3 +41,4 @@
 #define fgt_global
 #define fgt_shared
 #endif
+constexpr float FGT_PI = 3.14159265f;
