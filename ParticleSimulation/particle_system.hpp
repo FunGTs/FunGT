@@ -1,5 +1,6 @@
 #if !defined(_PARTICLE_SYSTEM_FGT_H)
 #define _PARTICLE_SYSTEM_FGT_H
+#include <GL/glew.h>
 #include <funlib/sycl/sycl_handler.hpp>
 #include <vector>
 #include <functional>

@@ -1,6 +1,6 @@
 #include "demo_particles_window.hpp"
 #include "ParticleSimulation/particle_simulation.hpp"
-#include "ParticleSimulation/particle_demos.hpp"
+#include "ParticleSimulation/particle_simulation_sycl_ops.hpp"
 
 void ParticleSimDemoWindow::onImGuiRender() {
     m_frameCount++;
@@ -40,14 +40,14 @@ void ParticleSimDemoWindow::onImGuiRender() {
 
     ImGui::TextColored(ImVec4(0.4f, 0.7f, 1.0f, 1.0f), "Active:");
     ImGui::SameLine();
-    ImGui::Text("%s", fgt::demoNames[particleSim->getCurrentDemo()].c_str());
+    ImGui::Text("%s", particleSim_getDemoName(particleSim->getCurrentDemo()).c_str());
     ImGui::Separator();
 
-    if (ImGui::BeginCombo("##Demo", fgt::demoNames[m_selectedDemoIndex].c_str())) {
-        for (size_t i = 0; i < fgt::demoNames.size(); i++) {
-            bool isSelected = (m_selectedDemoIndex == static_cast<int>(i));
-            if (ImGui::Selectable(fgt::demoNames[i].c_str(), isSelected)) {
-                m_selectedDemoIndex = static_cast<int>(i);
+    if (ImGui::BeginCombo("##Demo", particleSim_getDemoName(m_selectedDemoIndex).c_str())) {
+        for (int i = 0; i < particleSim_getDemoCount(); i++) {
+            bool isSelected = (m_selectedDemoIndex == i);
+            if (ImGui::Selectable(particleSim_getDemoName(i).c_str(), isSelected)) {
+                m_selectedDemoIndex = i;
                 if (m_autoApply) {
                     particleSim->loadDemo(m_selectedDemoIndex);
                 }

@@ -7,6 +7,8 @@
         std::cout << "SYCLTexture: Initialized with queue for device: "
             << queue.get_device().get_info<sycl::info::device::name>()
             << std::endl;
+        std::cout << "bindless support: " << queue.get_device().has(sycl::aspect::ext_oneapi_bindless_images) << std::endl;
+        std::cout << "backend: " << queue.get_device().get_info<sycl::info::device::name>() << std::endl;
 
     }
     SYCLTexture::~SYCLTexture() {

@@ -3,6 +3,8 @@ project(pbr_render)
 
 option(FUNGT_USE_CUDA "Enable CUDA backend" OFF)
 option(FUNGT_USE_SYCL "Enable SYCL backend" ON)
+set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
+set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
 
 # ────────────────────────────────────────────────────────
 # FUNGT_BASE_DIR validation
@@ -233,9 +235,18 @@ if(FUNGT_USE_SYCL)
     if(CUDAToolkit_FOUND)
         message(STATUS "CUDA SYCL backend enabled")
         set(SYCL_TARGETS nvptx64-nvidia-cuda,spir64)
+        set(SYCL_CUDA_ARCH_ARGS
+            "-Xsycl-target-backend=nvptx64-nvidia-cuda"
+            "--offload-arch=${SYCL_CUDA_ARCH}"
+        )
     else()
         set(SYCL_TARGETS spir64)
+        set(SYCL_CUDA_ARCH_ARGS "")
     endif()
+    set(SYCL_SPIRV_ARGS
+        "-Xsycl-target-backend=spir64"
+        "--spirv-ext=+SPV_INTEL_bindless_images"
+    )
 
     set(SYCL_FILES
         ${FUNGT_BASE_DIR}/PBR/Render/src/sycl_renderer.cpp
@@ -255,14 +266,14 @@ if(FUNGT_USE_SYCL)
         glfw
     )
 
-    target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
-    target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
+    target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS} ${SYCL_SPIRV_ARGS})
+    target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS} ${SYCL_SPIRV_ARGS})
 
     target_compile_definitions(pbr_sycl PUBLIC FUNGT_USE_SYCL)
 
     message(STATUS "SYCL library configured")
     message(STATUS "  Files: sycl_renderer.cpp, sycl_texture.cpp")
-    message(STATUS "  Flags: -fsycl -fsycl-targets=${SYCL_TARGETS}")
+    message(STATUS "  Flags: -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS}")
 
 else()
     message(STATUS "SYCL backend disabled")

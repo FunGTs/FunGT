@@ -1,12 +1,10 @@
 #include "particle_simulation.hpp"
+#include "particle_simulation_sycl_ops.hpp"
 
 ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader)
 : m_NumParticles{num}{
     // INITIALIZE SYCL WITH GL INTEROP (ParticleSimulation owns this responsibility)
-    std::cout << "Initializing SYCL for ParticleSimulation..." << std::endl;
-    flib::sycl_handler::register_queue("gl_queue", flib::device::GPU, flib::vendor::INTEL, flib::backend::OPENCL);
-    flib::sycl_handler::create_gl_interop_context("gl_queue"); // replaces that queue's context in-place
-    flib::sycl_handler::get_device_info("gl_queue");
+    particleSim_initSycl();
     m_pSet.SetNumParticles(m_NumParticles);
     std::cout << "Particle system constructor" << std::endl;
     std::cout << "Num particles: " << m_pSet._particles.size() << std::endl;
@@ -19,21 +17,18 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
 
 void ParticleSimulation::loadDemo(int demo_index)
 {
-    if (demo_index < 0 || demo_index >= fgt::demoInits.size()) {
+     if (demo_index < 0 || demo_index >= particleSim_getDemoCount()) {
         std::cerr << "Invalid demo index: " << demo_index << std::endl;
         return;
     }
-
     m_currentDemo = demo_index;
-    
-    fgt::demoInits[m_currentDemo](m_pSet._particles);
-    // UPLOAD NEW POSITIONS TO GPU VBO!
+    particleSim_loadDemoParticles(m_currentDemo, m_pSet._particles);
     m_vbo.bind();
     m_vbo.bufferData(m_pSet._particles.data(),
         m_pSet._particles.size() * sizeof(fgt::Particle<float>),
         GL_DYNAMIC_DRAW);
     m_vbo.unbind();
-    std::cout << "Loaded demo: " << fgt::demoNames[m_currentDemo] << std::endl;
+    std::cout << "Loaded demo: " << particleSim_getDemoName(m_currentDemo) << std::endl;
 }
 
 void ParticleSimulation::init()
@@ -100,36 +95,5 @@ void ParticleSimulation::simulation()
 {
     int numParticles = m_pSet._particles.size();
  
-    switch (m_currentDemo) {
-    case 0:
-        fgt::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
-            numParticles, m_vbo.getId(), fgt::spiralExplosionUpdate, 0.005f);
-        break;
-    case 1:
-        fgt::ParticleSystem<float, decltype(fgt::blackHoleUpdate)>::update(
-            numParticles, m_vbo.getId(), fgt::blackHoleUpdate, 0.005f);
-        break;
-    case 2:
-        fgt::ParticleSystem<float, decltype(fgt::vortexUpdate)>::update(
-            numParticles, m_vbo.getId(), fgt::vortexUpdate, 0.005f);
-        break;
-    case 3:
-        fgt::ParticleSystem<float, decltype(fgt::fireworkUpdate)>::update(
-            numParticles, m_vbo.getId(), fgt::fireworkUpdate, 0.005f);
-        break;
-    case 4:
-        fgt::ParticleSystem<float, decltype(fgt::waveUpdate)>::update(
-            numParticles, m_vbo.getId(), fgt::waveUpdate, 0.005f);
-        break;
-    case 5:
-        fgt::ParticleSystem<float, decltype(fgt::smokeUpdate)>::update(
-            numParticles, m_vbo.getId(), fgt::smokeUpdate, 0.005f);
-        break;
-    default:
-
-        fgt::ParticleSystem<float, decltype(fgt::spiralExplosionUpdate)>::update(
-            numParticles, m_vbo.getId(), fgt::spiralExplosionUpdate, 0.005f);
-        break;
-    }
-
+   particleSim_runDemo(m_currentDemo, numParticles, m_vbo.getId(), 0.005f);
 }
