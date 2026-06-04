@@ -127,6 +127,7 @@ set(FUNGT_INCLUDES
     ${FUNGT_BASE_DIR}/PBR/TextureManager
     ${FUNGT_BASE_DIR}/PBR/BVH
     ${FUNGT_BASE_DIR}/vendor/stb_image
+    ${FUNGT_BASE_DIR}/vendor/glm/include
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/Renders
     ${FUNGT_BASE_DIR}/Matrix
@@ -177,7 +178,7 @@ target_include_directories(pbr_core PUBLIC
     ${FUNLIB_DIR}/include
 )
 
-message(STATUS "Core PBR library configured (compiler: Intel clang + -fsycl)")
+message(STATUS "Core PBR library configured (compiler: Intel clang)")
 
 # ────────────────────────────────────────────────────────
 # CUDA BACKEND LIBRARY
@@ -342,13 +343,6 @@ else()
     message(FATAL_ERROR "Assimp library not found!")
 endif()
 
-find_package(glm CONFIG REQUIRED)
-if(glm_FOUND)
-    message(STATUS "GLM found")
-else()
-    message(FATAL_ERROR "GLM not found!")
-endif()
-
 # ────────────────────────────────────────────────────────
 # FINAL EXECUTABLE
 # ────────────────────────────────────────────────────────
@@ -386,7 +380,6 @@ target_link_libraries(pbr_render PRIVATE
     glfw
     GLEW::GLEW
     assimp::assimp
-    glm::glm
     funlib
     dl
     ${OpenCL_LIBRARIES}

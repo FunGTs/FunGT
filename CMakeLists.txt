@@ -106,9 +106,6 @@ if(UNIX)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
     
-    # ALWAYS use SYCL compiler (required for funlib)
-    # set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/FunGT/toolchain/sycl/linux_x64/dpcpp/bin/clang++)
-    
     # Add the prebuilt ImGui library
     add_library(imgui STATIC IMPORTED)
     set_target_properties(imgui PROPERTIES
@@ -171,6 +168,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/AnimatedModel
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/vendor/stb_image
+    ${FUNGT_BASE_DIR}/vendor/glm/include
     ${FUNGT_BASE_DIR}/Imgui_Setup
     ${FUNGT_BASE_DIR}/Material
     ${FUNGT_BASE_DIR}/Mesh
@@ -260,6 +258,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_rtc.cpp
+    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
+    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_rtc_sycl_ops.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
@@ -287,8 +287,6 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
     ${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo/light_gizmo_renderer.cpp
-    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
-    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_rtc_sycl_ops.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -364,7 +362,6 @@ if (WIN32)
     find_package(GLEW REQUIRED)
     find_package(glfw3 REQUIRED)
     find_package(assimp REQUIRED)
-    find_package(glm REQUIRED)
     
     target_link_libraries(FunGT
         PRIVATE
@@ -372,7 +369,6 @@ if (WIN32)
         glfw
         GLEW::GLEW
         assimp::assimp
-        glm::glm
     )
     
 elseif (UNIX)
@@ -461,13 +457,6 @@ elseif (UNIX)
         message(FATAL_ERROR "Assimp library not found!")
     endif()
     
-    find_package(glm CONFIG REQUIRED)
-    if(glm_FOUND)
-        message(STATUS "glm found")
-    else()
-        message(FATAL_ERROR "glm not found!")
-    endif()
-    
     # Link libraries
     target_include_directories(FunGT PRIVATE ${OpenCL_INCLUDE_DIRS})
     target_link_libraries(FunGT
@@ -477,7 +466,6 @@ elseif (UNIX)
         glfw
         GLEW::GLEW
         assimp::assimp
-        glm::glm
         dl
         funlib
         imgui
@@ -486,12 +474,12 @@ elseif (UNIX)
         pbr_core                   
         ${PBR_CUDA_LIB}           
         ${PBR_SYCL_LIB} 
-        $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cudart_static>  # CHANGE TO cudart_static
+        $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cudart_static>
         $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cuda_driver>           
     )
     
     # ════════════════════════════════════════════════════════════════════════
-    # SYCL compilation flags (always applied because funlib requires it)
+    # SYCL compilation flags (per-file, not blanket)
     # ════════════════════════════════════════════════════════════════════════
     if(CUDAToolkit_FOUND)
         message(STATUS "CUDA SYCL backend enabled")
@@ -504,26 +492,28 @@ elseif (UNIX)
         set(SYCL_TARGETS spir64)
         set(SYCL_CUDA_ARCH_ARGS "")
     endif()
+
     set(SYCL_SPIRV_ARGS
         "-Xsycl-target-backend=spir64"
         "--spirv-ext=+SPV_INTEL_bindless_images"
     )
+
     set(SYCL_SOURCES
         ${FUNGT_BASE_DIR}/InfoDevice/sycl_backend.cpp
         ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
         ${FUNGT_BASE_DIR}/ParticleSimulation/particle_rtc_sycl_ops.cpp
-        #${FUNGT_BASE_DIR}/Physics/AnimationCreator/animation_exporter.cpp  
-        #${FUNGT_BASE_DIR}/GUI/render_action_window.cpp 
         ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
-        #${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
-        #${FUNGT_BASE_DIR}/ViewPort/progressive_path_tracer_viewport.cpp
     )
 
+    list(JOIN SYCL_CUDA_ARCH_ARGS " " SYCL_CUDA_ARCH_STR)
+    list(JOIN SYCL_SPIRV_ARGS " " SYCL_SPIRV_STR)
+
     set_source_files_properties(${SYCL_SOURCES}
-        PROPERTIES COMPILE_FLAGS "-fsycl -fsycl-targets=${SYCL_TARGETS}"
+        PROPERTIES COMPILE_FLAGS "-fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_STR} ${SYCL_SPIRV_STR}"
     )
-    target_compile_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS} ${SYCL_SPIRV_ARGS})
+
     target_link_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS} ${SYCL_SPIRV_ARGS})
+    
     if(FUNGT_USE_SYCL)
         target_compile_definitions(FunGT PRIVATE FUNGT_USE_SYCL)
     endif()
