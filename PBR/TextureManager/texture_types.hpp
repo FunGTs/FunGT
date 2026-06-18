@@ -8,8 +8,8 @@ using TextureDeviceObject = cudaTextureObject_t;
 
 #elif defined(FUNGT_USE_SYCL) && !defined(__CUDACC__)
 #include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/bindless_images.hpp>  // ← ADD THIS!
-namespace syclexp = sycl::ext::oneapi::experimental;           // ← FIX THIS!
+#include <sycl/ext/oneapi/bindless_images.hpp>
+namespace syclexp = sycl::ext::oneapi::experimental;
 using TextureDeviceObject = syclexp::sampled_image_handle;
 #define TEXTURE_BACKEND_SYCL
 
