@@ -493,11 +493,6 @@ elseif (UNIX)
         set(SYCL_CUDA_ARCH_ARGS "")
     endif()
 
-    set(SYCL_SPIRV_ARGS
-        "-Xsycl-target-backend=spir64"
-        "--spirv-ext=+SPV_INTEL_bindless_images"
-    )
-
     set(SYCL_SOURCES
         ${FUNGT_BASE_DIR}/InfoDevice/sycl_backend.cpp
         ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
@@ -506,13 +501,12 @@ elseif (UNIX)
     )
 
     list(JOIN SYCL_CUDA_ARCH_ARGS " " SYCL_CUDA_ARCH_STR)
-    list(JOIN SYCL_SPIRV_ARGS " " SYCL_SPIRV_STR)
 
     set_source_files_properties(${SYCL_SOURCES}
-        PROPERTIES COMPILE_FLAGS "-fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_STR} ${SYCL_SPIRV_STR}"
+        PROPERTIES COMPILE_FLAGS "-fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_STR}"
     )
 
-    target_link_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS} ${SYCL_SPIRV_ARGS})
+    target_link_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
     
     if(FUNGT_USE_SYCL)
         target_compile_definitions(FunGT PRIVATE FUNGT_USE_SYCL)

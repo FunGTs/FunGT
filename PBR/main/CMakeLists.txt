@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(pbr_render)
 
-option(FUNGT_USE_CUDA "Enable CUDA backend" OFF)
+option(FUNGT_USE_CUDA "Enable CUDA backend" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend" ON)
 set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
 set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
@@ -244,11 +244,6 @@ if(FUNGT_USE_SYCL)
         set(SYCL_TARGETS spir64)
         set(SYCL_CUDA_ARCH_ARGS "")
     endif()
-    set(SYCL_SPIRV_ARGS
-        "-Xsycl-target-backend=spir64"
-        "--spirv-ext=+SPV_INTEL_bindless_images"
-    )
-
     set(SYCL_FILES
         ${FUNGT_BASE_DIR}/PBR/Render/src/sycl_renderer.cpp
         ${FUNGT_BASE_DIR}/PBR/TextureManager/sycl_texture.cpp
@@ -267,8 +262,8 @@ if(FUNGT_USE_SYCL)
         glfw
     )
 
-    target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS} ${SYCL_SPIRV_ARGS})
-    target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS} ${SYCL_SPIRV_ARGS})
+    target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
+    target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
 
     target_compile_definitions(pbr_sycl PUBLIC FUNGT_USE_SYCL)
 
@@ -398,6 +393,7 @@ message(STATUS "Default compiler: Bundled Intel clang (SYCL-capable)")
 if(FUNGT_USE_CUDA)
     message(STATUS "CUDA backend:     ENABLED (nvcc)")
     message(STATUS "CUDA includes:    ${CUDAToolkit_INCLUDE_DIRS}")
+    message(STATUS "CUDA architecture: ${SYCL_CUDA_ARCH}")
 else()
     message(STATUS "CUDA backend:     DISABLED")
 endif()
