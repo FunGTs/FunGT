@@ -5,6 +5,7 @@
 #include "SceneManager/scene_manager.hpp"
 #include "SimpleModel/simple_model.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
+#include "Vector/vector3_glm.hpp"
 #include <memory>
 #include <string>
 #include <set>

@@ -1,4 +1,5 @@
 #include "simple_model.hpp"
+#include "Vector/vector3_glm.hpp"
 
 
 SimpleModel::SimpleModel() {

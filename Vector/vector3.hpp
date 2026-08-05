@@ -1,7 +1,6 @@
 #if !defined(_VECTOR3_HPP_)
 #define _VECTOR3_HPP_
 #include <cmath>
-#include "../include/glmath.hpp"
 #include "../gpu/include/fgt_cpu_device.hpp"
 
 // DEBUG: Print what fgt_device expands to
@@ -95,16 +94,6 @@ namespace fungt{
     };
     fgt_device inline fungt::Vec3 operator*(float scalar, const fungt::Vec3& v) {
         return fungt::Vec3(v.x * scalar, v.y * scalar, v.z * scalar);
-    }
-    fgt_device inline Vec3 toFungtVec3(const glm::vec3& v) {
-        return Vec3(v.x, v.y, v.z);
-    }
-    fgt_device inline Vec3 toFungtVec3(float vec[3]) {
-        return Vec3(vec[0], vec[1], vec[2]);
-    }
-    fgt_device inline glm::vec3 toGlmVec3(const fungt::Vec3& vec) {
-
-        return glm::vec3(vec.x, vec.y, vec.z);
     }
 
 }

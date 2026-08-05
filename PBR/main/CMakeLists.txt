@@ -3,6 +3,8 @@ project(pbr_render)
 
 option(FUNGT_USE_CUDA "Enable CUDA backend" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend" ON)
+set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
+set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
 
 # ────────────────────────────────────────────────────────
 # FUNGT_BASE_DIR validation
@@ -125,6 +127,7 @@ set(FUNGT_INCLUDES
     ${FUNGT_BASE_DIR}/PBR/TextureManager
     ${FUNGT_BASE_DIR}/PBR/BVH
     ${FUNGT_BASE_DIR}/vendor/stb_image
+    ${FUNGT_BASE_DIR}/vendor/glm/include
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/Renders
     ${FUNGT_BASE_DIR}/Matrix
@@ -175,10 +178,7 @@ target_include_directories(pbr_core PUBLIC
     ${FUNLIB_DIR}/include
 )
 
-target_compile_options(pbr_core PRIVATE -fsycl)
-target_link_options(pbr_core PRIVATE -fsycl)
-
-message(STATUS "Core PBR library configured (compiler: Intel clang + -fsycl)")
+message(STATUS "Core PBR library configured (compiler: Intel clang)")
 
 # ────────────────────────────────────────────────────────
 # CUDA BACKEND LIBRARY
@@ -236,10 +236,14 @@ if(FUNGT_USE_SYCL)
     if(CUDAToolkit_FOUND)
         message(STATUS "CUDA SYCL backend enabled")
         set(SYCL_TARGETS nvptx64-nvidia-cuda,spir64)
+        set(SYCL_CUDA_ARCH_ARGS
+            "-Xsycl-target-backend=nvptx64-nvidia-cuda"
+            "--offload-arch=${SYCL_CUDA_ARCH}"
+        )
     else()
         set(SYCL_TARGETS spir64)
+        set(SYCL_CUDA_ARCH_ARGS "")
     endif()
-
     set(SYCL_FILES
         ${FUNGT_BASE_DIR}/PBR/Render/src/sycl_renderer.cpp
         ${FUNGT_BASE_DIR}/PBR/TextureManager/sycl_texture.cpp
@@ -258,14 +262,14 @@ if(FUNGT_USE_SYCL)
         glfw
     )
 
-    target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
-    target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
+    target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
+    target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
 
     target_compile_definitions(pbr_sycl PUBLIC FUNGT_USE_SYCL)
 
     message(STATUS "SYCL library configured")
     message(STATUS "  Files: sycl_renderer.cpp, sycl_texture.cpp")
-    message(STATUS "  Flags: -fsycl -fsycl-targets=${SYCL_TARGETS}")
+    message(STATUS "  Flags: -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS}")
 
 else()
     message(STATUS "SYCL backend disabled")
@@ -334,13 +338,6 @@ else()
     message(FATAL_ERROR "Assimp library not found!")
 endif()
 
-find_package(glm CONFIG REQUIRED)
-if(glm_FOUND)
-    message(STATUS "GLM found")
-else()
-    message(FATAL_ERROR "GLM not found!")
-endif()
-
 # ────────────────────────────────────────────────────────
 # FINAL EXECUTABLE
 # ────────────────────────────────────────────────────────
@@ -378,7 +375,6 @@ target_link_libraries(pbr_render PRIVATE
     glfw
     GLEW::GLEW
     assimp::assimp
-    glm::glm
     funlib
     dl
     ${OpenCL_LIBRARIES}
@@ -397,6 +393,7 @@ message(STATUS "Default compiler: Bundled Intel clang (SYCL-capable)")
 if(FUNGT_USE_CUDA)
     message(STATUS "CUDA backend:     ENABLED (nvcc)")
     message(STATUS "CUDA includes:    ${CUDAToolkit_INCLUDE_DIRS}")
+    message(STATUS "CUDA architecture: ${SYCL_CUDA_ARCH}")
 else()
     message(STATUS "CUDA backend:     DISABLED")
 endif()

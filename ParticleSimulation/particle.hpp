@@ -1,6 +1,7 @@
 #if !defined(_PARTICLE_H_)
 #define _PARTICLE_H_
 #include <vector>
+#include <iostream>
 namespace fgt
 {
     template <typename T>

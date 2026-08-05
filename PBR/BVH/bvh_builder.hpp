@@ -6,6 +6,7 @@
 #include "Triangle/triangle.hpp"
 #include "PBR/BVH/aabb.hpp"
 #include "PBR/BVH/bvh_node.hpp"
+#include <climits> 
 struct TriangleBounds {
     AABB bounds;
     fungt::Vec3 centroid;

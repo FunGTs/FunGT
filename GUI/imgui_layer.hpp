@@ -3,6 +3,7 @@
 #include "imgui_window.hpp"
 #include "Layer/layer.hpp"
 #include "InfoDevice/gpu_device_info.hpp"
+#include "Path_Manager/path_manager.hpp"
 #include "render_settings_window.hpp"
 #include <memory>
 
@@ -191,8 +192,10 @@ public:
         io.Fonts->Clear();
 
         // Load your font file (TTF)
+	// 	
+	std::string fontPath = getAssetPath("GUI/fonts/Nunito/static/Nunito-Regular.ttf");
         ImFont* myFont = io.Fonts->AddFontFromFileTTF(
-            "/home/juanchuletas/Documents/Development/FunGT/GUI/fonts/Nunito/static/Nunito-Regular.ttf", 18.0f
+            fontPath.c_str(), 18.0f
         );
 
         if (myFont == nullptr)

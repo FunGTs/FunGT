@@ -46,7 +46,7 @@ public:
         float focusDist = 1.0f     // Focus distance
     ) {
         // Convert FOV to radians
-        float theta = vfov * M_PI / 180.0f;
+        float theta = vfov * FGT_PI / 180.0f;
         float h = tanf(theta / 2.0f);
         float viewportHeight = 2.0f * h * focusDist;
         float viewportWidth = aspectRatio * viewportHeight;
@@ -104,13 +104,14 @@ private:
     }
 };
 
-
-#endif // _PBR_CAMERA_H_
-
-#if defined(FUNGT_USE_SYCL) && !defined(PBRCAMERA_SYCL_DEVICE_COPYABLE_DEFINED)
-#define PBRCAMERA_SYCL_DEVICE_COPYABLE_DEFINED
+#if defined(SYCL_LANGUAGE_VERSION) || defined(__SYCL_DEVICE_ONLY__)
+#include <sycl/sycl.hpp>
 namespace sycl {
-    template<>
-    struct is_device_copyable<PBRCamera> : std::true_type {};
+    inline namespace _V1 {
+        template <>
+        struct is_device_copyable<PBRCamera> : std::true_type {};
+    }
 }
 #endif
+
+#endif // _PBR_CAMERA_H_

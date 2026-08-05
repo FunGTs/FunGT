@@ -6,7 +6,7 @@
 using TextureDeviceObject = cudaTextureObject_t;
 #define TEXTURE_BACKEND_CUDA
 
-#elif defined(FUNGT_USE_SYCL) && !defined(__CUDACC__)
+#elif defined(SYCL_LANGUAGE_VERSION) && !defined(__CUDACC__)
 #include <sycl/sycl.hpp>
 #include <sycl/ext/oneapi/bindless_images.hpp>  // ← ADD THIS!
 namespace syclexp = sycl::ext::oneapi::experimental;           // ← FIX THIS!

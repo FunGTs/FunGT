@@ -1,4 +1,14 @@
 #include "space.hpp"
+#include "Vector/vector3_glm.hpp"
+// Conditional includes - only include backend headers when enabled
+#ifdef FUNGT_USE_CUDA
+#include "PBR/Render/include/cuda_renderer.hpp"
+#include "PBR/TextureManager/cuda_texture.hpp"
+#endif
+#ifdef FUNGT_USE_SYCL
+#include "PBR/Render/include/sycl_renderer.hpp"
+#include "PBR/TextureManager/sycl_texture.hpp"
+#endif
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../../vendor/stb_image/stb_image_write.h"
 Space::Space(){

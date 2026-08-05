@@ -6,8 +6,6 @@
 #include "VertexGL/vertexIndices.hpp"
 #include "Shaders/shader.hpp"
 #include "particle.hpp"
-#include "particle_demos.hpp"
-#include "particle_system.hpp"
 
 class ParticleSimulation : public Renderable {
     
