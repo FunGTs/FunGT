@@ -8,7 +8,7 @@
 
 class InfiniteGrid : public Renderable {
 private:
-    Shader m_shader;
+    std::unique_ptr<Shader> m_shader;
     std::unique_ptr<GPUBuffer> m_buffer;
     float m_nearPlane;
     float m_farPlane;
@@ -23,7 +23,7 @@ public:
 
     // Implement Renderable interface
     void draw() override;
-    Shader& getShader() override { return m_shader; }
+    Shader& getShader() override { return *m_shader; }
 
     void setViewMatrix(const glm::mat4& viewMatrix) override {
         m_viewMatrix = viewMatrix;

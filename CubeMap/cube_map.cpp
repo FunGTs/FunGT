@@ -2,9 +2,9 @@
 #include "../GraphicsRenderBackend/graphics_render_device.hpp"
 
 CubeMap::CubeMap()
+    : shader(Shader::create())
 {
     printf("USING CUBE MAP\n");
-    
 }
 CubeMap::CubeMap(glm::vec3 cubePos)
 {
@@ -156,14 +156,13 @@ unsigned CubeMap::getNumOfIndices()
 void CubeMap::setShaders(std::string vs, std::string fs)
 {
 
-    shader.create(vs,fs);
+    shader->create(vs,fs);
     std::cout<<"End setting shaders"<<std::endl; 
 }
 
 Shader &CubeMap::getShader()
 {
-    // TODO: insert return statement here
-    return shader;
+    return *shader;
 }
 
 void CubeMap::setViewMatrix(const glm::mat4 &viewMatrix)

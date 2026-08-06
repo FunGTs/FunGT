@@ -148,6 +148,7 @@ set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/PBR/Render/src/cpu_renderer.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
+    ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Geometries/cube.cpp
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp

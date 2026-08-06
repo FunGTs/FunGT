@@ -1,4 +1,5 @@
 #include "camera.hpp"
+#include <iostream>
 
 Camera::Camera() {
     std::cout << "Camera constructor" << std::endl;

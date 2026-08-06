@@ -11,8 +11,8 @@ int main() {
     srand(time(0));
 
     ModelPaths model_ball, model_lamp;
-    model_lamp.path = getAssetPath("Obj/LuxoLamp/Luxo.obj");
-    model_ball.path = getAssetPath("Obj/LuxoBall/luxoball.obj");
+    model_lamp.path = getAssetPath("assets_local/Obj/LuxoLamp/Luxo.obj");
+    model_ball.path = getAssetPath("assets_local/Obj/LuxoBall/luxoball.obj");
 
     DisplayGraphics::SetBackend(Backend::OpenGL);
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -64,17 +64,17 @@ int main() {
     lamp->setAnimationID("lamp");
 
     FunGTSGeom groundPlane = SimpleGeometry::create(Geometry::Plane);
-    groundPlane->load(getAssetPath("img/floor.png"));
+    groundPlane->load(getAssetPath("assets_local/img/floor.png"));
     groundPlane->position(0.0, 0.0, 0.0);
 
     //Back wall:
 
     FunGTSGeom backWall = SimpleGeometry::create(Geometry::Plane);
-    backWall->load(getAssetPath("img/leftwall.png"));
+    backWall->load(getAssetPath("assets_local/img/leftwall.png"));
     backWall->rotation(90.0f, 0.0f, 0.0f);
     backWall->position(0.0f, 0.0f, -40.0f);
     FunGTSGeom left_Wall = SimpleGeometry::create(Geometry::Plane);
-    left_Wall->load(getAssetPath("img/leftwall.png"));
+    left_Wall->load(getAssetPath("assets_local/img/leftwall.png"));
     left_Wall->rotation(90.0f, 0.0f, -90.0f);
     left_Wall->position(-40.0f, 0.0f, 0.0f);
 
@@ -94,11 +94,9 @@ int main() {
 
     auto animController = myGame->getAnimationController();
 
-    // Enable baking for ball
     animController->setObjectBakingEnabled("ball", true);
 
-    // Store window pointer (you need to add getAnimationWindow() to FunGT!)
-    auto animWindow = myGame->getAnimationWindow();  // ← ADD THIS METHOD TO FUNGT!
+    auto animWindow = myGame->getAnimationWindow(); 
 
     float lastTime = glfwGetTime();
     FunGTPhysicsWorld physics = myGame->getPhysicsWorld();

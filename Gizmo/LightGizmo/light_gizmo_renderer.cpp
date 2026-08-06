@@ -1,9 +1,11 @@
 #include "light_gizmo_renderer.hpp"
+#include "Shaders/shader.hpp"
 #include <cmath>
 
 LightGizmoRenderer::LightGizmoRenderer(SceneManager* sceneManager, Camera* camera)
     : m_sceneManager(sceneManager)
     , m_camera(camera)
+    , m_shader(Shader::create())
     , m_initialized(false)
 {
 }
@@ -49,7 +51,7 @@ void LightGizmoRenderer::init()
 {
     std::string m_vs = getAssetPath("shaders/gizmo_vs.glsl");
     std::string m_fs = getAssetPath("shaders/gizmo_fs.glsl");
-    m_shader.create(m_vs, m_fs);
+    m_shader->create(m_vs, m_fs);
 
     std::vector<GizmoVertex> sphereVerts;
     buildSphere(0.5f, 32, sphereVerts);
@@ -74,10 +76,10 @@ void LightGizmoRenderer::render(const glm::mat4& projection)
     const auto& lights = m_sceneManager->getLights();
     if (lights.empty()) return;
 
-    m_shader.Bind();
-    m_shader.setUniformMat4fv("ViewMatrix", m_camera->getViewMatrix());
-    m_shader.setUniformMat4fv("ProjectionMatrix", projection);
-    m_shader.setUniformVec1f(0.4f, "gizmoScale");
+    m_shader->Bind();
+    m_shader->setUniformMat4fv("ViewMatrix", m_camera->getViewMatrix());
+    m_shader->setUniformMat4fv("ProjectionMatrix", projection);
+    m_shader->setUniformVec1f(0.4f, "gizmoScale");
 
     for (const auto& light : lights)
     {
@@ -90,12 +92,12 @@ void LightGizmoRenderer::render(const glm::mat4& projection)
         case SceneLightType::Area:  color = glm::vec4(light.color, 1.0f); break;
         }
 
-        m_shader.setUniformVec3f(light.position, "lightWorldPos");
-        m_shader.setUniformVec4f(color, "gizmoColor");
+        m_shader->setUniformVec3f(light.position, "lightWorldPos");
+        m_shader->setUniformVec4f(color, "gizmoColor");
 
         if (light.type == SceneLightType::Point)
         {
-            m_shader.set1i(0, "isBillboard");
+            m_shader->set1i(0, "isBillboard");
             m_sphereMesh.buffer->bindVAO();
             glLineWidth(2.0f);
             m_sphereMesh.buffer->drawArrays(m_sphereMesh.vertexCount, m_sphereMesh.drawMode);
@@ -104,12 +106,12 @@ void LightGizmoRenderer::render(const glm::mat4& projection)
         }
         else
         {
-            m_shader.set1i(1, "isBillboard");
+            m_shader->set1i(1, "isBillboard");
             m_quadMesh.buffer->bindVAO();
             m_quadMesh.buffer->drawArrays(m_quadMesh.vertexCount, m_quadMesh.drawMode);
             m_quadMesh.buffer->unbindVAO();
         }
     }
 
-    m_shader.unBind();
+    m_shader->unBind();
 }

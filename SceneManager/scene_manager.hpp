@@ -11,7 +11,7 @@
 class SceneManager{
 
     private:
-        Shader m_shader;
+        std::unique_ptr<Shader> m_shader;
         std::vector<std::shared_ptr<Renderable>> m_VectorOfRenderNodes;
         glm::mat4 m_ViewMatrix = glm::mat4(1.f);
         glm::mat4 m_ProjectionMatrix = glm::mat4(1.f);

@@ -2,7 +2,7 @@
 #include <iostream>
 
 DebugRenderer::DebugRenderer()
-    : m_vao(0), m_vbo(0), m_initialized(false)
+    : m_vao(0), m_vbo(0), m_lineShader(Shader::create()), m_initialized(false)
 {
 }
 
@@ -15,7 +15,7 @@ void DebugRenderer::init() {
     // Use YOUR Shader class to create the shader program
     std::string vsPath = getAssetPath("shaders/debug_line_vs.glsl");
     std::string fsPath = getAssetPath("shaders/debug_line_fs.glsl");
-    m_lineShader.create(vsPath, fsPath);
+    m_lineShader->create(vsPath, fsPath);
 
     // Setup VAO/VBO for line rendering
     glGenVertexArrays(1, &m_vao);
@@ -191,11 +191,11 @@ void DebugRenderer::render(const glm::mat4& view, const glm::mat4& projection) {
     glLineWidth(3.0f);
 
     // Use YOUR Shader class methods
-    m_lineShader.Bind();
+    m_lineShader->Bind();
 
     // Set uniforms using YOUR Shader class methods
-    m_lineShader.setUniformMat4fv("u_View", view);
-    m_lineShader.setUniformMat4fv("u_Projection", projection);
+    m_lineShader->setUniformMat4fv("u_View", view);
+    m_lineShader->setUniformMat4fv("u_Projection", projection);
 
     // Upload vertex data
     glBindVertexArray(m_vao);
@@ -206,7 +206,7 @@ void DebugRenderer::render(const glm::mat4& view, const glm::mat4& projection) {
     glDrawArrays(GL_LINES, 0, m_vertices.size() / 6);
 
     glBindVertexArray(0);
-    m_lineShader.unBind();
+    m_lineShader->unBind();
 
     glEnable(GL_DEPTH_TEST);
 }

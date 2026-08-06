@@ -1,7 +1,8 @@
 #include "clothing.hpp"
 
 
-Clothing::Clothing(int nx, int ny ){
+Clothing::Clothing(int nx, int ny )
+    : m_shader(Shader::create()){
     std::cout<<"Clothin constructor"<<std::endl;
     grid_x  = nx;
     grid_y  = ny;
@@ -30,7 +31,7 @@ Clothing::Clothing(int nx, int ny ){
     std::string ps_fs = getAssetPath("resources/clothing.fs");
     initIndices();
     this->init();
-    m_shader.create(ps_vs, ps_fs);
+    m_shader->create(ps_vs, ps_fs);
 }
 
 void Clothing::initIndices()

@@ -3,7 +3,7 @@
 GPUGeometry::GPUGeometry(std::shared_ptr<gpu::CollisionManager> collision,
     int startIndex,
     int count)
-    : m_collision(collision), m_startIndex(startIndex), m_instanceCount(count) {
+    : m_collision(collision), m_startIndex(startIndex), m_instanceCount(count), m_shader(Shader::create()) {
 }
 
 GPUGeometry::~GPUGeometry() {
@@ -24,7 +24,7 @@ void GPUGeometry::load(const std::string& pathToTexture) {
     }
 
     m_primitive->setData();
-    m_shader.create(m_vs_path, m_fs_path);
+    m_shader->create(m_vs_path, m_fs_path);
     m_primitive->setTexture(pathToTexture);
     m_primitive->InitGraphics();
 }
@@ -42,9 +42,9 @@ void GPUGeometry::draw() {
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, kernel->getModelMatrixSSBO());
     // tells shader which index to start from
-    m_shader.setUniform1i("u_startIndex", m_startIndex);
+    m_shader->setUniform1i("u_startIndex", m_startIndex);
 
-    m_primitive->IntancedDraw(m_shader, m_instanceCount);
+    m_primitive->IntancedDraw(*m_shader, m_instanceCount);
    
 }
 

@@ -233,6 +233,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
+    ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/funGT/fungt.cpp
     ${FUNGT_BASE_DIR}/AnimatedModel/animated_model.cpp
     ${FUNGT_BASE_DIR}/Textures/textures.cpp

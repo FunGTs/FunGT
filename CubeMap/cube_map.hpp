@@ -16,7 +16,7 @@ class CubeMap : public Renderable {
         std::unique_ptr<GPUBuffer> m_buffer;
     public:
         Texture texture;
-        Shader shader; 
+        std::unique_ptr<Shader> shader;
 
 
     public:

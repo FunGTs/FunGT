@@ -24,7 +24,7 @@ class LightGizmoRenderer {
 
     SceneManager* m_sceneManager;
     Camera*       m_camera;
-    Shader        m_shader;
+    std::unique_ptr<Shader> m_shader;
     GizmoMesh     m_sphereMesh;
     GizmoMesh     m_quadMesh;
     bool          m_initialized;

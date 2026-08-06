@@ -42,7 +42,7 @@ class Model  {
         std::vector<std::unique_ptr<Mesh>> m_vMesh; 
         std::string m_dirPath; 
         std::vector<Texture> m_loadedTextures;
-        Shader m_shader;
+        std::unique_ptr<Shader> m_shader;
     
     private:
        
