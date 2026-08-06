@@ -134,6 +134,8 @@ set(FUNGT_INCLUDES
     ${FUNGT_BASE_DIR}/Lights
     ${FUNGT_BASE_DIR}/gpu/data
     ${FUNGT_BASE_DIR}/gpu/include
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl
 )
 
 # ────────────────────────────────────────────────────────
@@ -169,6 +171,12 @@ set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix4x4f.cpp
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/graphics_render_device.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_buffer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_texture.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_device.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_buffer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_texture.cpp
 )
 
 add_library(pbr_core STATIC ${PBR_CORE_FILES})

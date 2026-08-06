@@ -10,6 +10,9 @@ int main() {
     ModelPaths iwocl;
 
     iwocl.path = getAssetPath("demo_assets/iwocl/iwocl.obj");
+    //Backend:
+
+    DisplayGraphics::SetBackend(Backend::OpenGL);
     //Creates a FunGT Scene to display 
     FunGTScene myGame = FunGT::createScene(SCREEN_WIDTH, SCREEN_HEIGHT);
     //Background color, use 255.f for pure white, 

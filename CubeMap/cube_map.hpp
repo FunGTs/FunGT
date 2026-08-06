@@ -5,19 +5,16 @@
 #include "../Shaders/shader.hpp"
 #include "../Renderable/renderable.hpp"
 #include "../DataPaths/datapaths.hpp"
+#include "../GraphicsRenderBackend/gpu_buffer.hpp"
 class CubeMap : public Renderable {
 
     private:
-        std::vector<PrimitiveVertex> m_vertex; 
-        std::vector<GLuint> m_index;
-        glm::mat4 m_viewMatrix = glm::mat4(1.f); 
-        glm::mat4 m_projectionMatrix  = glm::mat4(1.f);
-    public: 
-
-        unsigned int texture_type = GL_TEXTURE_CUBE_MAP;
-        VertexArrayObject m_vao; 
-        VertexBuffer m_vb;
-        VertexIndex m_vi; 
+        std::vector<PrimitiveVertex> m_vertex;
+        std::vector<uint32_t>        m_index;
+        glm::mat4 m_viewMatrix = glm::mat4(1.f);
+        glm::mat4 m_projectionMatrix = glm::mat4(1.f);
+        std::unique_ptr<GPUBuffer> m_buffer;
+    public:
         Texture texture;
         Shader shader; 
 
@@ -33,9 +30,9 @@ class CubeMap : public Renderable {
         void set();
         
         void setVertices(const PrimitiveVertex *vertices, const unsigned numOfvert);
-        void setIndices(const GLuint *indices, const unsigned numOfindices);        
+        void setIndices(const uint32_t *indices, const unsigned numOfindices);
         PrimitiveVertex *getVertices();
-        GLuint* getIndices();
+        uint32_t* getIndices();
         unsigned getNumOfVertices();
         unsigned getNumOfIndices();
         void setShaders(std::string vs, std::string fs);

@@ -1,4 +1,5 @@
 #include "inf_grid.hpp"
+#include "../GraphicsRenderBackend/graphics_render_device.hpp"
 #include <iostream>
 
 InfiniteGrid::InfiniteGrid()
@@ -7,13 +8,13 @@ InfiniteGrid::InfiniteGrid()
     , m_viewMatrix(glm::mat4(1.0f))
     , m_projectionMatrix(glm::mat4(1.0f))
 {
-    // Generate empty VAO (shader generates vertices procedurally)
-    glGenVertexArrays(1, &m_VAO);
+    // Empty VAO — shader generates vertices procedurally
+    m_buffer = GPUBuffer::create();
+    m_buffer->genVAO();
     std::cout << "InfiniteGrid constructor" << std::endl;
 }
 
 InfiniteGrid::~InfiniteGrid() {
-    glDeleteVertexArrays(1, &m_VAO);
     std::cout << "InfiniteGrid destructor" << std::endl;
 }
 
@@ -31,22 +32,16 @@ void InfiniteGrid::draw() {
     m_shader.setUniform1f(m_nearPlane, "nearPlane");
     m_shader.setUniform1f(m_farPlane, "farPlane");
 
-    glBindVertexArray(m_VAO);
+    m_buffer->bindVAO();
 
-    // Enable blending for grid transparency
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    auto* dev = GraphicsRenderDevice::Get();
+    dev->setBlendFunc(BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha);
+    dev->setDepthMask(false);
 
-    // Disable depth writing (grid should not block objects)
-    glDepthMask(GL_FALSE);
+    m_buffer->drawArrays(6);
 
-    // Draw 6 vertices (2 triangles = fullscreen quad)
-    // Shader generates vertices procedurally
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    dev->setDepthMask(true);
 
-    // Restore depth writing
-    glDepthMask(GL_TRUE);
-
-    glBindVertexArray(0);
+    m_buffer->unbindVAO();
     //m_shader.unBind();
 }

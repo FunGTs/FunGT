@@ -11,13 +11,13 @@ FunGT::FunGT(int _width, int _height)
     m_firstMouse = true;
 
     m_sceneManager = std::make_shared<SceneManager>();
-    m_ViewPortLayer = std::make_unique<ViewPort>();
+    m_ViewPortLayer = ViewPort::create();
     m_imguiLayer = std::make_unique<ImGuiLayer>();
     // Create simulation controller
     m_simController = std::make_shared<fungt::SimulationController>();
 
     //Progressive Path Tracer
-    m_progressiveTracer = std::make_unique<ProgressivePathTracer>();
+    m_progressiveTracer = ProgressivePathTracer::create();
     
     
 }
@@ -173,7 +173,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
             auto* viewport = m_layerStack.get<ViewPort>();
             if (!viewport) return;
 
-            GLuint pathTraceTexture = viewport->getPathTraceTexture();
+            uint32_t pathTraceTexture = viewport->getPathTraceTexture();
 
             // Initialize on first sample or if not initialized
             if (sample == 0 || !m_progressiveTracer->isInitialized()) {

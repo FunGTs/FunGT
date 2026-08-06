@@ -151,10 +151,10 @@ std::unique_ptr<Mesh> AnimatedModel::processMesh(aiMesh *mesh, const aiScene *sc
     std::cout<<"Textures loaded  : "<<texture.size()<<std::endl; 
     std::cout<<"Materials loaded : "<<materials.size()<<std::endl; 
     if(texture.size()==0 && materials.size()>0){
-         std::cout<<"Mesh with only material"<<std::endl; 
+         std::cout<<"Mesh with only material"<<std::endl;
         return std::make_unique<Mesh>(vertices,indices,materials);
     }
-    return std::make_unique<Mesh>(vertices,indices,texture);
+    return std::make_unique<Mesh>(vertices,indices,std::move(texture));
 }
 
 void AnimatedModel::printGlmMat4(glm::mat4 &mat)

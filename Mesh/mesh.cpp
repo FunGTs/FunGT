@@ -4,125 +4,42 @@ Mesh::Mesh(){
     std::cout<<"Mesh Default Destructor"<<std::endl; 
 }
 
-Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Texture> &inTexture)
-: m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_texture{inTexture}{
-     
-}
-Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex,const std::vector<GLuint> &inIndex,const std::vector<Material> &inMaterial)
-: m_vertex(std::move(inVertex)),m_index{std::move(inIndex)}, m_material{inMaterial}{
-      //Calls the init mesh to populate the VAO, VBO and EBO
-     //this->initMesh();
-}
+Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex, const std::vector<uint32_t> &inIndex, std::vector<Texture> inTexture)
+: m_vertex(std::move(inVertex)), m_index{std::move(inIndex)}, m_texture{std::move(inTexture)} {}
+
+Mesh::Mesh(const std::vector<funGTVERTEX> &inVertex, const std::vector<uint32_t> &inIndex, const std::vector<Material> &inMaterial)
+: m_vertex(std::move(inVertex)), m_index{std::move(inIndex)}, m_material{inMaterial} {}
+
 Mesh::Mesh(const std::vector<funGTVERTEX>& inVertex,
-    const std::vector<GLuint>& inIndex,
-    const std::vector<Texture>& inTexture,
+    const std::vector<uint32_t>& inIndex,
+    std::vector<Texture> inTexture,
     const std::vector<Material>& inMaterial)
     : m_vertex(std::move(inVertex)),
-    m_index{ std::move(inIndex) },
-    m_texture{ inTexture },
-    m_material{ inMaterial }
-{
-    // Holds BOTH textures and materials!
-}
+    m_index{std::move(inIndex)},
+    m_texture{std::move(inTexture)},
+    m_material{inMaterial} {}
 Mesh::~Mesh()
 {
     std::cout<<"Mesh Destructor"<<std::endl;
 }
 //Methods
 void Mesh::initMesh() {
+    m_buffer = GPUBuffer::create();
 
-   //  //This method initialize a Mesh
+    m_buffer->genVAO();
+    m_buffer->bindVAO();
 
-    m_vao.genVAO(); //Generates a Vertex array object
-    m_vao.bind();
+    m_buffer->create(BufferType::Vertex, m_vertex.data(), m_vertex.size() * sizeof(funGTVERTEX));
+    m_buffer->create(BufferType::Index,  m_index.data(),  m_index.size()  * sizeof(unsigned int));
 
-    m_vb.genVB(); //Generates the Vertex Buffer
-    m_vb.bind();
-    m_vb.bufferData(&m_vertex[0],m_vertex.size()*sizeof(Vertex));
+    // layout baked into the VAO once
+    m_buffer->applyFormat(funGTVERTEX::getFormat());
 
-    m_vi.genVI(); //Generates the Vertex Buffer
-    m_vi.bind(); 
-    //m_vi.indexData(&m_index[0],sizeof(&m_index[0])*m_index.size()); //Changed to a possible bug : segmentation fault
-    m_vi.indexData(m_index.data(), m_index.size() * sizeof(m_index[0]));
-    
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index.size() * sizeof(unsigned int), &m_index[0], GL_STATIC_DRAW);
-
-    //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
-        //POSITION 
-        //  offsetof(s,m) takes as its first argument a struct and as its second argument a 
-        // variable name of the struct. 
-        // The macro returns the byte offset of that variable from the start of the struct.
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,position));
-       
-        //Normals
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,normal));
-        
-        //TEXTURE COORDS
-        //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        
-
-        // ids
-		glEnableVertexAttribArray(3);
-		glVertexAttribIPointer(3, maxBoneInfluencePerVertex, GL_INT, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_BoneIDs));
-        
-		// weights
-		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, maxBoneInfluencePerVertex, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_Weights));
-        
-    m_vao.unbind();
-  
+    m_buffer->unbindVAO();
 }
 void Mesh::InitOGLBuffers()
 {
-    //  //This method initialize a Mesh
-
-    m_vao.genVAO(); //Generates a Vertex array object
-    m_vao.bind();
-
-    m_vb.genVB(); //Generates the Vertex Buffer 
-    m_vb.bind();
-    m_vb.bufferData(&m_vertex[0], m_vertex.size() * sizeof(Vertex));
-
-    m_vi.genVI(); //Generates the Vertex Buffer
-    m_vi.bind();
-    //m_vi.indexData(&m_index[0],sizeof(&m_index[0])*m_index.size()); //Changed to a possible bug : segmentation fault
-    m_vi.indexData(m_index.data(), m_index.size() * sizeof(m_index[0]));
-
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index.size() * sizeof(unsigned int), &m_index[0], GL_STATIC_DRAW);
-
-    //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
-        //POSITION 
-        //  offsetof(s,m) takes as its first argument a struct and as its second argument a 
-        // variable name of the struct. 
-        // The macro returns the byte offset of that variable from the start of the struct.
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
-
-    //Normals
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
-
-    //TEXTURE COORDS
-    //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, texcoord));
-
-
-    // ids
-    glEnableVertexAttribArray(3);
-    glVertexAttribIPointer(3, maxBoneInfluencePerVertex, GL_INT, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_BoneIDs));
-
-    // weights
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, maxBoneInfluencePerVertex, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_Weights));
-
-    m_vao.unbind();
+    initMesh();
 }
 void Mesh::draw(Shader &shader){
 
@@ -134,24 +51,16 @@ void Mesh::draw(Shader &shader){
     shader.setUniform1i("hasTexture", numOfTextures > 0 ? 1 : 0);
     //std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
     for(unsigned int i=0; i<numOfTextures; i++){
-      
-        m_texture[i].active(i);
-        //glActiveTexture(GL_TEXTURE0 + i);
-        //std::cout<<"Texture : "<<m_texture[i].getTypeName()<<" activated"<<std::endl; 
-        std::string iter; //Asign a number at the end of the name
+        std::string iter;
         if(m_texture[i].getTypeName()=="texture_diffuse"){
             iter = std::to_string(diffuseL++);
         }
         else if(m_texture[i].getTypeName()=="texture_specular"){
-            iter = std::to_string(specularL++); 
+            iter = std::to_string(specularL++);
         }
-        std::string textName = m_texture[i].getTypeName()+iter; //Builds the full name of the texture
-        //std::cout<<"Sending : "<<textName<<" to the shader"<<std::endl;
-        //std::cout<<"Texture ID : "<<m_texture[i].getID()<<std::endl; 
-        shader.set1i(i,textName);//Send texture to the shader
-        //m_texture[i].active();
-        m_texture[i].bind();
-        //glBindTexture(GL_TEXTURE_2D, static_cast<unsigned int>(m_texture[i].getID())); 
+        std::string textName = m_texture[i].getTypeName() + iter;
+        shader.set1i(i, textName);
+        m_texture[i].active(i); // activates slot + binds
     } 
     //loading the materials
     for(int i=0; i<m_material.size(); i++){
@@ -160,15 +69,9 @@ void Mesh::draw(Shader &shader){
 
     }
 
-       //Draw your mesh!
-        m_vao.bind();
-        //glBindVertexArray(VAO);
-        //std::cout<<"Drawing Mesh with: "<< m_index.size() << " indices "<<std::endl;
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_index.size() / 3) * 3, GL_UNSIGNED_INT, (void*)0); 
-        //glBindVertexArray(0);
-        m_vao.unbind();
-        //glActiveTexture(GL_TEXTURE0);
-        // OpenGL Error Checking
+    m_buffer->bindVAO();
+    m_buffer->drawIndexed((m_index.size() / 3) * 3);
+    m_buffer->unbindVAO();
 
 }
 

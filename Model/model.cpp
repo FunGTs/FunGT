@@ -145,22 +145,15 @@ std::vector<funGTVERTEX> Model::getVertices(aiMesh *mesh, const aiScene *scene)
     return vertices;
 }
 
-std::vector<GLuint> Model::getIndices(aiMesh *mesh, const aiScene *scene)
-{   
-    std::vector<GLuint> indices; 
-    //lets iterate using the faces
+std::vector<uint32_t> Model::getIndices(aiMesh *mesh, const aiScene *scene)
+{
+    std::vector<uint32_t> indices;
     for(int i=0; i<mesh->mNumFaces; i++){
-        aiFace face = mesh->mFaces[i]; 
-
-        //lets extract each index of the current face
-
+        aiFace face = mesh->mFaces[i];
         for(int j=0; j<face.mNumIndices; j++){
-
-            indices.push_back(static_cast<GLint>(face.mIndices[j]));
-
+            indices.push_back(face.mIndices[j]);
         }
-    } 
-
+    }
     return indices;
 }
 
@@ -170,7 +163,7 @@ std::vector<Texture > Model::getTextures(aiMesh *mesh, const aiScene *scene)
     aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
     std::vector<Texture > diffuseM  = loadTextures(material,aiTextureType_DIFFUSE,"texture_diffuse");
-    textures.insert(textures.end(),diffuseM.begin(),diffuseM.end());
+    textures.insert(textures.end(), std::make_move_iterator(diffuseM.begin()), std::make_move_iterator(diffuseM.end()));
     //std::vector<Texture > specularM  = loadTextures(material,aiTextureType_SPECULAR,"texture_specular");
     //textures.insert(textures.end(),specularM.begin(),specularM.end());
 
@@ -327,7 +320,7 @@ std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
     std::cout << "Materials loaded : " << materials.size() << std::endl;
 
     // ALWAYS use the combined constructor - handles all cases!
-    auto newMesh = std::make_unique<Mesh>(vertices, indices, texture, materials);
+    auto newMesh = std::make_unique<Mesh>(vertices, indices, std::move(texture), materials);
     newMesh->m_name = meshName;
     return newMesh;
 }
@@ -343,24 +336,33 @@ std::vector<Texture > Model::loadTextures(aiMaterial *mat, aiTextureType type, s
         bool wasLoaded = false;
         for(unsigned int j=0; j<m_loadedTextures.size(); j++){
              if(m_loadedTextures[j].getPath().compare(txt_path)==0){
-                std::cout<<"Texture already loaded..."<<std::endl; 
-                textures.push_back(m_loadedTextures[j]);
+                std::cout<<"Texture already loaded..."<<std::endl;
+                // Re-load from path — GPU textures are not copyable
+                Texture cached;
+                cached.genTexture(txt_path);
+                cached.setTypeName(m_loadedTextures[j].getTypeName());
+                cached.setPath(txt_path);
+                textures.push_back(std::move(cached));
                 wasLoaded = true;
-                break; 
+                break;
             }
         }
         if(!wasLoaded){
             Texture  internalTexture;
-            std::cout<<"Texture not loaded, loading..."<<std::endl; 
+            std::cout<<"Texture not loaded, loading..."<<std::endl;
             std::cout<<" Texture path : " << txt_path <<std::endl;
-             
-            //Here  we populate or texture
+
             internalTexture.genTexture(txt_path);
             std::cout<<"Texture ID : "<<internalTexture.getID()<<std::endl;
             internalTexture.setTypeName(typeName);
             internalTexture.setPath(txt_path);
-            textures.push_back(internalTexture);
-            m_loadedTextures.push_back(internalTexture);  
+            // Keep a separate instance in the cache
+            Texture forCache;
+            forCache.genTexture(txt_path);
+            forCache.setTypeName(typeName);
+            forCache.setPath(txt_path);
+            m_loadedTextures.push_back(std::move(forCache));
+            textures.push_back(std::move(internalTexture));
 
         
         } 

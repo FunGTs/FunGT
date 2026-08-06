@@ -8,11 +8,11 @@ Pyramid::~Pyramid()
 {
 }
 
-void Pyramid::draw(){
+void Pyramid::draw() {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-    glDrawArrays(GL_TRIANGLES, 0, 18);
+    m_buffer->bindVAO();
+    m_buffer->drawArrays(getNumOfVertices());
+    m_buffer->unbindVAO();
 }
 
 void Pyramid::setData()

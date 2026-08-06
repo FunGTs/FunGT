@@ -1,122 +1,43 @@
 #include "primitives.hpp"
 
-Primitive::Primitive(){
+Primitive::Primitive() {}
+Primitive::~Primitive() {}
 
-}
-
-Primitive::~Primitive()
-{
-}
-void Primitive::set(const PrimitiveVertex *vertices, const unsigned numOfvert, const GLuint *indices, const unsigned numOfindices){
-
-    for(size_t i = 0; i<numOfvert; i++){
-        //use size_t for array indexing and loop counting
-        this->m_vertex.push_back(vertices[i]);
-    }
-    for(size_t i = 0; i<numOfindices; i++){
-        //use size_t for array indexing and loop counting
-        this->m_index.push_back(indices[i]);
-    }
-
-
-}
-void Primitive::set(const PrimitiveVertex *vertices, const unsigned numOfvert)
-{
-    for(size_t i = 0; i<numOfvert; i++){
-        //use size_t for array indexing and loop counting
-        this->m_vertex.push_back(vertices[i]);
-    }
-}
-PrimitiveVertex *Primitive::getVertices()
-{
-    return this->m_vertex.data();
-}
-GLuint* Primitive::getIndices(){
-    return this->m_index.data();
-}
- unsigned Primitive::getNumOfVertices(){
-    return this->m_vertex.size();
-}
- unsigned Primitive::getNumOfIndices(){
-    return this->m_index.size();
-}
-long unsigned Primitive::sizeOfVertices(){
-    return sizeof(PrimitiveVertex)*this->m_vertex.size();
-}
-long unsigned Primitive::sizeOfIndices(){
-    return sizeof(PrimitiveVertex)*this->m_index.size();
+void Primitive::set(const PrimitiveVertex* vertices, unsigned numOfvert, const uint32_t* indices, unsigned numOfindices) {
+    for (size_t i = 0; i < numOfvert;    i++) m_vertex.push_back(vertices[i]);
+    for (size_t i = 0; i < numOfindices; i++) m_index.push_back(indices[i]);
 }
 
-void Primitive::setAttribs()
-{
-    //Set Vertex Attributes pointers and enable n
-    //glVertexAttribPointer(0 /*First element: positions*/,3 /* 3 floats*/, GL_FLOAT/*Type*/,GL_FALSE, 3*sizeof(GLfloat)/*how much steps to the next vertex pos*/, (GLvoid*)0);
-    //glEnableVertexAttribArray(0); 
-    //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
-        //POSITION 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,position));
-       
-        //COLOR
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,normal));
-        
-        //TEXTURE COORDS
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,texcoord));
-        
+void Primitive::set(const PrimitiveVertex* vertices, unsigned numOfvert) {
+    for (size_t i = 0; i < numOfvert; i++) m_vertex.push_back(vertices[i]);
 }
 
-void Primitive::unsetAttribs()
-{
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
-}
+PrimitiveVertex* Primitive::getVertices()  { return m_vertex.data(); }
+uint32_t*        Primitive::getIndices()   { return m_index.data();  }
+unsigned         Primitive::getNumOfVertices() { return m_vertex.size(); }
+unsigned         Primitive::getNumOfIndices()  { return m_index.size();  }
+long unsigned    Primitive::sizeOfVertices()   { return sizeof(PrimitiveVertex) * m_vertex.size(); }
+long unsigned    Primitive::sizeOfIndices()    { return sizeof(uint32_t) * m_index.size(); }
 
-const std::vector<PrimitiveVertex>& Primitive::getVertices() const
-{
-    // TODO: insert return statement here
-    return m_vertex;
-}
+const std::vector<PrimitiveVertex>& Primitive::getVertices() const { return m_vertex; }
+const std::vector<uint32_t>&        Primitive::getIndices()  const { return m_index;  }
 
-const std::vector<unsigned int>& Primitive::getIndices() const
-{
-    // TODO: insert return statement here
-    return m_index;
-}
-
-// Graphics initialization
-void Primitive::setTexture(const std::string &pathToTexture)
-{
+void Primitive::setTexture(const std::string& pathToTexture) {
     texture.genTexture(pathToTexture);
-    texture.active();
-    texture.bind();
 }
 
-void Primitive::InitGraphics()
-{
-    m_vao.genVAO();
-    m_vb.genVB();
-    m_vi.genVI();
+void Primitive::InitGraphics() {
+    m_buffer = GPUBuffer::create();
 
-    m_vao.bind();
+    m_buffer->genVAO();
+    m_buffer->bindVAO();
 
-    m_vb.bind();
-    m_vb.bufferData(this->getVertices(), this->sizeOfVertices());
+    m_buffer->create(BufferType::Vertex, getVertices(), sizeOfVertices());
 
-    this->setAttribs();
+    if (getNumOfIndices() > 0)
+        m_buffer->create(BufferType::Index, getIndices(), sizeOfIndices());
 
-    // Upload index data if indices exist
-    if (this->getNumOfIndices() > 0) {
-        m_vi.bind();
-        m_vi.indexData(this->getIndices(), this->sizeOfIndices());
-    }
+    m_buffer->applyFormat(PrimitiveVertex::getFormat());
 
-    m_vao.unbind();
-    this->unsetAttribs();
-    m_vb.unbind();
-    if (this->getNumOfIndices() > 0) {
-        m_vi.unbind();
-    }
+    m_buffer->unbindVAO();
 }
