@@ -271,6 +271,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/GUI/demo_particles_window.cpp
     ${FUNGT_BASE_DIR}/GUI/render_action_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/debug_rigidbody_renderer.cpp
+    ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp

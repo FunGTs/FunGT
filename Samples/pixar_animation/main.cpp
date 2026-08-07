@@ -10,11 +10,11 @@ int main(){
     ModelPaths model_ball, model_lamp, model_ground;
     
     //model.path   = getAssetPath("Animations/monster_dancing/monster_dancing.dae");
-    model_ball.path   = getAssetPath("Obj/LuxoBall/luxoball.obj");
+    model_ball.path   = getAssetPath("assets_local/Obj/LuxoBall/luxoball.obj");
     model_ball.vs_path = getAssetPath("resources/luxoball_vs.glsl");
     model_ball.fs_path = getAssetPath("resources/luxoball_fs.glsl");
 
-    model_lamp.path   = getAssetPath("Obj/LuxoLamp/Luxo.obj");
+    model_lamp.path   = getAssetPath("assets_local/Obj/LuxoLamp/Luxo.obj");
     model_lamp.vs_path = getAssetPath("resources/luxolamp_vs.glsl");
     model_lamp.fs_path = getAssetPath("resources/luxolamp_fs.glsl");
 
