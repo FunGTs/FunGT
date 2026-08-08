@@ -2,7 +2,7 @@
 #include "particle_simulation_sycl_ops.hpp"
 
 ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, std::string fragment_shader)
-: m_NumParticles{num}{
+: m_NumParticles{num}, m_shader(Shader::create()){
     // INITIALIZE SYCL WITH GL INTEROP (ParticleSimulation owns this responsibility)
     particleSim_initSycl();
     m_pSet.SetNumParticles(m_NumParticles);
@@ -12,7 +12,7 @@ ParticleSimulation::ParticleSimulation(size_t num, std::string vertex_shader, st
     loadDemo(3);
     this->init();
 
-    m_shader.create(vertex_shader, fragment_shader);
+    m_shader->create(vertex_shader, fragment_shader);
 }
 
 void ParticleSimulation::loadDemo(int demo_index)
@@ -60,8 +60,7 @@ void ParticleSimulation::draw()
 
 Shader &ParticleSimulation::getShader()
 {
-    // TODO: insert return statement here
-    return m_shader;
+    return *m_shader;
 }
 
 void ParticleSimulation::updateTime(float deltaTime)

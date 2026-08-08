@@ -4,33 +4,38 @@
 #include "Shaders/shader.hpp"
 #include "SceneManager/scene_manager.hpp"
 #include "Camera/camera.hpp"
-#include "include/prerequisites.hpp"
-#include "include/glmath.hpp"
+#include "GraphicsRenderBackend/gpu_buffer.hpp"
+#include "GraphicsRenderBackend/vertex_format.hpp"
+#include <memory>
 #include <vector>
 
+struct GizmoVertex {
+    glm::vec3 position;
+    FUNGT_VERTEX_FORMAT(GizmoVertex, position)
+};
+
 struct GizmoMesh {
-    GLuint vao = 0;
-    GLuint vbo = 0;
-    int    vertexCount = 0;
-    GLenum drawMode = GL_LINES;
+    std::unique_ptr<GPUBuffer> buffer;
+    int       vertexCount = 0;
+    DrawMode  drawMode    = DrawMode::Lines;
 };
 
 class LightGizmoRenderer {
 
-    SceneManager* m_sceneManager;   
-    Camera* m_camera;
-    Shader        m_shader;
+    SceneManager* m_sceneManager;
+    Camera*       m_camera;
+    std::unique_ptr<Shader> m_shader;
     GizmoMesh     m_sphereMesh;
     GizmoMesh     m_quadMesh;
     bool          m_initialized;
     std::string m_vs;
     std::string m_fs;
-    static void buildSphere(float radius, int segments, std::vector<float>& out);
-    static void uploadMesh(GizmoMesh& mesh, const std::vector<float>& vertices, GLenum drawMode);
+    static void buildSphere(float radius, int segments, std::vector<GizmoVertex>& out);
+    static void uploadMesh(GizmoMesh& mesh, const std::vector<GizmoVertex>& vertices, DrawMode drawMode);
 
 public:
     LightGizmoRenderer(SceneManager* sceneManager, Camera* camera);
-    ~LightGizmoRenderer();
+    ~LightGizmoRenderer() = default;
 
     void init();
     void render(const glm::mat4& projection);

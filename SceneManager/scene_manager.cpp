@@ -1,8 +1,9 @@
 #include "scene_manager.hpp"
 
-SceneManager::SceneManager(){
-        std::cout<<"Scene Manager Constructor"<<std::endl;
-        
+SceneManager::SceneManager()
+    : m_shader(Shader::create())
+{
+    std::cout<<"Scene Manager Constructor"<<std::endl;
 }
 SceneManager:: ~SceneManager(){
     std::cout<<"Scene Manager Destructor"<<std::endl;
@@ -10,11 +11,10 @@ SceneManager:: ~SceneManager(){
 
 void SceneManager::loadShaders(std::string &vs_pat, std::string &fs_path)
 {
-    m_shader.create(vs_pat,fs_path);
+    m_shader->create(vs_pat,fs_path);
 }
 Shader& SceneManager::getShader(){
-    //std::cout<<"Returning Shader reference"<<std::endl;
-    return m_shader;
+    return *m_shader;
 }
 std::vector<std::shared_ptr<Renderable>> SceneManager::getRenderable()
 {

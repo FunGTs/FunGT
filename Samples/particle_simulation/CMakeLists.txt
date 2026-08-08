@@ -231,6 +231,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
+    ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/funGT/fungt.cpp
     ${FUNGT_BASE_DIR}/AnimatedModel/animated_model.cpp
     ${FUNGT_BASE_DIR}/Textures/textures.cpp
@@ -274,6 +275,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
     ${FUNGT_BASE_DIR}/Physics/AnimationCreator/key_frame_recorder.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
+    ${FUNGT_BASE_DIR}/ViewPort/opengl/opengl_viewport.cpp
+    ${FUNGT_BASE_DIR}/ViewPort/opengl/opengl_progressive_path_tracer.cpp
     ${FUNGT_BASE_DIR}/ViewPort/progressive_path_tracer_viewport.cpp
     ${FUNGT_BASE_DIR}/Renders/framebuffer.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp

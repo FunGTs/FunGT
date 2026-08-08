@@ -17,20 +17,16 @@ geometry::Sphere::~Sphere() {
 
 void geometry::Sphere::draw() {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-
-    glDrawElements(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0);
+    m_buffer->bindVAO();
+    m_buffer->drawIndexed(getNumOfIndices());
+    m_buffer->unbindVAO();
 }
-void geometry::Sphere::InstancedDraw(Shader& shader, int instanceCount)
-{
+
+void geometry::Sphere::InstancedDraw(Shader& shader, int instanceCount) {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-
-    glDrawElementsInstanced(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0, instanceCount);
-
-    m_vao.unbind();
+    m_buffer->bindVAO();
+    m_buffer->drawIndexedInstanced(getNumOfIndices(), instanceCount);
+    m_buffer->unbindVAO();
 }
 void geometry::Sphere::setData() {
     std::cout << "Calling Sphere::setData() " << std::endl;
@@ -62,7 +58,7 @@ void geometry::Sphere::setData() {
         }
     }
 
-    std::vector<GLuint> indices;
+    std::vector<uint32_t> indices;
 
     for (int i = 0; i < m_stackCount; ++i) {
         int k1 = i * (m_sectorCount + 1);

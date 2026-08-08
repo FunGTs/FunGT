@@ -1,8 +1,9 @@
 #include "simple_geometry.hpp"
 
 
-SimpleGeometry::SimpleGeometry() {
-    // Private constructor for factory pattern
+SimpleGeometry::SimpleGeometry()
+    : m_Shader(Shader::create())
+{
 }
 
 SimpleGeometry::~SimpleGeometry() {
@@ -31,7 +32,7 @@ void SimpleGeometry::load(const std::string &pathToTexture) {
     }
 
     m_primitive->setData();
-    m_Shader.create(m_vs_path, m_fs_path);
+    m_Shader->create(m_vs_path, m_fs_path);
     if(!pathToTexture.empty()){
         m_primitive->setTexture(pathToTexture);
         m_isTexturized = true;
@@ -62,18 +63,18 @@ void SimpleGeometry::scale(float s) {
 
 void SimpleGeometry::draw() {
     if (m_primitive) {
-        m_Shader.setUniformVec3f(m_material.baseColor, "material.diffuse");
-        m_Shader.setUniformVec3f(m_material.baseColor * 0.3f, "material.ambient");
-        m_Shader.setUniformVec3f(glm::vec3(1.0f - m_material.roughness), "material.specular");
-        m_Shader.setUniformVec1f(glm::mix(2.f, 128.f, 1.f - m_material.roughness), "material.shininess");
-        m_Shader.setUniformVec1f(0.f, "material.emission");
-        m_Shader.setUniform1i("hasTexture", m_isTexturized ? 1 : 0);
+        m_Shader->setUniformVec3f(m_material.baseColor, "material.diffuse");
+        m_Shader->setUniformVec3f(m_material.baseColor * 0.3f, "material.ambient");
+        m_Shader->setUniformVec3f(glm::vec3(1.0f - m_material.roughness), "material.specular");
+        m_Shader->setUniformVec1f(glm::mix(2.f, 128.f, 1.f - m_material.roughness), "material.shininess");
+        m_Shader->setUniformVec1f(0.f, "material.emission");
+        m_Shader->setUniform1i("hasTexture", m_isTexturized ? 1 : 0);
         m_primitive->draw();
     }
 }
 
 Shader& SimpleGeometry::getShader() {
-    return m_Shader;
+    return *m_Shader;
 }
 
 glm::mat4 SimpleGeometry::getViewMatrix() {

@@ -1,66 +1,56 @@
 #if !defined(_GEOMETRIES_H_)
 #define _GEOMETRIES_H_
 #include <vector>
-#include "../include/prerequisites.hpp"
+#include <memory>
 #include "../include/glmath.hpp"
-#include "../VertexGL/vertexArrayObjects.hpp"
-#include "../VertexGL/vertexBuffers.hpp"
-#include "../VertexGL/vertexIndices.hpp"
 #include "../Textures/textures.hpp"
+#include "../GraphicsRenderBackend/gpu_buffer.hpp"
+#include "../GraphicsRenderBackend/vertex_format.hpp"
 #include "Shaders/shader.hpp"
 
-struct PrimitiveVertex{
+struct PrimitiveVertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 texcoord;
 
+    FUNGT_VERTEX_FORMAT(PrimitiveVertex, position, normal, texcoord)
 };
 
-
 class Primitive {
-
 private:
     std::vector<PrimitiveVertex> m_vertex;
-    std::vector<GLuint> m_index;
+    std::vector<uint32_t>        m_index;
+
+protected:
+    std::unique_ptr<GPUBuffer> m_buffer;
 
 public:
-    VertexArrayObject m_vao;
-    VertexBuffer m_vb;
-    VertexIndex m_vi;
     Texture texture;
 
+    Primitive();
+    virtual ~Primitive();
 
-    public:
-        Primitive();
-        virtual ~Primitive();
+    void set(const PrimitiveVertex* vertices, unsigned numOfvert, const uint32_t* indices, unsigned numOfindices);
+    void set(const PrimitiveVertex* vertices, unsigned numOfvert);
 
+    PrimitiveVertex*              getVertices();
+    uint32_t*                     getIndices();
+    unsigned                      getNumOfVertices();
+    unsigned                      getNumOfIndices();
+    long unsigned                 sizeOfVertices();
+    long unsigned                 sizeOfIndices();
 
-        void set(const PrimitiveVertex *vertices, const unsigned numOfvert, const GLuint *indices, const unsigned numOfindices);
-        void set(const PrimitiveVertex *vertices, const unsigned numOfvert);
-        PrimitiveVertex *getVertices();
-        GLuint* getIndices();
-        unsigned getNumOfVertices();
-        unsigned getNumOfIndices();
-        long unsigned sizeOfVertices();
-        long unsigned sizeOfIndices();
-        void setAttribs();
-        void unsetAttribs();
-        const std::vector<PrimitiveVertex>& getVertices() const;
-        const std::vector<unsigned int>& getIndices() const;
-        // Geometry-specific virtuals
-        virtual void setData() = 0;
+    const std::vector<PrimitiveVertex>& getVertices() const;
+    const std::vector<uint32_t>&        getIndices()  const;
 
-        // Graphics initialization
-        void setTexture(const std::string &pathToTexture);
-        void InitGraphics();
-        virtual void InstancedDraw(Shader& shader, int instanceCount) {
+    virtual void setData() = 0;
 
-        }
-        // Pure virtual draw method
-        virtual void draw() = 0;
-}; 
+    void setTexture(const std::string& pathToTexture);
+    void InitGraphics();
 
-
+    virtual void InstancedDraw(Shader& shader, int instanceCount) {}
+    virtual void draw() = 0;
+};
 
 #endif // _GEOMETRIES_H_
 

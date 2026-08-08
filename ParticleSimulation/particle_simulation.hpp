@@ -11,7 +11,7 @@ class ParticleSimulation : public Renderable {
     
     VertexArrayObject m_vao; 
     VertexBuffer m_vbo; 
-    Shader m_shader;
+    std::unique_ptr<Shader> m_shader;
     size_t m_NumParticles; 
     float m_deltaTime = 2.0;
     float x_pos = 0.0;

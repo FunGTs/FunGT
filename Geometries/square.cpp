@@ -7,11 +7,11 @@ Square::Square()
 Square::~Square(){
 }
 
-void Square::draw(){
+void Square::draw() {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-    glDrawElements(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0);
+    m_buffer->bindVAO();
+    m_buffer->drawIndexed(getNumOfIndices());
+    m_buffer->unbindVAO();
 }
 
 void Square::setData()
@@ -26,11 +26,11 @@ void Square::setData()
     };
     unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
 
-    GLuint indices[] = {
+    uint32_t indices[] = {
         0, 1, 2,
         0, 2, 3
     };
-    unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
+    unsigned nOfIndices = sizeof(indices) / sizeof(uint32_t);
 
     this->set(vertices, nOfvertices, indices, nOfIndices);
 }

@@ -3,7 +3,8 @@
 #include<iostream>
 #include<fstream>
 #include<string>
-#include <functional>   
+#include <functional>
+#include <memory>
 #include "Textures/textures.hpp"
 #include "Imgui_Setup/imgui_setup.hpp"
 #include "Geometries/square.hpp"
@@ -14,6 +15,7 @@
 #include "Model/model.hpp"
 #include "AnimatedModel/animated_model.hpp"
 #include "Animation/animation.hpp"
+#include "GraphicsRenderBackend/graphics_render_device.hpp"
 
 class GraphicsTool{
 
@@ -27,32 +29,28 @@ class GraphicsTool{
         std::string glVersion;
         std::string glVendor;
         std::string glRenderer;
-        
+        std::unique_ptr<GraphicsRenderDevice> m_renderDevice;
 
-    public: 
+    public:
         GraphicsTool(int _width, int _height);
         virtual ~GraphicsTool();
-        int initGL(); //initialize OpenGL stuff
+        int initGL();
         void render(const std::function<void()>& renderLambda);
 
-    private: 
-        void setWindowUserPointer(void* pointer);  
+    private:
+        void setWindowUserPointer(void* pointer);
     protected:
-        // Virtual methods that derived classes can override
         virtual void onMouseMove(double xpos, double ypos) {}
-        virtual void onMouseScroll(double xoffset, double yoffset){}
+        virtual void onMouseScroll(double xoffset, double yoffset) {}
         virtual void onUpdate(float deltaTime) {}
         virtual void onRender() {}
-        /* implemented in the derived class*/
         virtual void update(const std::function<void()> &renderLambda);
         virtual void renderGUI();
-    
+
     public:
-      
-        
 
 
-}; 
+};
 
 #endif // _GRAPHICS_TOOL_H_
 

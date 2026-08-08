@@ -1,6 +1,5 @@
 #if !defined(_CAMERA_H_)
 #define _CAMERA_H_
-#include "include/glmath.hpp"    
 #include "Shaders/shader.hpp"
 
 enum keyboardDir {
@@ -28,12 +27,12 @@ public:
     glm::vec3 m_vTarget; // orbit center point
 
     //rotations
-    GLfloat m_pitch = PITCH;
-    GLfloat m_yaw = YAW;
-    GLfloat m_roll;
+    float m_pitch = PITCH;
+    float m_yaw = YAW;
+    float m_roll;
 
-    GLfloat m_speed;
-    GLfloat m_sens;
+    float m_speed;
+    float m_sens;
 
     // Blender-style orbit parameters
     float m_distance;     // distance from target

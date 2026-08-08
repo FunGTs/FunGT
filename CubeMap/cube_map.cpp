@@ -1,9 +1,10 @@
 #include "cube_map.hpp"
+#include "../GraphicsRenderBackend/graphics_render_device.hpp"
 
 CubeMap::CubeMap()
+    : shader(Shader::create())
 {
     printf("USING CUBE MAP\n");
-    
 }
 CubeMap::CubeMap(glm::vec3 cubePos)
 {
@@ -84,28 +85,16 @@ void CubeMap::set()
     };
     unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
     this->setVertices(vertices,nOfvertices);
-    GLuint indices[] = {
-        // Right
-        1, 2, 6,
-        6, 5, 1,
-        // Left
-        0, 4, 7,
-        7, 3, 0,
-        // Top
-        4, 5, 6,
-        6, 7, 4,
-        // Bottom
-        0, 3, 2,
-        2, 1, 0,
-        // Back
-        0, 1, 5,
-        5, 4, 0,
-        // Front
-        3, 7, 6,
-        6, 2, 3
+    uint32_t indices[] = {
+        1, 2, 6,  6, 5, 1,
+        0, 4, 7,  7, 3, 0,
+        4, 5, 6,  6, 7, 4,
+        0, 3, 2,  2, 1, 0,
+        0, 1, 5,  5, 4, 0,
+        3, 7, 6,  6, 2, 3
     };
-    unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
-    this->setIndices(indices,nOfIndices);
+    unsigned nOfIndices = sizeof(indices) / sizeof(uint32_t);
+    this->setIndices(indices, nOfIndices);
     
 }
 
@@ -116,12 +105,11 @@ void CubeMap::addData(const ModelPaths &data)
     
 }
 
-void CubeMap::draw()
-{    m_vao.bind();
+void CubeMap::draw() {
     texture.active();
-    texture.bind();
-    
-    glDrawElements(GL_TRIANGLES,36, GL_UNSIGNED_INT,0);
+    m_buffer->bindVAO();
+    m_buffer->drawIndexed(36);
+    m_buffer->unbindVAO();
 }
 
 glm::mat4 CubeMap::getViewMatrix()
@@ -143,7 +131,7 @@ void CubeMap::setVertices(const PrimitiveVertex *vertices, const unsigned numOfv
 
 }
 
-void CubeMap::setIndices(const GLuint *indices, const unsigned numOfindices)
+void CubeMap::setIndices(const uint32_t *indices, const unsigned numOfindices)
 {
         for(size_t i = 0; i<numOfindices; i++){
         //use size_t for array indexing and loop counting
@@ -156,22 +144,25 @@ unsigned CubeMap::getNumOfVertices()
     return this->m_vertex.size();
 }
 
+uint32_t* CubeMap::getIndices() {
+    return this->m_index.data();
+}
+
 unsigned CubeMap::getNumOfIndices()
 {
-    return this->m_index.size();;
+    return this->m_index.size();
 }
 
 void CubeMap::setShaders(std::string vs, std::string fs)
 {
 
-    shader.create(vs,fs);
+    shader->create(vs,fs);
     std::cout<<"End setting shaders"<<std::endl; 
 }
 
 Shader &CubeMap::getShader()
 {
-    // TODO: insert return statement here
-    return shader;
+    return *shader;
 }
 
 void CubeMap::setViewMatrix(const glm::mat4 &viewMatrix)
@@ -182,12 +173,12 @@ void CubeMap::setViewMatrix(const glm::mat4 &viewMatrix)
 
 void CubeMap::enableDepthFunc()
 {
-    glDepthFunc(GL_LEQUAL);
+    GraphicsRenderDevice::Get()->setDepthFunc(DepthFunc::LessEqual);
 }
 
 void CubeMap::disableDepthFunc()
 {
-    glDepthFunc(GL_LESS);
+    GraphicsRenderDevice::Get()->setDepthFunc(DepthFunc::Less);
 }
 
 void CubeMap::setProjectionMatrix(const glm::mat4 &projectionMatrix)
@@ -212,75 +203,32 @@ void CubeMap::build(const std::vector<std::string> &pathVec)
         glm::vec3( 1.0f,  1.0f, -1.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),
         glm::vec3(-1.0f, 1.0f, -1.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f)
     };
-    unsigned nOfvertices = sizeof(vertices)/sizeof(PrimitiveVertex);
-    this->setVertices(vertices,nOfvertices);
-    GLuint indices[] = {
-        // Right
-        1, 2, 6,
-        6, 5, 1,
-        // Left
-        0, 4, 7,
-        7, 3, 0,
-        // Top
-        4, 5, 6,
-        6, 7, 4,
-        // Bottom
-        0, 3, 2,
-        2, 1, 0,
-        // Back
-        0, 1, 5,
-        5, 4, 0,
-        // Front
-        3, 7, 6,
-        6, 2, 3
+    unsigned nOfvertices = sizeof(vertices) / sizeof(PrimitiveVertex);
+    this->setVertices(vertices, nOfvertices);
+
+    uint32_t indices[] = {
+        1, 2, 6,  6, 5, 1,
+        0, 4, 7,  7, 3, 0,
+        4, 5, 6,  6, 7, 4,
+        0, 3, 2,  2, 1, 0,
+        0, 1, 5,  5, 4, 0,
+        3, 7, 6,  6, 2, 3
     };
-    unsigned nOfIndices = sizeof(indices)/sizeof(GLuint);
-    this->setIndices(indices,nOfIndices);
+    unsigned nOfIndices = sizeof(indices) / sizeof(uint32_t);
+    this->setIndices(indices, nOfIndices);
 
+    m_buffer = GPUBuffer::create();
+    m_buffer->genVAO();
+    m_buffer->bindVAO();
 
+    m_buffer->create(BufferType::Vertex, vertices, sizeof(vertices));
+    m_buffer->create(BufferType::Index,  indices,  sizeof(indices));
+    m_buffer->applyFormat(PrimitiveVertex::getFormat());
 
-    m_vao.genVAO(); //Generates a Vertex array object
-    m_vb.genVB(); //Generates the Vertex Buffer
-    m_vi.genVI(); //Generates the Vertex Buffer
-
-
-    m_vao.bind();
-
-    m_vb.bind();
-    m_vb.bufferData(&vertices,sizeof(vertices));
-
-    m_vi.bind(); 
-    m_vi.indexData(indices,sizeof(indices));
-    //
-     //Set Vertex Attributes pointers and enable n
-    //glVertexAttribPointer(0 /*First element: positions*/,3 /* 3 floats*/, GL_FLOAT/*Type*/,GL_FALSE, 3*sizeof(GLfloat)/*how much steps to the next vertex pos*/, (GLvoid*)0);
-    //glEnableVertexAttribArray(0); 
-    //SET VERTEXATTRIBPOINTERS AND ENABLE (INPUT ASSEMBLY)
-        //POSITION 
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,position));
-        glEnableVertexAttribArray(0);
-        //COLOR
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,normal));
-        glEnableVertexAttribArray(1);
-        //TEXTURE COORDS
-        //glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,texcoord));
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(PrimitiveVertex),(GLvoid*)offsetof(PrimitiveVertex,texcoord));
-        glEnableVertexAttribArray(2);
-
-    //Texture
     texture.genTextureCubeMap(pathVec);
     texture.active();
-    texture.bind();
 
-    //All binded above must be released
-    m_vao.unbind();
-    m_vi.unbind();
-    // glDisableVertexAttribArray(0);
-    // glDisableVertexAttribArray(1);
-    // glDisableVertexAttribArray(2);
-    // m_vb.unbind(); 
+    m_buffer->unbindVAO();
 
-
-
-    std::cout<<"End Cube Map Create function : "<<std::endl;
+    std::cout << "End Cube Map Create function" << std::endl;
 }

@@ -1,35 +1,36 @@
 #ifndef PROGRESSIVE_PATH_TRACER_HPP
 #define PROGRESSIVE_PATH_TRACER_HPP
 
-#include "include/prerequisites.hpp"
 #include "Camera/camera.hpp"
 #include "SceneManager/scene_manager.hpp"
 #include "PBR/PBRCamera/pbr_camera.hpp"
 #include "PBR/Render/include/compute_backends.hpp"
+#include "Renders/display_graphics.hpp"
 #include <vector>
 #include <memory>
+
 class Space;
+
 class ProgressivePathTracer {
-private:
+protected:
     std::unique_ptr<Space> m_space;
     int m_width = 0;
     int m_height = 0;
-    std::vector<float> m_accumBuffer;  // Accumulation buffer
+    std::vector<float> m_accumBuffer;
     bool m_initialized = false;
 
 public:
-    ProgressivePathTracer();
-    ~ProgressivePathTracer();
+    ProgressivePathTracer() = default;
+    virtual ~ProgressivePathTracer();
 
-    // Initialize with camera and scene
+    static std::unique_ptr<ProgressivePathTracer> create();
+
     void initialize(Camera* viewportCam,
         std::shared_ptr<SceneManager> sceneManager,
         int width, int height);
 
-    // Render one sample and accumulate
-    void renderSample(int sample, GLuint targetTexture);
+    virtual void renderSample(int sample, uint32_t targetTexture) = 0;
 
-    // Reset accumulation
     void reset();
 
     bool isInitialized() const { return m_initialized; }

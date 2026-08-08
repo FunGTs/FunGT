@@ -11,10 +11,9 @@ Plane::~Plane() {
 
 void Plane::draw() {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-    glDrawElements(GL_TRIANGLES, this->getNumOfIndices(), GL_UNSIGNED_INT, 0);
-    
+    m_buffer->bindVAO();
+    m_buffer->drawIndexed(getNumOfIndices());
+    m_buffer->unbindVAO();
 }
 
 void Plane::setData() {
@@ -31,12 +30,12 @@ void Plane::setData() {
 
     unsigned nOfVertices = sizeof(vertices) / sizeof(PrimitiveVertex);
 
-    GLuint indices[] = {
-        0, 1, 2,  // First triangle
-        0, 2, 3   // Second triangle
+    uint32_t indices[] = {
+        0, 1, 2,
+        0, 2, 3
     };
 
-    unsigned nOfIndices = sizeof(indices) / sizeof(GLuint);
+    unsigned nOfIndices = sizeof(indices) / sizeof(uint32_t);
 
     this->set(vertices, nOfVertices, indices, nOfIndices);
 }

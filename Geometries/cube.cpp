@@ -11,9 +11,9 @@ Cube::~Cube() {
 
 void Cube::draw() {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    m_buffer->bindVAO();
+    m_buffer->drawArrays(getNumOfVertices());
+    m_buffer->unbindVAO();
 }
 
 void Cube::setData() {
@@ -73,8 +73,7 @@ void Cube::setData() {
 
 void Cube::InstancedDraw(Shader& shader, int instanceCount) {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-    glDrawArraysInstanced(GL_TRIANGLES, 0, getNumOfVertices(), instanceCount);
-    m_vao.unbind();
+    m_buffer->bindVAO();
+    m_buffer->drawArraysInstanced(getNumOfVertices(), instanceCount);
+    m_buffer->unbindVAO();
 }

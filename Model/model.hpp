@@ -42,7 +42,7 @@ class Model  {
         std::vector<std::unique_ptr<Mesh>> m_vMesh; 
         std::string m_dirPath; 
         std::vector<Texture> m_loadedTextures;
-        Shader m_shader;
+        std::unique_ptr<Shader> m_shader;
     
     private:
        
@@ -62,7 +62,7 @@ class Model  {
         static void initializeDefaultShaders();
     protected: 
         virtual std::vector<funGTVERTEX> getVertices(aiMesh *mesh, const aiScene *scene);
-        std::vector<GLuint> getIndices(aiMesh *mesh, const aiScene *scene);
+        std::vector<uint32_t> getIndices(aiMesh *mesh, const aiScene *scene);
         std::vector<Texture > getTextures(aiMesh *mesh, const aiScene *scene);
         std::vector<Material> getMaterials(aiMesh *mesh, const aiScene *scene);
 

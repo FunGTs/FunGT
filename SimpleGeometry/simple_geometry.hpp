@@ -31,7 +31,7 @@ private:
     };
     GeometryMaterial m_material;
     std::shared_ptr<Primitive> m_primitive;
-    Shader m_Shader;
+    std::unique_ptr<Shader> m_Shader;
 
     std::string m_vs_path;
     std::string m_fs_path;

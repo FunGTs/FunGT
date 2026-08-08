@@ -2,12 +2,11 @@
 #define PARTICLE_RTC_WINDOW_HPP
 
 #include "GUI/imgui_window.hpp"
+#include "ParticleSimulation/particle_simulation_rtc.hpp"
 #include <string>
 #include <future>
 #include <atomic>
 #include <memory>
-
-class ParticleRTC;
 
 
 

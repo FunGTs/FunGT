@@ -1,7 +1,7 @@
 #include "particle_sys.hpp"
 
 ParticleSystem::ParticleSystem(size_t num,std::string vs_Path,std::string fs_Path)
-:m_NumParticles{num}{
+:m_NumParticles{num}, m_shader(Shader::create()){
     m_particles.resize(m_NumParticles);
 
     std::cout<<"Particle system constructor"<<std::endl;
@@ -17,7 +17,7 @@ ParticleSystem::ParticleSystem(size_t num,std::string vs_Path,std::string fs_Pat
         }
     }
     this->init();
-    m_shader.create(vs_Path,fs_Path);
+    m_shader->create(vs_Path,fs_Path);
     
 }
 

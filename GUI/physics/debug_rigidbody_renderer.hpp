@@ -2,6 +2,7 @@
 #define _DEBUG_RENDERER_H_
 
 #include <GL/glew.h>
+#include <memory>
 #include <vector>
 #include "Shaders/shader.hpp"
 #include "Vector/vector3.hpp"
@@ -10,7 +11,7 @@ class DebugRenderer {
 private:
     GLuint m_vao;
     GLuint m_vbo;
-    Shader m_lineShader;  // Use YOUR Shader class!
+    std::unique_ptr<Shader> m_lineShader;
 
     std::vector<float> m_vertices;  // Line vertices (pos + color)
     bool m_initialized;

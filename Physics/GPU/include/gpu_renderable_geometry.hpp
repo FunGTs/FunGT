@@ -21,7 +21,7 @@ enum class GPUGeometryType {
 class GPUGeometry : public Renderable {
 private:
     std::shared_ptr<Primitive> m_primitive;
-    Shader m_shader;
+    std::unique_ptr<Shader> m_shader;
     std::string m_vs_path;
     std::string m_fs_path;
 

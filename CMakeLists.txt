@@ -219,6 +219,8 @@ include_directories(
     ${FUNGT_BASE_DIR}/Triangle
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo
     ${FUNGT_BASE_DIR}/Lights
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -231,6 +233,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
+    ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/funGT/fungt.cpp
     ${FUNGT_BASE_DIR}/AnimatedModel/animated_model.cpp
     ${FUNGT_BASE_DIR}/Textures/textures.cpp
@@ -268,6 +271,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/GUI/demo_particles_window.cpp
     ${FUNGT_BASE_DIR}/GUI/render_action_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/debug_rigidbody_renderer.cpp
+    ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
@@ -277,6 +281,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Physics/AnimationCreator/key_frame_recorder.cpp
     ${FUNGT_BASE_DIR}/Physics/AnimationCreator/animation_exporter.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
+    ${FUNGT_BASE_DIR}/ViewPort/opengl/opengl_viewport.cpp
+    ${FUNGT_BASE_DIR}/ViewPort/opengl/opengl_progressive_path_tracer.cpp
     ${FUNGT_BASE_DIR}/ViewPort/progressive_path_tracer_viewport.cpp
     ${FUNGT_BASE_DIR}/Renders/framebuffer.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
@@ -287,6 +293,12 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
     ${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo/light_gizmo_renderer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/graphics_render_device.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_buffer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_texture.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_device.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_buffer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_texture.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════

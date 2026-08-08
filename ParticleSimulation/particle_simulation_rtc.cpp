@@ -2,7 +2,7 @@
 #include "particle_rtc_sycl_ops.hpp"
 
 ParticleRTC::ParticleRTC(std::size_t numOfParticles)
-: m_NumParticles{numOfParticles}{
+: m_NumParticles{numOfParticles}, m_shader(Shader::create()){
     std::cout << "Initializing SYCL for RTC ParticleSimulation..." << std::endl;
     particleRTC_initSycl();
     m_pSet.SetNumParticles(m_NumParticles);
@@ -12,7 +12,7 @@ ParticleRTC::ParticleRTC(std::size_t numOfParticles)
     m_fs = getAssetPath("resources/particle.fs");
     m_vs = getAssetPath("resources/particle.vs");
 
-    m_shader.create(m_vs, m_fs);
+    m_shader->create(m_vs, m_fs);
 }
 
 bool ParticleRTC::compileInitKernel(const std::string& user_init_code, std::string& error_msg)
@@ -79,7 +79,7 @@ void ParticleRTC::draw()
 
 Shader& ParticleRTC::getShader()
 {
-    return m_shader;
+    return *m_shader;
 }
 
 void ParticleRTC::updateTime(float deltaTime)

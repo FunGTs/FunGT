@@ -3,11 +3,13 @@
 
 #include "Renderable/renderable.hpp"
 #include "Shaders/shader.hpp"
+#include "../GraphicsRenderBackend/gpu_buffer.hpp"
+#include <memory>
 
 class InfiniteGrid : public Renderable {
 private:
-    Shader m_shader;
-    unsigned int m_VAO;
+    std::unique_ptr<Shader> m_shader;
+    std::unique_ptr<GPUBuffer> m_buffer;
     float m_nearPlane;
     float m_farPlane;
     glm::mat4 m_viewMatrix = glm::mat4(1.f);
@@ -21,7 +23,7 @@ public:
 
     // Implement Renderable interface
     void draw() override;
-    Shader& getShader() override { return m_shader; }
+    Shader& getShader() override { return *m_shader; }
 
     void setViewMatrix(const glm::mat4& viewMatrix) override {
         m_viewMatrix = viewMatrix;

@@ -11,10 +11,9 @@ geometry::Box::~Box() {
 
 void geometry::Box::draw() {
     texture.active();
-    texture.bind();
-    m_vao.bind();
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    m_vao.unbind();
+    m_buffer->bindVAO();
+    m_buffer->drawArrays(getNumOfVertices());
+    m_buffer->unbindVAO();
 }
 
 void geometry::Box::setData() {
@@ -79,22 +78,10 @@ void geometry::Box::setData() {
     this->set(vertices, nOfvertices);
 }
 
-void geometry::Box::InstancedDraw(Shader& shader, int instanceCount)
-{
+void geometry::Box::InstancedDraw(Shader& shader, int instanceCount) {
     shader.setUniformVec3f(glm::vec3(0.4f, 0.4f, 0.4f), "u_color");
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
     texture.active();
-    texture.bind();
-    m_vao.bind();
-
-    // Get vertex count from primitive!
-    int vertexCount = getNumOfVertices();
-
-
-    glDrawArraysInstanced(GL_TRIANGLES, 0, vertexCount, instanceCount);
-
-    m_vao.unbind();
-
-  //  glDisable(GL_CULL_FACE);
+    m_buffer->bindVAO();
+    m_buffer->drawArraysInstanced(getNumOfVertices(), instanceCount);
+    m_buffer->unbindVAO();
 }

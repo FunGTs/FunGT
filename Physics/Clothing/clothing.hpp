@@ -21,7 +21,7 @@ class Clothing : public Renderable
     std::array<VertexBuffer,2> m_vbo;
     int currentBuffer = 0;  // Which buffer is currently active
     VertexIndex m_vi; 
-    Shader m_shader;
+    std::unique_ptr<Shader> m_shader;
 
     float m_deltaTime = 2.0;
     //Clothing stuff:
