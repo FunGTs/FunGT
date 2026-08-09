@@ -219,6 +219,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/Triangle
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo
     ${FUNGT_BASE_DIR}/Lights
+    ${FUNGT_BASE_DIR}/IBL
     ${FUNGT_BASE_DIR}/GraphicsRenderBackend
     ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl
 )
@@ -259,6 +260,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
+    ${FUNGT_BASE_DIR}/IBL/ibl_probe.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_rtc.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
@@ -271,6 +273,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/GUI/demo_particles_window.cpp
     ${FUNGT_BASE_DIR}/GUI/render_action_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/debug_rigidbody_renderer.cpp
+    ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp

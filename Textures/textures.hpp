@@ -28,7 +28,9 @@ public:
     Texture& operator=(const Texture&) = delete;
 
     void genTexture(const std::string& path);
+    void genTextureHDR(const std::string& path);
     void genTextureCubeMap(const std::vector<std::string>& faces);
+    void allocateEmptyCubemap(int faceSize, bool mipmaps);
     void active(unsigned int slot = 0);
     void bind();
     void unBind();

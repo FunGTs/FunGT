@@ -38,7 +38,7 @@ void OpenGLViewPort::onUpdate()
         glViewport(0, 0,
             static_cast<GLsizei>(m_viewportSize.x),
             static_cast<GLsizei>(m_viewportSize.y));
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (m_RenderFunc)
@@ -52,7 +52,7 @@ void OpenGLViewPort::onUpdate()
     }
 
     m_frameBuffer->bind();
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (m_RenderFunc)

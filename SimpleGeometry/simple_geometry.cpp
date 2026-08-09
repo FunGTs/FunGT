@@ -119,8 +119,8 @@ std::shared_ptr<SimpleGeometry> SimpleGeometry::create(Geometry geomType) {
         case Geometry::Sphere: {
             // TODO: Implement Sphere primitive
             simpleGeom->setPrimitive(std::make_shared<geometry::Sphere>(1.0f, 72, 18));
-            simpleGeom->m_vs_path = getAssetPath("shaders/primitive_vs.glsl");
-            simpleGeom->m_fs_path = getAssetPath("shaders/primitive_fs.glsl");
+            simpleGeom->m_vs_path = getAssetPath("shaders/fungt_default.vs");
+            simpleGeom->m_fs_path = getAssetPath("shaders/fungt_default.fs");
             break;
         }
         case Geometry::Box: {
@@ -132,10 +132,10 @@ std::shared_ptr<SimpleGeometry> SimpleGeometry::create(Geometry geomType) {
         }
         case Geometry::Plane:{
             simpleGeom->setPrimitive(std::make_shared<Plane>(80.0f, 80.0f)); // 10x10 ground
-            simpleGeom->m_vs_path = getAssetPath("shaders/primitive_vs.glsl");
-            simpleGeom->m_fs_path = getAssetPath("shaders/primitive_fs.glsl");
+            simpleGeom->m_vs_path = getAssetPath("shaders/fungt_default.vs");
+            simpleGeom->m_fs_path = getAssetPath("shaders/fungt_default.fs");
             break;
-        }   
+        }
         default:
             throw std::runtime_error("Unknown geometry type");
     }

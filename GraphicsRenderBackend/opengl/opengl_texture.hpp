@@ -10,7 +10,9 @@ public:
     ~OpenGLTexture() override;
 
     void upload(const unsigned char* pixels, int width, int height) override;
+    void uploadFloat(const float* pixels, int width, int height) override;
     void uploadCubeMap(const std::vector<unsigned char*>& faces, int width, int height) override;
+    void allocateEmptyCubemap(int faceSize, bool mipmaps) override;
     void bind(unsigned int slot = 0) override;
     void unbind() override;
     void destroy() override;
