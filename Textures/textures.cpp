@@ -40,6 +40,22 @@ void Texture::genTexture(const std::string& path) {
     }
 }
 
+void Texture::genTextureHDR(const std::string& path) {
+    txt_Path = path;
+    stbi_set_flip_vertically_on_load(1);
+    float* pixels = stbi_loadf(txt_Path.c_str(), &txt_width, &txt_height, &txt_BBP, 3);
+
+    if (pixels) {
+        std::cout << "\nOk to load HDR: " << std::endl;
+        printf("%s\n", txt_Path.c_str());
+        m_gpu->uploadFloat(pixels, txt_width, txt_height);
+        stbi_image_free(pixels);
+    } else {
+        std::cout << "\nError: Failed to load HDR texture" << std::endl;
+        std::cout << stbi_failure_reason() << std::endl;
+    }
+}
+
 void Texture::genTextureCubeMap(const std::vector<std::string>& faces) {
     if (!m_gpu)
         m_gpu = GPUTexture::create(TextureType::CubeMap);
@@ -64,6 +80,12 @@ void Texture::genTextureCubeMap(const std::vector<std::string>& faces) {
 
     for (auto* p : pixelFaces)
         if (p) stbi_image_free(p);
+}
+
+void Texture::allocateEmptyCubemap(int faceSize, bool mipmaps) {
+    if (!m_gpu)
+        m_gpu = GPUTexture::create(TextureType::CubeMap);
+    m_gpu->allocateEmptyCubemap(faceSize, mipmaps);
 }
 
 void Texture::active(unsigned int slot) {

@@ -43,6 +43,16 @@ void SceneManager::renderScene()
         node->getShader().setUniform1i("numLights", (int)m_lights.size());
         node->getShader().setUniformVec3f(m_viewPos, "viewPos");
 
+        node->getShader().setUniform1i("hasIBL", m_hasIBL ? 1 : 0);
+        node->getShader().setUniformVec3f(m_ambientColor, "ambientColor");
+
+        if (m_hasIBL) {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_iblProbe->getIrradianceMapID());
+            node->getShader().set1i(1, "irradianceMap");
+            node->getShader().setUniform1f(m_iblIntensity, "iblIntensity");
+        }
+
         for (size_t i = 0; i < m_lights.size(); ++i)
         {
             const SceneLight& light = m_lights[i];
@@ -58,6 +68,13 @@ void SceneManager::renderScene()
         node->disableDepthFunc(); //For CubeMap purposes
     }
 }
+void SceneManager::loadEnvironment(const std::string& hdrPath)
+{
+    m_iblProbe = std::make_unique<IBLProbe>();
+    m_iblProbe->build(hdrPath);
+    m_hasIBL = true;
+}
+
 void SceneManager::addRenderableObj(std::shared_ptr<Renderable> node)
 {
     m_VectorOfRenderNodes.push_back(node);

@@ -43,12 +43,13 @@ void Mesh::InitOGLBuffers()
 }
 void Mesh::draw(Shader &shader){
 
-   int numOfTextures = m_texture.size(); //How many textures do we have? 
+   int numOfTextures = m_texture.size(); //How many textures do we have?
 
-    unsigned int diffuseL = 1; 
+    unsigned int diffuseL = 1;
     unsigned int specularL = 1;
     // ADD THIS LINE HERE:
     shader.setUniform1i("hasTexture", numOfTextures > 0 ? 1 : 0);
+    shader.set1i(0, "texture_diffuse1"); // keep this sampler pinned to unit 0 even when unused
     //std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
     for(unsigned int i=0; i<numOfTextures; i++){
         std::string iter;

@@ -62,6 +62,18 @@ void OpenGLShader::linkProgram(GLuint vShader, GLuint geomShader, GLuint fShader
         glGetProgramInfoLog(m_idP, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::LINK_FAILED\n" << infoLog << std::endl;
     }
+
+    // Sampler uniforms default to texture unit 0 until explicitly set. A program
+    // declaring two different sampler types (sampler2D + samplerCube) both left at
+    // the default fails validation before any per-frame uniform code ever runs.
+    // Pin known samplers to distinct units here so validation sees a consistent state.
+    glUseProgram(m_idP);
+    GLint diffuseLoc = glGetUniformLocation(m_idP, "texture_diffuse1");
+    if (diffuseLoc != -1) glUniform1i(diffuseLoc, 0);
+    GLint irradianceLoc = glGetUniformLocation(m_idP, "irradianceMap");
+    if (irradianceLoc != -1) glUniform1i(irradianceLoc, 1);
+    glUseProgram(0);
+
     glValidateProgram(m_idP);
     glGetProgramiv(m_idP, GL_VALIDATE_STATUS, &success);
     if (!success) {

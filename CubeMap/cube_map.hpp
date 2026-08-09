@@ -26,6 +26,7 @@ class CubeMap : public Renderable {
         ~CubeMap();
 
         void build(const std::vector<std::string> &pathVec);
+        void buildHDR(const std::string &path);
         void setData();
         void set();
         

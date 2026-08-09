@@ -7,6 +7,7 @@
 #include "Camera/camera.hpp"
 #include "SimpleModel/simple_model.hpp"
 #include "Lights/scene_light.hpp"
+#include "IBL/ibl_probe.hpp"
 
 class SceneManager{
 
@@ -24,7 +25,14 @@ class SceneManager{
         glm::vec3 m_lightAmbient = glm::vec3(0.3f, 0.3f, 0.3f);
         glm::vec3 m_lightDiffuse = glm::vec3(1.0f, 1.0f, 1.0f);
         glm::vec3 m_lightSpecular = glm::vec3(1.0f, 1.0f, 1.0f);
-        float m_deltaTime; 
+        float m_deltaTime;
+
+        // IBL: irradiance cubemap sampled for ambient light, built via loadEnvironment()
+        std::unique_ptr<IBLProbe> m_iblProbe;
+        bool m_hasIBL = false;
+        float m_iblIntensity = 0.3f;
+
+        glm::vec3 m_ambientColor = glm::vec3(0.3f, 0.3f, 0.3f);
     public:
         SceneManager();
         ~SceneManager();
@@ -35,6 +43,11 @@ class SceneManager{
         void updateProjectionMatrix(const glm::mat4 &projectionMatrix);
         void updateModelMatrix(const glm::mat4 &modelMatrix); 
         void updateViewPos(const glm::vec3& pos) { m_viewPos = pos; }
+        void loadEnvironment(const std::string& hdrPath);
+        void setIBLIntensity(float intensity) { m_iblIntensity = intensity; }
+        float getIBLIntensity() const { return m_iblIntensity; }
+        void setAmbientColor(const glm::vec3& color) { m_ambientColor = color; }
+        glm::vec3 getAmbientColor() const { return m_ambientColor; }
         void renderScene();
         void addRenderableObj(std::shared_ptr<Renderable> node);
         void setDeltaTime(float deltaT); 

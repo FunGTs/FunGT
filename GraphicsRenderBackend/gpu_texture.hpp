@@ -17,7 +17,11 @@ public:
     virtual ~GPUTexture() = default;
 
     virtual void upload(const unsigned char* pixels, int width, int height) = 0;
+    virtual void uploadFloat(const float* pixels, int width, int height) = 0;
     virtual void uploadCubeMap(const std::vector<unsigned char*>& faces, int width, int height) = 0;
+    // Allocates an empty, mutable float cubemap with no face data, for use as a render
+    // target (e.g. equirect->cubemap conversion, irradiance/prefilter convolution passes).
+    virtual void allocateEmptyCubemap(int faceSize, bool mipmaps) = 0;
     virtual void bind(unsigned int slot = 0) = 0;
     virtual void unbind() = 0;
     virtual void destroy() = 0;

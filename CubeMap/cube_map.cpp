@@ -105,6 +105,53 @@ void CubeMap::addData(const ModelPaths &data)
     
 }
 
+void CubeMap::buildHDR(const std::string &path)
+{
+    std::cout << "Cube Create function (HDR) : " << std::endl;
+
+    PrimitiveVertex vertices[] =
+    {
+        //POSITION                         //COLOR                  //Texcoords
+        glm::vec3(-1.0f,-1.0,1.0f),      glm::vec3(1.f,0.f,0.f),   glm::vec2(0.f,1.f),
+        glm::vec3(1.0f, -1.0f, 1.0f),      glm::vec3(0.f,1.f,0.f),   glm::vec2(0.f,0.f),
+        glm::vec3(1.0f, -1.0f, -1.0f),     glm::vec3(0.f,0.f,1.f),    glm::vec2(1.f,0.f),
+        glm::vec3(-1.0f, -1.0f, -1.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),
+
+        glm::vec3(-1.0f,  1.0f,  1.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),
+        glm::vec3(1.0f,  1.0f,  1.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),
+        glm::vec3( 1.0f,  1.0f, -1.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f),
+        glm::vec3(-1.0f, 1.0f, -1.0f),      glm::vec3(1.f,1.f,0.f),     glm::vec2(1.f,1.f)
+    };
+    unsigned nOfvertices = sizeof(vertices) / sizeof(PrimitiveVertex);
+    this->setVertices(vertices, nOfvertices);
+
+    uint32_t indices[] = {
+        1, 2, 6,  6, 5, 1,
+        0, 4, 7,  7, 3, 0,
+        4, 5, 6,  6, 7, 4,
+        0, 3, 2,  2, 1, 0,
+        0, 1, 5,  5, 4, 0,
+        3, 7, 6,  6, 2, 3
+    };
+    unsigned nOfIndices = sizeof(indices) / sizeof(uint32_t);
+    this->setIndices(indices, nOfIndices);
+
+    m_buffer = GPUBuffer::create();
+    m_buffer->genVAO();
+    m_buffer->bindVAO();
+
+    m_buffer->create(BufferType::Vertex, vertices, sizeof(vertices));
+    m_buffer->create(BufferType::Index,  indices,  sizeof(indices));
+    m_buffer->applyFormat(PrimitiveVertex::getFormat());
+
+    texture.genTextureHDR(path);
+    texture.active();
+
+    m_buffer->unbindVAO();
+
+    std::cout << "End Cube Map Create function (HDR)" << std::endl;
+}
+
 void CubeMap::draw() {
     texture.active();
     m_buffer->bindVAO();

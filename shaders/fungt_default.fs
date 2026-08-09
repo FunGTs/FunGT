@@ -26,6 +26,10 @@ uniform Light    light[8];
 uniform int      numLights;
 uniform sampler2D texture_diffuse1;
 uniform bool     hasTexture;
+uniform samplerCube irradianceMap;
+uniform bool     hasIBL;
+uniform float    iblIntensity;
+uniform vec3     ambientColor;
 
 void main()
 {
@@ -38,7 +42,6 @@ void main()
     vec3 norm    = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    vec3 totalAmbient  = vec3(0.0);
     vec3 totalDiffuse  = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -48,9 +51,6 @@ void main()
         float dist   = length(light[i].position - FragPos);
         float attenuation = 1.0 / (dist * dist + 1e-6f);
         vec3  radiance   = light[i].color * light[i].power * attenuation;
-
-        // Ambient
-        totalAmbient += radiance * 0.05 * material.ambient;
 
         // Diffuse
         float diff = max(dot(norm, lightDir), 0.0);
@@ -62,7 +62,19 @@ void main()
         totalSpecular += radiance * spec * material.specular;
     }
 
+    vec3 ambient;
+    if (hasIBL)
+        ambient = texture(irradianceMap, norm).rgb * iblIntensity * baseColor * material.ambient;
+    else
+        ambient = ambientColor * material.ambient * baseColor;
+
     vec3 emissive = baseColor * material.emission;
-    vec3 result   = totalAmbient + totalDiffuse + totalSpecular + emissive;
+    vec3 result   = ambient + totalDiffuse + totalSpecular + emissive;
+
+    // Reinhard tonemap + gamma correction: HDR irradiance/light values can exceed 1.0
+    // and would otherwise hard-clip to white. This rolls off highlights smoothly instead.
+    result = result / (result + vec3(1.0));
+    result = pow(result, vec3(1.0 / 2.2));
+
     vs_color = vec4(result, 1.0);
 }
