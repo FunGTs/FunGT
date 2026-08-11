@@ -28,6 +28,9 @@ public:
     virtual void unbind() = 0;
     virtual void destroy() = 0;
 
+    virtual void update(const void* data, size_t size, size_t offset = 0) {}
+    virtual void bindBase(unsigned int bindingPoint) {}
+
     // VAO — OpenGL only, Vulkan impl leaves these empty
     virtual void genVAO()   {}
     virtual void bindVAO()  {}

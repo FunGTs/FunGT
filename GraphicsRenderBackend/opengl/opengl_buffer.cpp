@@ -42,7 +42,9 @@ void OpenGLBuffer::create(BufferType type, const void* data, size_t size) {
             m_ebo.indexData(static_cast<const unsigned int*>(data), static_cast<unsigned int>(size));
             break;
         case BufferType::Uniform:
-            // Uniform buffers (UBOs) — to be implemented
+            m_ubo.create(size);
+            if (data)
+                m_ubo.setBufferData(data, size);
             break;
     }
 }
@@ -51,7 +53,7 @@ void OpenGLBuffer::bind() {
     switch (m_type) {
         case BufferType::Vertex:  m_vbo.bind(); break;
         case BufferType::Index:   m_ebo.bind(); break;
-        case BufferType::Uniform: break;
+        case BufferType::Uniform: m_ubo.bind(); break;
     }
 }
 
@@ -59,12 +61,19 @@ void OpenGLBuffer::unbind() {
     switch (m_type) {
         case BufferType::Vertex:  m_vbo.unbind(); break;
         case BufferType::Index:   m_ebo.unbind(); break;
-        case BufferType::Uniform: break;
+        case BufferType::Uniform: m_ubo.unbind(); break;
     }
 }
 
 void OpenGLBuffer::destroy() {
-    // VertexBuffer and VertexIndex destructors handle glDeleteBuffers
+}
+
+void OpenGLBuffer::update(const void* data, size_t size, size_t offset) {
+    m_ubo.setBufferData(data, size, offset);
+}
+
+void OpenGLBuffer::bindBase(unsigned int bindingPoint) {
+    m_ubo.bindBase(static_cast<GLuint>(bindingPoint));
 }
 
 void OpenGLBuffer::genVAO()    { m_vao.genVAO(); }

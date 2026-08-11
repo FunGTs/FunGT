@@ -9,8 +9,10 @@ out vec3 Normal;
 out vec2 textureCoords;
 
 uniform mat4 ModelMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 ProjectionMatrix;
+layout(std140, binding = 0) uniform Matrices {
+    mat4 ViewMatrix;
+    mat4 ProjectionMatrix;
+};
 
 void main() {
     FragPos = vec3(ModelMatrix * vec4(vertex_position, 1.0));

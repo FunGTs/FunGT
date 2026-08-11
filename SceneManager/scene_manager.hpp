@@ -8,6 +8,7 @@
 #include "SimpleModel/simple_model.hpp"
 #include "Lights/scene_light.hpp"
 #include "IBL/ibl_probe.hpp"
+#include "GraphicsRenderBackend/gpu_buffer.hpp"
 
 class SceneManager{
 
@@ -33,6 +34,13 @@ class SceneManager{
         float m_iblIntensity = 0.3f;
 
         glm::vec3 m_ambientColor = glm::vec3(0.3f, 0.3f, 0.3f);
+
+        static constexpr int MAX_LIGHTS = 32;
+        std::unique_ptr<GPUBuffer> m_matricesUBO;
+        std::unique_ptr<GPUBuffer> m_lightsUBO;
+        void initUBOs();
+        void updateMatricesUBO();
+        void updateLightsUBO();
     public:
         SceneManager();
         ~SceneManager();
