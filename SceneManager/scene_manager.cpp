@@ -82,27 +82,50 @@ void SceneManager::renderScene()
     updateMatricesUBO();
     updateLightsUBO();
 
-    for(auto & node : m_VectorOfRenderNodes){
-        node->getShader().Bind();
-        node->enableDepthFunc(); //For Cubemap purposes
-        node->setViewMatrix(m_ViewMatrix);
-        node->updateModelMatrix();
-        node->updateTime(m_deltaTime);
-        node->getShader().setUniformVec3f(m_viewPos, "viewPos");
+    for (auto& layerBuckets : m_buckets)
+        for (auto& bucket : layerBuckets)
+            bucket.nodes.clear();
 
-        node->getShader().setUniform1i("hasIBL", m_hasIBL ? 1 : 0);
-        node->getShader().setUniformVec3f(m_ambientColor, "ambientColor");
-
-        if (m_hasIBL) {
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, m_iblProbe->getIrradianceMapID());
-            node->getShader().set1i(1, "irradianceMap");
-            node->getShader().setUniform1f(m_iblIntensity, "iblIntensity");
+    for (auto& node : m_VectorOfRenderNodes) {
+        auto& layerBuckets = m_buckets[static_cast<int>(node->getRenderLayer())];
+        Shader* shader = &node->getShader();
+        auto it = std::find_if(layerBuckets.begin(), layerBuckets.end(),
+            [shader](const ShaderBucket& b) { return b.shader == shader; });
+        if (it == layerBuckets.end()) {
+            layerBuckets.push_back(ShaderBucket{ shader, {} });
+            layerBuckets.back().nodes.reserve(m_VectorOfRenderNodes.size());
+            it = layerBuckets.end() - 1;
         }
+        it->nodes.push_back(node.get());
+    }
 
-        node->getShader().setUniformMat4fv("ModelMatrix",node->getModelMatrix());
-        node->draw();
-        node->disableDepthFunc(); //For CubeMap purposes
+    for (auto& layerBuckets : m_buckets) {
+        for (auto& bucket : layerBuckets) {
+            if (bucket.nodes.empty())
+                continue;
+            bucket.shader->Bind();
+            for (auto* node : bucket.nodes) {
+                node->enableDepthFunc(); //For Cubemap purposes
+                node->setViewMatrix(m_ViewMatrix);
+                node->updateModelMatrix();
+                node->updateTime(m_deltaTime);
+                node->getShader().setUniformVec3f(m_viewPos, "viewPos");
+
+                node->getShader().setUniform1i("hasIBL", m_hasIBL ? 1 : 0);
+                node->getShader().setUniformVec3f(m_ambientColor, "ambientColor");
+
+                if (m_hasIBL) {
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, m_iblProbe->getIrradianceMapID());
+                    node->getShader().set1i(1, "irradianceMap");
+                    node->getShader().setUniform1f(m_iblIntensity, "iblIntensity");
+                }
+
+                node->getShader().setUniformMat4fv("ModelMatrix",node->getModelMatrix());
+                node->draw();
+                node->disableDepthFunc(); //For CubeMap purposes
+            }
+        }
     }
 }
 void SceneManager::loadEnvironment(const std::string& hdrPath)

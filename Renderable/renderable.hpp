@@ -5,13 +5,18 @@
 #include "Shaders/shader.hpp"
 #include "Physics/RigidBody/rigid_body.hpp"
 
+enum class RenderLayer { Opaque, Background, Transparent };
+
 class Renderable{ //Abstract class
 
-    public: 
+    public:
 
 
         //Pure virtual functions
         virtual void draw() = 0;
+        virtual RenderLayer getRenderLayer() const {
+            return RenderLayer::Opaque;
+        }
         virtual Shader& getShader() = 0;
         virtual glm::mat4 getModelMatrix() const {
             return glm::mat4(0.0);

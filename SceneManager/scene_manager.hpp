@@ -9,12 +9,19 @@
 #include "Lights/scene_light.hpp"
 #include "IBL/ibl_probe.hpp"
 #include "GraphicsRenderBackend/gpu_buffer.hpp"
+#include <array>
+
+struct ShaderBucket {
+    Shader* shader;
+    std::vector<Renderable*> nodes;
+};
 
 class SceneManager{
 
     private:
         std::unique_ptr<Shader> m_shader;
         std::vector<std::shared_ptr<Renderable>> m_VectorOfRenderNodes;
+        std::array<std::vector<ShaderBucket>, 3> m_buckets;
         glm::mat4 m_ViewMatrix = glm::mat4(1.f);
         glm::mat4 m_ProjectionMatrix = glm::mat4(1.f);
         glm::mat4 m_ModelMatrix = glm::mat4(1.f);

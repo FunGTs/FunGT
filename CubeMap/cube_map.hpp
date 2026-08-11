@@ -57,8 +57,11 @@ class CubeMap : public Renderable {
         glm::mat4 getProjectionMatrix() override;
         Shader &getShader() override;
         void setViewMatrix(const glm::mat4 &viewMatrix) override;
-        void enableDepthFunc() override; 
-        void disableDepthFunc() override;   
+        void enableDepthFunc() override;
+        void disableDepthFunc() override;
+        RenderLayer getRenderLayer() const override {
+            return RenderLayer::Background;
+        }
 
         
 
