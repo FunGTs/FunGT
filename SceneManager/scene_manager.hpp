@@ -9,7 +9,9 @@
 #include "Lights/scene_light.hpp"
 #include "IBL/ibl_probe.hpp"
 #include "GraphicsRenderBackend/gpu_buffer.hpp"
+#include "VertexGL/shaderStorageBufferObejct.hpp"
 #include <array>
+#include <unordered_map>
 
 struct ShaderBucket {
     Shader* shader;
@@ -39,7 +41,10 @@ class SceneManager{
         std::unique_ptr<IBLProbe> m_iblProbe;
         bool m_hasIBL = false;
         float m_iblIntensity = 0.3f;
-
+        //Shader Storage Buffer Objects for matrices
+        SSBO m_modelMatrixSSBO;
+        bool m_modelMatrixSSBOInitialized = false;
+        std::unordered_map<Renderable*, int> m_modelMatrixIndex;
         glm::vec3 m_ambientColor = glm::vec3(0.3f, 0.3f, 0.3f);
 
         static constexpr int MAX_LIGHTS = 32;
@@ -48,6 +53,7 @@ class SceneManager{
         void initUBOs();
         void updateMatricesUBO();
         void updateLightsUBO();
+        void updateModelMatrixSSBO();
     public:
         SceneManager();
         ~SceneManager();

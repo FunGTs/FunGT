@@ -170,6 +170,7 @@ set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
     ${FUNGT_BASE_DIR}/VertexGL/uniform_buffer_object.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/shaderStorageBufferObejct.cpp
     ${FUNGT_BASE_DIR}/Matrix/matrix4x4f.cpp
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp

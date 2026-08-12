@@ -50,6 +50,43 @@ void SceneManager::updateLightsUBO()
     const size_t lightStride = 32;
     m_lightsUBO->update(&count, sizeof(int), lightStride * MAX_LIGHTS);
 }
+void SceneManager::updateModelMatrixSSBO()
+{
+    if (!m_modelMatrixSSBOInitialized) {
+        m_modelMatrixSSBO.create(sizeof(glm::mat4) * m_VectorOfRenderNodes.size());
+        m_modelMatrixSSBO.bindToBase(2);
+        m_modelMatrixSSBOInitialized = true;
+    }
+
+    for (auto& layer_bucks : m_buckets)
+        for (auto& bucket : layer_bucks)
+            bucket.nodes.clear();
+
+    std::vector<glm::mat4> modelMatrices;
+    modelMatrices.reserve(m_VectorOfRenderNodes.size());
+    m_modelMatrixIndex.clear();
+
+    int index = 0;
+    for (auto& node : m_VectorOfRenderNodes) {
+        node->updateModelMatrix();
+        modelMatrices.push_back(node->getModelMatrix());
+        m_modelMatrixIndex[node.get()] = index;
+        ++index;
+
+        auto& layer_bucks = m_buckets[static_cast<int>(node->getRenderLayer())];
+        Shader* shader = &node->getShader();
+        auto it = std::find_if(layer_bucks.begin(), layer_bucks.end(),
+            [shader](const ShaderBucket& b) { return b.shader == shader; });
+        if (it == layer_bucks.end()) {
+            layer_bucks.push_back(ShaderBucket{ shader, {} });
+            layer_bucks.back().nodes.reserve(m_VectorOfRenderNodes.size());
+            it = layer_bucks.end() - 1;
+        }
+        it->nodes.push_back(node.get());
+    }
+
+    m_modelMatrixSSBO.setBuffData(modelMatrices.data(), modelMatrices.size() * sizeof(glm::mat4));
+}
 SceneManager:: ~SceneManager(){
     std::cout<<"Scene Manager Destructor"<<std::endl;
 }
@@ -81,33 +118,16 @@ void SceneManager::renderScene()
 {
     updateMatricesUBO();
     updateLightsUBO();
+    updateModelMatrixSSBO();
 
-    for (auto& layerBuckets : m_buckets)
-        for (auto& bucket : layerBuckets)
-            bucket.nodes.clear();
-
-    for (auto& node : m_VectorOfRenderNodes) {
-        auto& layerBuckets = m_buckets[static_cast<int>(node->getRenderLayer())];
-        Shader* shader = &node->getShader();
-        auto it = std::find_if(layerBuckets.begin(), layerBuckets.end(),
-            [shader](const ShaderBucket& b) { return b.shader == shader; });
-        if (it == layerBuckets.end()) {
-            layerBuckets.push_back(ShaderBucket{ shader, {} });
-            layerBuckets.back().nodes.reserve(m_VectorOfRenderNodes.size());
-            it = layerBuckets.end() - 1;
-        }
-        it->nodes.push_back(node.get());
-    }
-
-    for (auto& layerBuckets : m_buckets) {
-        for (auto& bucket : layerBuckets) {
+    for (auto& layer_bucks : m_buckets) {
+        for (auto& bucket : layer_bucks) {
             if (bucket.nodes.empty())
                 continue;
             bucket.shader->Bind();
             for (auto* node : bucket.nodes) {
                 node->enableDepthFunc(); //For Cubemap purposes
                 node->setViewMatrix(m_ViewMatrix);
-                node->updateModelMatrix();
                 node->updateTime(m_deltaTime);
                 node->getShader().setUniformVec3f(m_viewPos, "viewPos");
 
@@ -121,7 +141,7 @@ void SceneManager::renderScene()
                     node->getShader().setUniform1f(m_iblIntensity, "iblIntensity");
                 }
 
-                node->getShader().setUniformMat4fv("ModelMatrix",node->getModelMatrix());
+                node->getShader().setUniform1i("ModelMatrixIndex", m_modelMatrixIndex[node]);
                 node->draw();
                 node->disableDepthFunc(); //For CubeMap purposes
             }

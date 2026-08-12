@@ -234,6 +234,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
     ${FUNGT_BASE_DIR}/VertexGL/uniform_buffer_object.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/shaderStorageBufferObejct.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
     ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/funGT/fungt.cpp
