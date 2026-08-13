@@ -5,6 +5,7 @@
 #include "../../VertexGL/vertexArrayObjects.hpp"
 #include "../../VertexGL/vertexBuffers.hpp"
 #include "../../VertexGL/vertexIndices.hpp"
+#include "../../VertexGL/uniform_buffer_object.hpp"
 
 class OpenGLBuffer : public GPUBuffer {
 public:
@@ -26,11 +27,15 @@ public:
     void drawIndexedInstanced(size_t indexCount, int instanceCount, DrawMode mode = DrawMode::Triangles) override;
     void drawArraysInstanced(size_t vertexCount, int instanceCount, DrawMode mode = DrawMode::Triangles) override;
 
+    void update(const void* data, size_t size, size_t offset = 0) override;
+    void bindBase(unsigned int bindingPoint) override;
+
 private:
-    BufferType        m_type;
-    VertexArrayObject m_vao;
-    VertexBuffer      m_vbo;
-    VertexIndex       m_ebo;
+    BufferType         m_type;
+    VertexArrayObject  m_vao;
+    VertexBuffer       m_vbo;
+    VertexIndex        m_ebo;
+    UniformBufferObject m_ubo;
 };
 
 #endif // _OPENGL_BUFFER_HPP_

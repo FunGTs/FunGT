@@ -1,9 +1,91 @@
 #include "scene_manager.hpp"
+#include <algorithm>
 
 SceneManager::SceneManager()
     : m_shader(Shader::create())
 {
     std::cout<<"Scene Manager Constructor"<<std::endl;
+}
+
+void SceneManager::initUBOs()
+{
+    m_matricesUBO = GPUBuffer::create();
+    m_matricesUBO->create(BufferType::Uniform, nullptr, sizeof(glm::mat4) * 2);
+    m_matricesUBO->bindBase(0);
+
+    const size_t lightStride = 32;
+    const size_t lightsUBOSize = lightStride * MAX_LIGHTS + 16;
+    m_lightsUBO = GPUBuffer::create();
+    m_lightsUBO->create(BufferType::Uniform, nullptr, lightsUBOSize);
+    m_lightsUBO->bindBase(1);
+}
+
+void SceneManager::updateMatricesUBO()
+{
+    if (!m_matricesUBO)
+        initUBOs();
+
+    glm::mat4 matrices[2] = { m_ViewMatrix, m_ProjectionMatrix };
+    m_matricesUBO->update(matrices, sizeof(matrices));
+}
+
+void SceneManager::updateLightsUBO()
+{
+    struct GPULight {
+        glm::vec3 position; float pad0;
+        glm::vec3 color;    float power;
+    };
+
+    const int count = static_cast<int>(std::min(m_lights.size(), static_cast<size_t>(MAX_LIGHTS)));
+    std::vector<GPULight> gpuLights(count);
+    for (int i = 0; i < count; ++i) {
+        gpuLights[i].position = m_lights[i].position;
+        gpuLights[i].color = m_lights[i].color;
+        gpuLights[i].power = m_lights[i].power;
+    }
+
+    if (count > 0)
+        m_lightsUBO->update(gpuLights.data(), gpuLights.size() * sizeof(GPULight));
+
+    const size_t lightStride = 32;
+    m_lightsUBO->update(&count, sizeof(int), lightStride * MAX_LIGHTS);
+}
+void SceneManager::updateModelMatrixSSBO()
+{
+    if (!m_modelMatrixSSBOInitialized) {
+        m_modelMatrixSSBO.create(sizeof(glm::mat4) * m_VectorOfRenderNodes.size());
+        m_modelMatrixSSBO.bindToBase(2);
+        m_modelMatrixSSBOInitialized = true;
+    }
+
+    for (auto& layer_bucks : m_buckets)
+        for (auto& bucket : layer_bucks)
+            bucket.nodes.clear();
+
+    std::vector<glm::mat4> modelMatrices;
+    modelMatrices.reserve(m_VectorOfRenderNodes.size());
+    m_modelMatrixIndex.clear();
+
+    int index = 0;
+    for (auto& node : m_VectorOfRenderNodes) {
+        node->updateModelMatrix();
+        modelMatrices.push_back(node->getModelMatrix());
+        m_modelMatrixIndex[node.get()] = index;
+        ++index;
+
+        auto& layer_bucks = m_buckets[static_cast<int>(node->getRenderLayer())];
+        Shader* shader = &node->getShader();
+        auto it = std::find_if(layer_bucks.begin(), layer_bucks.end(),
+            [shader](const ShaderBucket& b) { return b.shader == shader; });
+        if (it == layer_bucks.end()) {
+            layer_bucks.push_back(ShaderBucket{ shader, {} });
+            layer_bucks.back().nodes.reserve(m_VectorOfRenderNodes.size());
+            it = layer_bucks.end() - 1;
+        }
+        it->nodes.push_back(node.get());
+    }
+
+    m_modelMatrixSSBO.setBuffData(modelMatrices.data(), modelMatrices.size() * sizeof(glm::mat4));
 }
 SceneManager:: ~SceneManager(){
     std::cout<<"Scene Manager Destructor"<<std::endl;
@@ -34,38 +116,36 @@ void SceneManager::updateModelMatrix(const glm::mat4 &modelMatrix)
 }
 void SceneManager::renderScene()
 {
-    for(auto & node : m_VectorOfRenderNodes){
-        node->getShader().Bind();
-        node->enableDepthFunc(); //For Cubemap purposes
-        node->setViewMatrix(m_ViewMatrix);
-        node->updateModelMatrix();
-        node->updateTime(m_deltaTime);
-        node->getShader().setUniform1i("numLights", (int)m_lights.size());
-        node->getShader().setUniformVec3f(m_viewPos, "viewPos");
+    updateMatricesUBO();
+    updateLightsUBO();
+    updateModelMatrixSSBO();
 
-        node->getShader().setUniform1i("hasIBL", m_hasIBL ? 1 : 0);
-        node->getShader().setUniformVec3f(m_ambientColor, "ambientColor");
+    for (auto& layer_bucks : m_buckets) {
+        for (auto& bucket : layer_bucks) {
+            if (bucket.nodes.empty())
+                continue;
+            bucket.shader->Bind();
+            for (auto* node : bucket.nodes) {
+                node->enableDepthFunc(); //For Cubemap purposes
+                node->setViewMatrix(m_ViewMatrix);
+                node->updateTime(m_deltaTime);
+                node->getShader().setUniformVec3f(m_viewPos, "viewPos");
 
-        if (m_hasIBL) {
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, m_iblProbe->getIrradianceMapID());
-            node->getShader().set1i(1, "irradianceMap");
-            node->getShader().setUniform1f(m_iblIntensity, "iblIntensity");
+                node->getShader().setUniform1i("hasIBL", m_hasIBL ? 1 : 0);
+                node->getShader().setUniformVec3f(m_ambientColor, "ambientColor");
+
+                if (m_hasIBL) {
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, m_iblProbe->getIrradianceMapID());
+                    node->getShader().set1i(1, "irradianceMap");
+                    node->getShader().setUniform1f(m_iblIntensity, "iblIntensity");
+                }
+
+                node->getShader().setUniform1i("ModelMatrixIndex", m_modelMatrixIndex[node]);
+                node->draw();
+                node->disableDepthFunc(); //For CubeMap purposes
+            }
         }
-
-        for (size_t i = 0; i < m_lights.size(); ++i)
-        {
-            const SceneLight& light = m_lights[i];
-            std::string idx = std::to_string(i);
-            node->getShader().setUniformVec3f(light.position, "light[" + idx + "].position");
-            node->getShader().setUniformVec3f(light.color, "light[" + idx + "].color");
-            node->getShader().setUniformVec1f(light.power, "light[" + idx + "].power");
-        }
-        node->getShader().setUniformMat4fv("ViewMatrix",node->getViewMatrix());
-        node->getShader().setUniformMat4fv("ProjectionMatrix",m_ProjectionMatrix);
-        node->getShader().setUniformMat4fv("ModelMatrix",node->getModelMatrix());
-        node->draw();
-        node->disableDepthFunc(); //For CubeMap purposes
     }
 }
 void SceneManager::loadEnvironment(const std::string& hdrPath)

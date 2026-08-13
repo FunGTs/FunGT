@@ -8,11 +8,17 @@ out vec3 FragPos;
 out vec3 Normal;
 out vec2 textureCoords;
 
-uniform mat4 ModelMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 ProjectionMatrix;
+uniform int ModelMatrixIndex;
+layout(std140, binding = 0) uniform Matrices {
+    mat4 ViewMatrix;
+    mat4 ProjectionMatrix;
+};
+layout(std430, binding = 2) readonly buffer ModelMatrices {
+    mat4 models[];
+};
 
 void main() {
+    mat4 ModelMatrix = models[ModelMatrixIndex];
     FragPos = vec3(ModelMatrix * vec4(vertex_position, 1.0));
     Normal = mat3(transpose(inverse(ModelMatrix))) * normal_position;
     textureCoords = texture_position;

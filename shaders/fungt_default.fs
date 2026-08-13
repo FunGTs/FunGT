@@ -13,7 +13,10 @@ struct Light {
     vec3  color;
     float power;
 };
-
+layout(std140, binding = 1) uniform LightsBlock {
+    Light light[32];
+    int   numLights;
+};
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 textureCoords;
@@ -22,8 +25,6 @@ out vec4 vs_color;
 
 uniform vec3     viewPos;
 uniform Material material;
-uniform Light    light[8];
-uniform int      numLights;
 uniform sampler2D texture_diffuse1;
 uniform bool     hasTexture;
 uniform samplerCube irradianceMap;

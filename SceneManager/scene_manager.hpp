@@ -8,12 +8,22 @@
 #include "SimpleModel/simple_model.hpp"
 #include "Lights/scene_light.hpp"
 #include "IBL/ibl_probe.hpp"
+#include "GraphicsRenderBackend/gpu_buffer.hpp"
+#include "VertexGL/shaderStorageBufferObejct.hpp"
+#include <array>
+#include <unordered_map>
+
+struct ShaderBucket {
+    Shader* shader;
+    std::vector<Renderable*> nodes;
+};
 
 class SceneManager{
 
     private:
         std::unique_ptr<Shader> m_shader;
         std::vector<std::shared_ptr<Renderable>> m_VectorOfRenderNodes;
+        std::array<std::vector<ShaderBucket>, 3> m_buckets;
         glm::mat4 m_ViewMatrix = glm::mat4(1.f);
         glm::mat4 m_ProjectionMatrix = glm::mat4(1.f);
         glm::mat4 m_ModelMatrix = glm::mat4(1.f);
@@ -31,8 +41,19 @@ class SceneManager{
         std::unique_ptr<IBLProbe> m_iblProbe;
         bool m_hasIBL = false;
         float m_iblIntensity = 0.3f;
-
+        //Shader Storage Buffer Objects for matrices
+        SSBO m_modelMatrixSSBO;
+        bool m_modelMatrixSSBOInitialized = false;
+        std::unordered_map<Renderable*, int> m_modelMatrixIndex;
         glm::vec3 m_ambientColor = glm::vec3(0.3f, 0.3f, 0.3f);
+
+        static constexpr int MAX_LIGHTS = 32;
+        std::unique_ptr<GPUBuffer> m_matricesUBO;
+        std::unique_ptr<GPUBuffer> m_lightsUBO;
+        void initUBOs();
+        void updateMatricesUBO();
+        void updateLightsUBO();
+        void updateModelMatrixSSBO();
     public:
         SceneManager();
         ~SceneManager();
