@@ -9,7 +9,7 @@ public:
     OpenGLTexture(TextureType type = TextureType::Texture2D);
     ~OpenGLTexture() override;
 
-    void upload(const unsigned char* pixels, int width, int height) override;
+    void upload(const unsigned char* pixels, int width, int height, TextureColorSpace colorSpace) override;
     void uploadFloat(const float* pixels, int width, int height) override;
     void uploadCubeMap(const std::vector<unsigned char*>& faces, int width, int height) override;
     void allocateEmptyCubemap(int faceSize, bool mipmaps) override;
