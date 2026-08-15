@@ -131,29 +131,21 @@ public:
         ImGui::Separator();
         ImGui::Spacing();
 
-        // Ambient color
-        ImGui::Text("Ambient");
-        ImGui::ColorEdit3("##Ambient", &mat.m_ambientLight.x, ImGuiColorEditFlags_Float);
-
-        ImGui::Spacing();
-
-        // Diffuse color
-        ImGui::Text("Diffuse");
-        ImGui::ColorEdit3("##Diffuse", &mat.m_diffLigth.x, ImGuiColorEditFlags_Float);
-
-        ImGui::Spacing();
-
-        // Specular color
-        ImGui::Text("Specular");
-        ImGui::ColorEdit3("##Specular", &mat.m_specLight.x, ImGuiColorEditFlags_Float);
+        ImGui::Text("Base Color");
+        ImGui::ColorEdit3("##BaseColor", &mat.m_baseColor.x, ImGuiColorEditFlags_Float);
 
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
 
-        // Shininess slider
-        ImGui::Text("Shininess");
-        ImGui::SliderFloat("##Shininess", &mat.m_shininess, 1.0f, 128.0f, "%.1f");
+        ImGui::Text("Metallic");
+        ImGui::SliderFloat("##Metallic", &mat.m_metallic, 0.0f, 1.0f, "%.3f");
+
+        ImGui::Text("Roughness");
+        ImGui::SliderFloat("##Roughness", &mat.m_roughness, 0.05f, 1.0f, "%.3f");
+
+        ImGui::Text("Reflectance");
+        ImGui::SliderFloat("##Reflectance", &mat.m_reflectance, 0.0f, 1.0f, "%.3f");
 
         ImGui::Spacing();
         ImGui::Separator();

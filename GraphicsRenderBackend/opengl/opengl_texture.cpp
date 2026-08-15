@@ -15,7 +15,7 @@ OpenGLTexture::~OpenGLTexture() {
     destroy();
 }
 
-void OpenGLTexture::upload(const unsigned char* pixels, int width, int height) {
+void OpenGLTexture::upload(const unsigned char* pixels, int width, int height, TextureColorSpace colorSpace){
     glGenTextures(1, &m_id);
     glBindTexture(m_glTarget, m_id);
 
@@ -24,7 +24,13 @@ void OpenGLTexture::upload(const unsigned char* pixels, int width, int height) {
     glTexParameteri(m_glTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(m_glTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-    glTexImage2D(m_glTarget, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    const GLenum internalFormat =
+        colorSpace == TextureColorSpace::SRGB
+        ? GL_SRGB8_ALPHA8
+        : GL_RGBA8;
+
+
+    glTexImage2D(m_glTarget, 0, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     glGenerateMipmap(m_glTarget);
     glBindTexture(m_glTarget, 0);
 }

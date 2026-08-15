@@ -373,45 +373,28 @@ std::vector<Texture > Model::loadTextures(aiMaterial *mat, aiTextureType type, s
     return textures;
 }
 std::vector<Material> Model::loadMaterials(aiMaterial *mat)
-{   std::vector<Material> internalMat; 
-    glm::vec3 ka;
-    glm::vec3 kd; 
-    glm::vec3 ks;
-    float shininess;
-    
-
+{
     aiString aiName; 
-
-    //Gets the name of the material: 
     mat->Get(AI_MATKEY_NAME,aiName);
+    const std::string name = aiName.C_Str();
+    std::cout << "Loading : " << name << std::endl;
 
+    aiColor3D aiDiffuseColor(0.8f, 0.8f, 0.8f);
+    aiColor3D aiSpecularColor(0.04f, 0.04f, 0.04f);
+    float shininess = 2.0f;
 
-    const char * name = aiName.C_Str();
-
-    std::string nameMaterial(name);
-
-    std::cout<<"Loading : " << nameMaterial <<std::endl;
-    
-    aiColor3D aiAmbientColor, aiDiffuseColor, aiSpecularColor;
-    float aiShininess;
-    //Gets the values of the properties
-    mat->Get(AI_MATKEY_COLOR_AMBIENT, aiAmbientColor);
-    ka = glm::vec3(aiAmbientColor.r,aiAmbientColor.g,aiAmbientColor.b);
-    //std::cout<<"ka : " << ka.x << ", " << ka.y <<", " << ka.z <<std::endl;
     mat->Get(AI_MATKEY_COLOR_DIFFUSE, aiDiffuseColor);
-    kd = glm::vec3(aiDiffuseColor.r,aiDiffuseColor.g,aiDiffuseColor.b);
-
     mat->Get(AI_MATKEY_COLOR_SPECULAR, aiSpecularColor);
-    ks = glm::vec3(aiSpecularColor.r,aiSpecularColor.g,aiSpecularColor.b);
+    mat->Get(AI_MATKEY_SHININESS, shininess);
 
-    mat->Get(AI_MATKEY_SHININESS, aiShininess);
-    shininess = static_cast<float>(aiShininess);
+    const glm::vec3 baseColor(aiDiffuseColor.r, aiDiffuseColor.g, aiDiffuseColor.b);
+    const float roughness = glm::clamp(std::sqrt(2.0f / (shininess + 2.0f)), 0.05f, 1.0f);
+    const float reflectance = glm::clamp(
+        (aiSpecularColor.r + aiSpecularColor.g + aiSpecularColor.b) / 3.0f,
+        0.0f, 1.0f);
 
-    Material myMaterial(ka,ks,kd,shininess,name);
-
-    internalMat.push_back(myMaterial); 
-
-    return internalMat;
+    // Legacy Phong/MTL data has no reliable metallic parameter.
+    return { Material(baseColor, 0.0f, roughness, reflectance, name) };
 }
 void Model::initializeDefaultShaders()
 {

@@ -24,7 +24,7 @@ Texture::~Texture() {
     std::cout << "Texture Destructor" << std::endl;
 }
 
-void Texture::genTexture(const std::string& path) {
+void Texture::genTexture(const std::string& path, TextureColorSpace colorSpace) {
     txt_Path = path;
     stbi_set_flip_vertically_on_load(1);
     unsigned char* pixels = stbi_load(txt_Path.c_str(), &txt_width, &txt_height, &txt_BBP, 4);
@@ -32,7 +32,7 @@ void Texture::genTexture(const std::string& path) {
     if (pixels) {
         std::cout << "\nOk to load: " << std::endl;
         printf("%s\n", txt_Path.c_str());
-        m_gpu->upload(pixels, txt_width, txt_height);
+        m_gpu->upload(pixels, txt_width, txt_height, colorSpace);
         stbi_image_free(pixels);
     } else {
         std::cout << "\nError: Failed to load texture" << std::endl;
