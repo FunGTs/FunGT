@@ -63,10 +63,10 @@ void SimpleGeometry::scale(float s) {
 
 void SimpleGeometry::draw() {
     if (m_primitive) {
-        m_Shader->setUniformVec3f(m_material.baseColor, "material.diffuse");
-        m_Shader->setUniformVec3f(m_material.baseColor * 0.3f, "material.ambient");
-        m_Shader->setUniformVec3f(glm::vec3(1.0f - m_material.roughness), "material.specular");
-        m_Shader->setUniformVec1f(glm::mix(2.f, 128.f, 1.f - m_material.roughness), "material.shininess");
+        m_Shader->setUniformVec3f(m_material.baseColor, "material.baseColor");
+        m_Shader->setUniformVec1f(m_material.metallic, "material.metallic");
+        m_Shader->setUniformVec1f(m_material.roughness, "material.roughness");
+        m_Shader->setUniformVec1f(0.04f, "material.reflectance");
         m_Shader->setUniformVec1f(0.f, "material.emission");
         m_Shader->setUniform1i("hasTexture", m_isTexturized ? 1 : 0);
         m_primitive->draw();

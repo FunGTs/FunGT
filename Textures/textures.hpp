@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "../GraphicsRenderBackend/gpu_texture.hpp"
+#include "GraphicsRenderBackend/gpu_texture.hpp"
 
 class Texture {
 public:
@@ -27,7 +27,8 @@ public:
     Texture(const Texture&) = delete;
     Texture& operator=(const Texture&) = delete;
 
-    void genTexture(const std::string& path);
+    void genTexture(const std::string& path, 
+                    TextureColorSpace colorSpace = TextureColorSpace::SRGB);
     void genTextureHDR(const std::string& path);
     void genTextureCubeMap(const std::vector<std::string>& faces);
     void allocateEmptyCubemap(int faceSize, bool mipmaps);

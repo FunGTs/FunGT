@@ -59,7 +59,6 @@ Space::Space(){
 
 Space::Space(std::vector<Triangle>& triangleList)
 {
-    Material gray(glm::vec3(0.2f), glm::vec3(0.8f), glm::vec3(0.8f), 32.0f, "DefaultGray");
     m_triangles = std::move(triangleList);
     m_lights.push_back(Light(
         fungt::Vec3(2.0f, 2.0f, 2.0f),    // position
@@ -237,7 +236,7 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
         global_material.metallic = 0.0f;
         global_material.roughness = 0.5f;
         global_material.reflectance = 0.05f;
-        global_material.emission = materials[0].m_emission;
+        global_material.emission = 0.0f;
         global_material.baseColorTexIdx = -1;
         if (!textures.empty() && m_textureManager != nullptr) {
             std::string texPath = textures[0].getPath();
@@ -249,17 +248,13 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
             std::cout << "  No texture (using base color)" << std::endl;
         }
         if (!materials.empty()) {
-            global_material.baseColor[0] = materials[0].m_diffLigth.x;
-            global_material.baseColor[1] = materials[0].m_diffLigth.y;
-            global_material.baseColor[2] = materials[0].m_diffLigth.z;
-
-            float Ns = materials[0].m_shininess;
-            global_material.roughness = sqrtf(2.0f / (Ns + 2.0f));
-
-            float avgSpec = (materials[0].m_specLight.x +
-                materials[0].m_specLight.y +
-                materials[0].m_specLight.z) / 3.0f;
-            global_material.metallic = (avgSpec < 0.9f) ? 0.0f : 0.3f;
+            global_material.baseColor[0] = materials[0].m_baseColor.x;
+            global_material.baseColor[1] = materials[0].m_baseColor.y;
+            global_material.baseColor[2] = materials[0].m_baseColor.z;
+            global_material.metallic = materials[0].m_metallic;
+            global_material.roughness = materials[0].m_roughness;
+            global_material.reflectance = materials[0].m_reflectance;
+            global_material.emission = materials[0].m_emission;
 
             std::cout << "Material: Base color ("
                 << global_material.baseColor[0] << ", "
@@ -479,6 +474,5 @@ void Space::setSamples(int numOfSamples)
 {
     m_samplesPerPixel = numOfSamples;
 }
-
 
 

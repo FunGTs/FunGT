@@ -77,7 +77,7 @@ class Intersection{
                 tMax = fminf(t1, tMax);
 
                 // Early exit if no overlap
-                if (tMax <= tMin)
+                if (tMax < tMin)
                     return false;
             }
             return true;
