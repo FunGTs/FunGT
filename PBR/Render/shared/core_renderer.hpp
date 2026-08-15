@@ -73,9 +73,7 @@ fgt_device_gpu inline fungt::Vec3 sampleHemisphere(const fungt::Vec3& normal, fu
 
 }
 fgt_device fungt::Vec3 skyColor(const fungt::Ray& ray) {
-    float t = 0.5f * (ray.m_dir.y + 1.0f);
-    //return (1.0f - t) * fungt::Vec3(1.0f, 1.0f, 1.0f) + t * fungt::Vec3(0.5f, 0.7f, 1.0f)*3.0f;
-    return fungt::Vec3(0.0f, 0.0f, 0.0f); // Bright blu
+    return fungt::Vec3(0.3f, 0.3f, 0.3f);
     //return (t * fungt::Vec3(2.0f, 2.0f, 2.0f) + (1.0f - t) * fungt::Vec3(0.3f, 0.5f, 1.0f));
 
     // float t = 0.5f * (ray.m_dir.y + 1.0f);
