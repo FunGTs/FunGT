@@ -1,4 +1,5 @@
 #include "graphicsTool.hpp"
+#include "../MeshGPU/mesh_gpu.hpp"
 
 
 GraphicsTool::GraphicsTool(int _width, int _height)
@@ -45,6 +46,7 @@ int GraphicsTool::initGL(){
     });
 
     m_renderDevice->init(m_Window, m_frameBufferWidth, m_frameBufferHeight, m_colors);
+    RegisterMeshGPUCallbacks();
 
     return 1;
 }
