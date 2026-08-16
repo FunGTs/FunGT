@@ -1,5 +1,17 @@
 #include "graphicsTool.hpp"
 #include "../MeshGPU/mesh_gpu.hpp"
+#include "../TextureGPU/texture_gpu.hpp"
+#include "../PrimitiveGPU/primitive_gpu.hpp"
+#include "../Shaders/shader.hpp"
+#include "../Model/model.hpp"
+
+Shader* BuildShader() {
+    return Shader::create().release();
+}
+
+void FreeShader(Shader* s) {
+    delete s;
+}
 
 
 GraphicsTool::GraphicsTool(int _width, int _height)
@@ -47,6 +59,10 @@ int GraphicsTool::initGL(){
 
     m_renderDevice->init(m_Window, m_frameBufferWidth, m_frameBufferHeight, m_colors);
     RegisterMeshGPUCallbacks();
+    RegisterTextureGPUCallbacks();
+    RegisterPrimitiveGPUCallbacks();
+    Model::s_shaderCreate = &BuildShader;
+    Model::s_shaderFree = &FreeShader;
 
     return 1;
 }

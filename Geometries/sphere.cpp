@@ -17,16 +17,16 @@ geometry::Sphere::~Sphere() {
 
 void geometry::Sphere::draw() {
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawIndexed(getNumOfIndices());
-    m_buffer->unbindVAO();
+    if (s_gpuDraw && m_gpuCache) {
+        s_gpuDraw(*m_gpuCache, getNumOfIndices(), 0);
+    }
 }
 
 void geometry::Sphere::InstancedDraw(Shader& shader, int instanceCount) {
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawIndexedInstanced(getNumOfIndices(), instanceCount);
-    m_buffer->unbindVAO();
+    if (s_gpuDrawInstanced && m_gpuCache) {
+        s_gpuDrawInstanced(*m_gpuCache, getNumOfIndices(), 0, instanceCount);
+    }
 }
 void geometry::Sphere::setData() {
     std::cout << "Calling Sphere::setData() " << std::endl;

@@ -11,9 +11,9 @@ Plane::~Plane() {
 
 void Plane::draw() {
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawIndexed(getNumOfIndices());
-    m_buffer->unbindVAO();
+    if (s_gpuDraw && m_gpuCache) {
+        s_gpuDraw(*m_gpuCache, getNumOfIndices(), 0);
+    }
 }
 
 void Plane::setData() {

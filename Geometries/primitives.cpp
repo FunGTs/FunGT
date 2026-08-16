@@ -1,7 +1,17 @@
 #include "primitives.hpp"
 
+void (*Primitive::s_gpuBuild)(Primitive&, PrimitiveGPU*&) = nullptr;
+void (*Primitive::s_gpuFree)(PrimitiveGPU*) = nullptr;
+void (*Primitive::s_gpuDraw)(PrimitiveGPU&, unsigned, unsigned) = nullptr;
+void (*Primitive::s_gpuDrawInstanced)(PrimitiveGPU&, unsigned, unsigned, int) = nullptr;
+
 Primitive::Primitive() {}
-Primitive::~Primitive() {}
+
+Primitive::~Primitive() {
+    if (s_gpuFree && m_gpuCache) {
+        s_gpuFree(m_gpuCache);
+    }
+}
 
 void Primitive::set(const PrimitiveVertex* vertices, unsigned numOfvert, const uint32_t* indices, unsigned numOfindices) {
     for (size_t i = 0; i < numOfvert;    i++) m_vertex.push_back(vertices[i]);
@@ -27,17 +37,7 @@ void Primitive::setTexture(const std::string& pathToTexture) {
 }
 
 void Primitive::InitGraphics() {
-    m_buffer = GPUBuffer::create();
-
-    m_buffer->genVAO();
-    m_buffer->bindVAO();
-
-    m_buffer->create(BufferType::Vertex, getVertices(), sizeOfVertices());
-
-    if (getNumOfIndices() > 0)
-        m_buffer->create(BufferType::Index, getIndices(), sizeOfIndices());
-
-    m_buffer->applyFormat(PrimitiveVertex::getFormat());
-
-    m_buffer->unbindVAO();
+    if (s_gpuBuild && !m_gpuCache) {
+        s_gpuBuild(*this, m_gpuCache);
+    }
 }

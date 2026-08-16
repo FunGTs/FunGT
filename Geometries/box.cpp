@@ -11,9 +11,9 @@ geometry::Box::~Box() {
 
 void geometry::Box::draw() {
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawArrays(getNumOfVertices());
-    m_buffer->unbindVAO();
+    if (s_gpuDraw && m_gpuCache) {
+        s_gpuDraw(*m_gpuCache, 0, getNumOfVertices());
+    }
 }
 
 void geometry::Box::setData() {
@@ -81,7 +81,7 @@ void geometry::Box::setData() {
 void geometry::Box::InstancedDraw(Shader& shader, int instanceCount) {
     shader.setUniformVec3f(glm::vec3(0.4f, 0.4f, 0.4f), "u_color");
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawArraysInstanced(getNumOfVertices(), instanceCount);
-    m_buffer->unbindVAO();
+    if (s_gpuDrawInstanced && m_gpuCache) {
+        s_gpuDrawInstanced(*m_gpuCache, 0, getNumOfVertices(), instanceCount);
+    }
 }

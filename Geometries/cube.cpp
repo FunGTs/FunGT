@@ -11,9 +11,9 @@ Cube::~Cube() {
 
 void Cube::draw() {
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawArrays(getNumOfVertices());
-    m_buffer->unbindVAO();
+    if (s_gpuDraw && m_gpuCache) {
+        s_gpuDraw(*m_gpuCache, 0, getNumOfVertices());
+    }
 }
 
 void Cube::setData() {
@@ -73,7 +73,7 @@ void Cube::setData() {
 
 void Cube::InstancedDraw(Shader& shader, int instanceCount) {
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawArraysInstanced(getNumOfVertices(), instanceCount);
-    m_buffer->unbindVAO();
+    if (s_gpuDrawInstanced && m_gpuCache) {
+        s_gpuDrawInstanced(*m_gpuCache, 0, getNumOfVertices(), instanceCount);
+    }
 }
