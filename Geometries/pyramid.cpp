@@ -10,9 +10,9 @@ Pyramid::~Pyramid()
 
 void Pyramid::draw() {
     texture.active();
-    m_buffer->bindVAO();
-    m_buffer->drawArrays(getNumOfVertices());
-    m_buffer->unbindVAO();
+    if (s_gpuDraw && m_gpuCache) {
+        s_gpuDraw(*m_gpuCache, 0, getNumOfVertices());
+    }
 }
 
 void Pyramid::setData()

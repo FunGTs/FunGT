@@ -222,6 +222,9 @@ include_directories(
     ${FUNGT_BASE_DIR}/IBL
     ${FUNGT_BASE_DIR}/GraphicsRenderBackend
     ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl
+    ${FUNGT_BASE_DIR}/MeshGPU
+    ${FUNGT_BASE_DIR}/TextureGPU
+    ${FUNGT_BASE_DIR}/PrimitiveGPU
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -244,6 +247,9 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Imgui_Setup/imgui_setup.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
+    ${FUNGT_BASE_DIR}/MeshGPU/mesh_gpu.cpp
+    ${FUNGT_BASE_DIR}/TextureGPU/texture_gpu.cpp
+    ${FUNGT_BASE_DIR}/PrimitiveGPU/primitive_gpu.cpp
     ${FUNGT_BASE_DIR}/Camera/camera.cpp
     ${FUNGT_BASE_DIR}/Geometries/cube.cpp
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp

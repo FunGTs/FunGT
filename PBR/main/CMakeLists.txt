@@ -147,15 +147,12 @@ set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/PBR/Render/src/compute_backends.cpp
     ${FUNGT_BASE_DIR}/PBR/Render/src/cpu_renderer.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
-    ${FUNGT_BASE_DIR}/Shaders/shader.cpp
-    ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Geometries/cube.cpp
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp
     ${FUNGT_BASE_DIR}/Geometries/primitives.cpp
     ${FUNGT_BASE_DIR}/Geometries/pyramid.cpp
     ${FUNGT_BASE_DIR}/Geometries/shape.cpp
-    ${FUNGT_BASE_DIR}/Geometries/inf_grid.cpp
     ${FUNGT_BASE_DIR}/Geometries/square.cpp
     ${FUNGT_BASE_DIR}/Geometries/sphere.cpp
     ${FUNGT_BASE_DIR}/Geometries/box.cpp
@@ -166,20 +163,9 @@ set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
     ${FUNGT_BASE_DIR}/Textures/textures.cpp
     ${FUNGT_BASE_DIR}/vendor/stb_image/stb_image.cpp
-    ${FUNGT_BASE_DIR}/VertexGL/vertexArrayObjects.cpp
-    ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
-    ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
-    ${FUNGT_BASE_DIR}/VertexGL/uniform_buffer_object.cpp
-    ${FUNGT_BASE_DIR}/VertexGL/shaderStorageBufferObejct.cpp
     ${FUNGT_BASE_DIR}/Matrix/matrix4x4f.cpp
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/Renders/display_graphics.cpp
-    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/graphics_render_device.cpp
-    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_buffer.cpp
-    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_texture.cpp
-    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_device.cpp
-    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_buffer.cpp
-    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_texture.cpp
 )
 
 add_library(pbr_core STATIC ${PBR_CORE_FILES})
@@ -267,12 +253,6 @@ if(FUNGT_USE_SYCL)
         ${FUNLIB_DIR}/include
     )
 
-    target_link_libraries(pbr_sycl PRIVATE
-        OpenGL::GL
-        GLEW::GLEW
-        glfw
-    )
-
     target_compile_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
     target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
 
@@ -321,32 +301,18 @@ else()
     endif()
 endif()
 
-find_package(OpenGL REQUIRED)
-if(OpenGL_FOUND)
-    message(STATUS "OpenGL found")
-else()
-    message(FATAL_ERROR "OpenGL library not found!")
-endif()
-
-find_package(glfw3 REQUIRED)
-if(glfw3_FOUND)
-    message(STATUS "GLFW found")
-else()
-    message(FATAL_ERROR "GLFW library not found!")
-endif()
-
-find_package(GLEW REQUIRED)
-if(GLEW_FOUND)
-    message(STATUS "GLEW found")
-else()
-    message(FATAL_ERROR "GLEW library not found!")
-endif()
-
 find_package(assimp REQUIRED)
 if(assimp_FOUND)
     message(STATUS "Assimp found")
 else()
     message(FATAL_ERROR "Assimp library not found!")
+endif()
+
+find_package(OpenGL REQUIRED)
+if(OpenGL_FOUND)
+    message(STATUS "OpenGL found (for GL/SYCL interop)")
+else()
+    message(FATAL_ERROR "OpenGL library not found!")
 endif()
 
 # ────────────────────────────────────────────────────────
@@ -383,8 +349,6 @@ target_link_libraries(pbr_render PRIVATE
     $<$<BOOL:${FUNGT_USE_CUDA}>:pbr_cuda>
     $<$<BOOL:${FUNGT_USE_SYCL}>:pbr_sycl>
     OpenGL::GL
-    glfw
-    GLEW::GLEW
     assimp::assimp
     funlib
     dl

@@ -6,15 +6,8 @@
 #include <vector>
 #include <cstdint>
 #include "../Renders/display_graphics.hpp"
+#include "texture_enums.hpp"
 
-enum class TextureType {
-    Texture2D,
-    CubeMap
-};
-enum class TextureColorSpace {
-    Linear,
-    SRGB
-};
 class GPUTexture {
 public:
     virtual ~GPUTexture() = default;

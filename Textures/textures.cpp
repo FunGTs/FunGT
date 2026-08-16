@@ -2,26 +2,81 @@
 #include "../vendor/stb_image/stb_image.h"
 #include <iostream>
 
-Texture::Texture()
-    : m_gpu(GPUTexture::create(TextureType::Texture2D)) {}
+TextureGPU* (*Texture::s_gpuCreate)(TextureType) = nullptr;
+void (*Texture::s_gpuFree)(TextureGPU*) = nullptr;
+void (*Texture::s_gpuUpload)(TextureGPU&, const unsigned char*, int, int, TextureColorSpace) = nullptr;
+void (*Texture::s_gpuUploadFloat)(TextureGPU&, const float*, int, int) = nullptr;
+void (*Texture::s_gpuUploadCubeMap)(TextureGPU&, const std::vector<unsigned char*>&, int, int) = nullptr;
+void (*Texture::s_gpuAllocateEmptyCubemap)(TextureGPU&, int, bool) = nullptr;
+void (*Texture::s_gpuBind)(TextureGPU&, unsigned int) = nullptr;
+void (*Texture::s_gpuUnbind)(TextureGPU&) = nullptr;
+void (*Texture::s_gpuDestroy)(TextureGPU&) = nullptr;
+uint32_t (*Texture::s_gpuGetID)(const TextureGPU&) = nullptr;
 
-Texture::Texture(TextureType type)
-    : m_gpu(GPUTexture::create(type)) {}
+Texture::Texture() {
+    if (s_gpuCreate) {
+        m_gpuCache = s_gpuCreate(TextureType::Texture2D);
+    }
+}
+
+Texture::Texture(TextureType type) {
+    if (s_gpuCreate) {
+        m_gpuCache = s_gpuCreate(type);
+    }
+}
 
 Texture::Texture(const std::string& path)
-    : txt_Path(path), m_gpu(GPUTexture::create(TextureType::Texture2D))
+    : txt_Path(path)
 {
+    if (s_gpuCreate) {
+        m_gpuCache = s_gpuCreate(TextureType::Texture2D);
+    }
     genTexture(path);
 }
 
 Texture::Texture(const std::string& path, TextureType type)
-    : txt_Path(path), m_gpu(GPUTexture::create(type))
+    : txt_Path(path)
 {
+    if (s_gpuCreate) {
+        m_gpuCache = s_gpuCreate(type);
+    }
     genTexture(path);
 }
 
 Texture::~Texture() {
+    if (s_gpuFree && m_gpuCache) {
+        s_gpuFree(m_gpuCache);
+    }
     std::cout << "Texture Destructor" << std::endl;
+}
+
+Texture::Texture(Texture&& other) noexcept
+    : name(std::move(other.name)),
+      m_type(std::move(other.m_type)),
+      txt_Path(std::move(other.txt_Path)),
+      txt_width(other.txt_width),
+      txt_height(other.txt_height),
+      txt_BBP(other.txt_BBP),
+      m_gpuCache(other.m_gpuCache)
+{
+    other.m_gpuCache = nullptr;
+}
+
+Texture& Texture::operator=(Texture&& other) noexcept {
+    if (this != &other) {
+        if (s_gpuFree && m_gpuCache) {
+            s_gpuFree(m_gpuCache);
+        }
+        name = std::move(other.name);
+        m_type = std::move(other.m_type);
+        txt_Path = std::move(other.txt_Path);
+        txt_width = other.txt_width;
+        txt_height = other.txt_height;
+        txt_BBP = other.txt_BBP;
+        m_gpuCache = other.m_gpuCache;
+        other.m_gpuCache = nullptr;
+    }
+    return *this;
 }
 
 void Texture::genTexture(const std::string& path, TextureColorSpace colorSpace) {
@@ -32,7 +87,9 @@ void Texture::genTexture(const std::string& path, TextureColorSpace colorSpace) 
     if (pixels) {
         std::cout << "\nOk to load: " << std::endl;
         printf("%s\n", txt_Path.c_str());
-        m_gpu->upload(pixels, txt_width, txt_height, colorSpace);
+        if (s_gpuUpload && m_gpuCache) {
+            s_gpuUpload(*m_gpuCache, pixels, txt_width, txt_height, colorSpace);
+        }
         stbi_image_free(pixels);
     } else {
         std::cout << "\nError: Failed to load texture" << std::endl;
@@ -48,7 +105,9 @@ void Texture::genTextureHDR(const std::string& path) {
     if (pixels) {
         std::cout << "\nOk to load HDR: " << std::endl;
         printf("%s\n", txt_Path.c_str());
-        m_gpu->uploadFloat(pixels, txt_width, txt_height);
+        if (s_gpuUploadFloat && m_gpuCache) {
+            s_gpuUploadFloat(*m_gpuCache, pixels, txt_width, txt_height);
+        }
         stbi_image_free(pixels);
     } else {
         std::cout << "\nError: Failed to load HDR texture" << std::endl;
@@ -57,8 +116,9 @@ void Texture::genTextureHDR(const std::string& path) {
 }
 
 void Texture::genTextureCubeMap(const std::vector<std::string>& faces) {
-    if (!m_gpu)
-        m_gpu = GPUTexture::create(TextureType::CubeMap);
+    if (!m_gpuCache && s_gpuCreate) {
+        m_gpuCache = s_gpuCreate(TextureType::CubeMap);
+    }
 
     std::vector<unsigned char*> pixelFaces;
     int w = 0, h = 0, bbp = 0;
@@ -76,34 +136,50 @@ void Texture::genTextureCubeMap(const std::vector<std::string>& faces) {
         pixelFaces.push_back(pixels);
     }
 
-    m_gpu->uploadCubeMap(pixelFaces, w, h);
+    if (s_gpuUploadCubeMap && m_gpuCache) {
+        s_gpuUploadCubeMap(*m_gpuCache, pixelFaces, w, h);
+    }
 
     for (auto* p : pixelFaces)
         if (p) stbi_image_free(p);
 }
 
 void Texture::allocateEmptyCubemap(int faceSize, bool mipmaps) {
-    if (!m_gpu)
-        m_gpu = GPUTexture::create(TextureType::CubeMap);
-    m_gpu->allocateEmptyCubemap(faceSize, mipmaps);
+    if (!m_gpuCache && s_gpuCreate) {
+        m_gpuCache = s_gpuCreate(TextureType::CubeMap);
+    }
+    if (s_gpuAllocateEmptyCubemap && m_gpuCache) {
+        s_gpuAllocateEmptyCubemap(*m_gpuCache, faceSize, mipmaps);
+    }
 }
 
 void Texture::active(unsigned int slot) {
-    m_gpu->bind(slot);
+    if (s_gpuBind && m_gpuCache) {
+        s_gpuBind(*m_gpuCache, slot);
+    }
 }
 
 void Texture::bind() {
-    m_gpu->bind();
+    if (s_gpuBind && m_gpuCache) {
+        s_gpuBind(*m_gpuCache, 0);
+    }
 }
 
 void Texture::unBind() {
-    m_gpu->unbind();
+    if (s_gpuUnbind && m_gpuCache) {
+        s_gpuUnbind(*m_gpuCache);
+    }
 }
 
 void Texture::Delete() {
-    m_gpu->destroy();
+    if (s_gpuDestroy && m_gpuCache) {
+        s_gpuDestroy(*m_gpuCache);
+    }
 }
 
 uint32_t Texture::getID() const {
-    return m_gpu ? m_gpu->getID() : 0;
+    if (s_gpuGetID && m_gpuCache) {
+        return s_gpuGetID(*m_gpuCache);
+    }
+    return 0;
 }

@@ -219,8 +219,12 @@ include_directories(
     ${FUNGT_BASE_DIR}/Triangle
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo
     ${FUNGT_BASE_DIR}/Lights
+    ${FUNGT_BASE_DIR}/IBL
     ${FUNGT_BASE_DIR}/GraphicsRenderBackend
     ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl
+    ${FUNGT_BASE_DIR}/MeshGPU
+    ${FUNGT_BASE_DIR}/TextureGPU
+    ${FUNGT_BASE_DIR}/PrimitiveGPU
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -232,6 +236,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/VertexGL/vertexArrayObjects.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/uniform_buffer_object.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/shaderStorageBufferObejct.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
     ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/funGT/fungt.cpp
@@ -241,6 +247,9 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Imgui_Setup/imgui_setup.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
+    ${FUNGT_BASE_DIR}/MeshGPU/mesh_gpu.cpp
+    ${FUNGT_BASE_DIR}/TextureGPU/texture_gpu.cpp
+    ${FUNGT_BASE_DIR}/PrimitiveGPU/primitive_gpu.cpp
     ${FUNGT_BASE_DIR}/Camera/camera.cpp
     ${FUNGT_BASE_DIR}/Geometries/cube.cpp
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp
@@ -259,6 +268,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
+    ${FUNGT_BASE_DIR}/IBL/ibl_probe.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_rtc.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp

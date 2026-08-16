@@ -1,5 +1,9 @@
 #include "mesh.hpp"
 
+void (*Mesh::s_gpuCacheBuild)(Mesh&) = nullptr;
+void (*Mesh::s_gpuCacheFree)(MeshGPU*) = nullptr;
+void (*Mesh::s_gpuCacheDraw)(MeshGPU&, size_t) = nullptr;
+
 Mesh::Mesh(){
     std::cout<<"Mesh Default Destructor"<<std::endl; 
 }
@@ -20,26 +24,21 @@ Mesh::Mesh(const std::vector<funGTVERTEX>& inVertex,
     m_material{inMaterial} {}
 Mesh::~Mesh()
 {
+    if (s_gpuCacheFree && m_gpuCache) {
+        s_gpuCacheFree(m_gpuCache);
+    }
     std::cout<<"Mesh Destructor"<<std::endl;
 }
 //Methods
-void Mesh::initMesh() {
-    m_buffer = GPUBuffer::create();
-
-    m_buffer->genVAO();
-    m_buffer->bindVAO();
-
-    m_buffer->create(BufferType::Vertex, m_vertex.data(), m_vertex.size() * sizeof(funGTVERTEX));
-    m_buffer->create(BufferType::Index,  m_index.data(),  m_index.size()  * sizeof(unsigned int));
-
-    // layout baked into the VAO once
-    m_buffer->applyFormat(funGTVERTEX::getFormat());
-
-    m_buffer->unbindVAO();
+void Mesh::attachGPUCache(MeshGPU* cache)
+{
+    m_gpuCache = cache;
 }
 void Mesh::InitOGLBuffers()
 {
-    initMesh();
+    if (s_gpuCacheBuild && !m_gpuCache) {
+        s_gpuCacheBuild(*this);
+    }
 }
 void Mesh::draw(Shader &shader){
 
@@ -47,7 +46,7 @@ void Mesh::draw(Shader &shader){
 
     unsigned int diffuseL = 1;
     unsigned int specularL = 1;
-    // ADD THIS LINE HERE:
+  
     shader.setUniform1i("hasTexture", numOfTextures > 0 ? 1 : 0);
     shader.set1i(0, "texture_diffuse1"); // keep this sampler pinned to unit 0 even when unused
     //std::cout<<"This mesh contains : "<< numOfTextures<<std::endl; 
@@ -70,9 +69,9 @@ void Mesh::draw(Shader &shader){
 
     }
 
-    m_buffer->bindVAO();
-    m_buffer->drawIndexed((m_index.size() / 3) * 3);
-    m_buffer->unbindVAO();
+    if (s_gpuCacheDraw && m_gpuCache) {
+        s_gpuCacheDraw(*m_gpuCache, m_index.size());
+    }
 
 }
 

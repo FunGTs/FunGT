@@ -10,6 +10,7 @@
 #include "Layer/layer_stack.hpp"              
 #include "GUI/fungt_gui_headers.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
+#include "ParticleSimulation/particle_simulation.hpp"
 #include "Physics/AnimationCreator/animation_controller.hpp"
 #include "Physics/PhysicsWorld/physics_world.hpp"
 #include "Gizmo/LightGizmo/light_gizmo_renderer.hpp"

@@ -39,10 +39,14 @@ class Model  {
         
     protected:
     //Members
-        std::vector<std::unique_ptr<Mesh>> m_vMesh; 
-        std::string m_dirPath; 
+        std::vector<std::unique_ptr<Mesh>> m_vMesh;
+        std::string m_dirPath;
         std::vector<Texture> m_loadedTextures;
-        std::unique_ptr<Shader> m_shader;
+        Shader* m_shaderCache = nullptr;
+
+    public:
+        static Shader* (*s_shaderCreate)();
+        static void (*s_shaderFree)(Shader*);
     
     private:
        

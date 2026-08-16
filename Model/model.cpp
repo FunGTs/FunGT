@@ -5,8 +5,10 @@ std::string Model::s_defaultVertexShader = "";
 std::string Model::s_defaultFragmentShader = "";
 bool Model::s_defaultShadersInitialized = false;
 
+Shader* (*Model::s_shaderCreate)() = nullptr;
+void (*Model::s_shaderFree)(Shader*) = nullptr;
+
 Model::Model()
-    : m_shader(Shader::create())
 {
     std::cout<<"Model Default Constructor"<<std::endl;
 }
@@ -18,9 +20,10 @@ Model::Model(const std::string &path)
    
 }
 Model::~Model(){
-
-    std::cout<<"Model Destructor"<<std::endl; 
-
+    if (s_shaderFree && m_shaderCache) {
+        s_shaderFree(m_shaderCache);
+    }
+    std::cout<<"Model Destructor"<<std::endl;
 }
 
 //Methods:
@@ -232,19 +235,24 @@ void Model::processAssimpScene(aiNode *node, const aiScene *scene)
 
 void Model::createShader(std::string vertex_shader, std::string fragment_shader)
 {
+    if (!s_shaderCreate) return;
+
+    if (!m_shaderCache) {
+        m_shaderCache = s_shaderCreate();
+    }
+
     if (!s_defaultShadersInitialized) {
         initializeDefaultShaders();
     }
 
     if (vertex_shader.empty() || fragment_shader.empty()) {
         std::cout << "Using default FunGT shader" << std::endl;
-        m_shader->create(s_defaultVertexShader, s_defaultFragmentShader);
+        m_shaderCache->create(s_defaultVertexShader, s_defaultFragmentShader);
     }
     else {
         std::cout << "Using custom shader" << std::endl;
-        m_shader->create(vertex_shader, fragment_shader);
+        m_shaderCache->create(vertex_shader, fragment_shader);
     }
-   
 }
 
 const std::vector<std::unique_ptr<Mesh>>& Model::getMeshes()
@@ -254,10 +262,10 @@ const std::vector<std::unique_ptr<Mesh>>& Model::getMeshes()
 
 void Model::draw()
 {
-      //std::cout<<"Drawing a Model "<<std::endl; 
+    if (!m_shaderCache) return;
     for(unsigned int i=0; i<m_vMesh.size(); i++){
-        m_vMesh[i]->draw(*m_shader);
-    }   
+        m_vMesh[i]->draw(*m_shaderCache);
+    }
 }
 
 std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
@@ -422,7 +430,10 @@ void Model::setDirPath(const std::string &dirPath)
 }
 Shader &Model::getShader()
 {
-    return *m_shader;
+    if (!m_shaderCache) {
+        throw std::runtime_error("Shader not created. Call createShader() first.");
+    }
+    return *m_shaderCache;
 }
 const std::string &Model::getDirPath() const
 {

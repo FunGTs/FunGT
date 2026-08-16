@@ -6,6 +6,8 @@ project(FunGT)
 # ════════════════════════════════════════════════════════════════════════════
 option(FUNGT_USE_CUDA "Enable CUDA backend for NVIDIA GPUs" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend for Intel GPUs" ON)
+set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
+set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
 
 # Allow FUNGT_BASE_DIR to be set externally (command line, environment, or cache)
 # Priority: 1. Cache variable, 2. Environment variable, 3. Default fallback
@@ -104,9 +106,6 @@ if(UNIX)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
     
-    # ALWAYS use SYCL compiler (required for funlib)
-    # set(CMAKE_CXX_COMPILER /home/juanchuletas/Documents/Development/FunGT/toolchain/sycl/linux_x64/dpcpp/bin/clang++)
-    
     # Add the prebuilt ImGui library
     add_library(imgui STATIC IMPORTED)
     set_target_properties(imgui PROPERTIES
@@ -169,6 +168,7 @@ include_directories(
     ${FUNGT_BASE_DIR}/AnimatedModel
     ${FUNGT_BASE_DIR}/Textures
     ${FUNGT_BASE_DIR}/vendor/stb_image
+    ${FUNGT_BASE_DIR}/vendor/glm/include
     ${FUNGT_BASE_DIR}/Imgui_Setup
     ${FUNGT_BASE_DIR}/Material
     ${FUNGT_BASE_DIR}/Mesh
@@ -219,6 +219,12 @@ include_directories(
     ${FUNGT_BASE_DIR}/Triangle
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo
     ${FUNGT_BASE_DIR}/Lights
+    ${FUNGT_BASE_DIR}/IBL
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl
+    ${FUNGT_BASE_DIR}/MeshGPU
+    ${FUNGT_BASE_DIR}/TextureGPU
+    ${FUNGT_BASE_DIR}/PrimitiveGPU
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -230,6 +236,8 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/VertexGL/vertexArrayObjects.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexBuffers.cpp
     ${FUNGT_BASE_DIR}/VertexGL/vertexIndices.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/uniform_buffer_object.cpp
+    ${FUNGT_BASE_DIR}/VertexGL/shaderStorageBufferObejct.cpp
     ${FUNGT_BASE_DIR}/Shaders/shader.cpp
     ${FUNGT_BASE_DIR}/Shaders/opengl/opengl_shader.cpp
     ${FUNGT_BASE_DIR}/funGT/fungt.cpp
@@ -239,6 +247,9 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Imgui_Setup/imgui_setup.cpp
     ${FUNGT_BASE_DIR}/Material/material.cpp
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
+    ${FUNGT_BASE_DIR}/MeshGPU/mesh_gpu.cpp
+    ${FUNGT_BASE_DIR}/TextureGPU/texture_gpu.cpp
+    ${FUNGT_BASE_DIR}/PrimitiveGPU/primitive_gpu.cpp
     ${FUNGT_BASE_DIR}/Camera/camera.cpp
     ${FUNGT_BASE_DIR}/Geometries/cube.cpp
     ${FUNGT_BASE_DIR}/Geometries/plane.cpp
@@ -257,23 +268,28 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
+    ${FUNGT_BASE_DIR}/IBL/ibl_probe.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
     ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_rtc.cpp
+    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
+    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_rtc_sycl_ops.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
     ${FUNGT_BASE_DIR}/GUI/gui.cpp
-    ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/simulation_controller_window.cpp
+    ${FUNGT_BASE_DIR}/GUI/demo_particles_window.cpp
+    ${FUNGT_BASE_DIR}/GUI/render_action_window.cpp
     ${FUNGT_BASE_DIR}/GUI/physics/debug_rigidbody_renderer.cpp
+    ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/manifold_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
     ${FUNGT_BASE_DIR}/Physics/Collider/collider.cpp
-    ${FUNGT_BASE_DIR}/Physics/Clothing/clothing.cpp
     ${FUNGT_BASE_DIR}/Physics/AnimationCreator/key_frame_recorder.cpp
+    ${FUNGT_BASE_DIR}/Physics/AnimationCreator/animation_exporter.cpp
     ${FUNGT_BASE_DIR}/ViewPort/viewport.cpp
     ${FUNGT_BASE_DIR}/ViewPort/opengl/opengl_viewport.cpp
     ${FUNGT_BASE_DIR}/ViewPort/opengl/opengl_progressive_path_tracer.cpp
@@ -287,6 +303,12 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
     ${FUNGT_BASE_DIR}/PBR/TriangleExtractor/triangle_extractor.cpp
     ${FUNGT_BASE_DIR}/Gizmo/LightGizmo/light_gizmo_renderer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/graphics_render_device.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_buffer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/gpu_texture.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_device.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_buffer.cpp
+    ${FUNGT_BASE_DIR}/GraphicsRenderBackend/opengl/opengl_texture.cpp
 )
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -362,7 +384,6 @@ if (WIN32)
     find_package(GLEW REQUIRED)
     find_package(glfw3 REQUIRED)
     find_package(assimp REQUIRED)
-    find_package(glm REQUIRED)
     
     target_link_libraries(FunGT
         PRIVATE
@@ -370,7 +391,6 @@ if (WIN32)
         glfw
         GLEW::GLEW
         assimp::assimp
-        glm::glm
     )
     
 elseif (UNIX)
@@ -425,7 +445,12 @@ elseif (UNIX)
 
     endif()
 
-    
+    find_package(CURL REQUIRED)
+    if (CURL_FOUND)
+        message(STATUS "CURL found")
+    else()
+        message(FATAL_ERROR "CURL library not found!")
+    endif()
     find_package(OpenGL REQUIRED)
     if (OpenGL_FOUND)
         message(STATUS "OpenGL found")
@@ -454,22 +479,15 @@ elseif (UNIX)
         message(FATAL_ERROR "Assimp library not found!")
     endif()
     
-    find_package(glm CONFIG REQUIRED)
-    if(glm_FOUND)
-        message(STATUS "glm found")
-    else()
-        message(FATAL_ERROR "glm not found!")
-    endif()
-    
     # Link libraries
     target_include_directories(FunGT PRIVATE ${OpenCL_INCLUDE_DIRS})
     target_link_libraries(FunGT
         PRIVATE
+        CURL::libcurl
         OpenGL::GL
         glfw
         GLEW::GLEW
         assimp::assimp
-        glm::glm
         dl
         funlib
         imgui
@@ -478,21 +496,39 @@ elseif (UNIX)
         pbr_core                   
         ${PBR_CUDA_LIB}           
         ${PBR_SYCL_LIB} 
-        $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cudart_static>  # CHANGE TO cudart_static
+        $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cudart_static>
         $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cuda_driver>           
     )
     
     # ════════════════════════════════════════════════════════════════════════
-    # SYCL compilation flags (always applied because funlib requires it)
+    # SYCL compilation flags (per-file, not blanket)
     # ════════════════════════════════════════════════════════════════════════
     if(CUDAToolkit_FOUND)
         message(STATUS "CUDA SYCL backend enabled")
         set(SYCL_TARGETS nvptx64-nvidia-cuda,spir64)
+        set(SYCL_CUDA_ARCH_ARGS
+            "-Xsycl-target-backend=nvptx64-nvidia-cuda"
+            "--offload-arch=${SYCL_CUDA_ARCH}"
+        )
     else()
         set(SYCL_TARGETS spir64)
+        set(SYCL_CUDA_ARCH_ARGS "")
     endif()
-    target_compile_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
-    target_link_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS})
+
+    set(SYCL_SOURCES
+        ${FUNGT_BASE_DIR}/InfoDevice/sycl_backend.cpp
+        ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
+        ${FUNGT_BASE_DIR}/ParticleSimulation/particle_rtc_sycl_ops.cpp
+        ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
+    )
+
+    list(JOIN SYCL_CUDA_ARCH_ARGS " " SYCL_CUDA_ARCH_STR)
+
+    set_source_files_properties(${SYCL_SOURCES}
+        PROPERTIES COMPILE_FLAGS "-fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_STR}"
+    )
+
+    target_link_options(FunGT PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
     
     if(FUNGT_USE_SYCL)
         target_compile_definitions(FunGT PRIVATE FUNGT_USE_SYCL)
