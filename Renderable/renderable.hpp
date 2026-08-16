@@ -17,6 +17,9 @@ class Renderable{ //Abstract class
         virtual RenderLayer getRenderLayer() const {
             return RenderLayer::Opaque;
         }
+        virtual bool showInSceneHierarchy() const {
+            return true;
+        }
         virtual Shader& getShader() = 0;
         virtual glm::mat4 getModelMatrix() const {
             return glm::mat4(0.0);

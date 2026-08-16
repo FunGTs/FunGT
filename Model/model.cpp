@@ -212,22 +212,51 @@ void Model::processAssimpScene(aiNode *node, const aiScene *scene)
 {
     std::cout<<"Processing Nodes and creating the mesh iteratively "<<std::endl; 
     std::cout<<"Children Nodes : " <<node->mNumChildren<<std::endl; 
-    std::stack<aiNode *> aiNodeStackTrack; 
-    aiNodeStackTrack.push(node);
+    struct NodeEntry {
+        aiNode* node;
+        aiMatrix4x4 parentTransform;
+    };
+
+    std::stack<NodeEntry> aiNodeStackTrack;
+    aiNodeStackTrack.push({node, aiMatrix4x4()});
 
     while(!aiNodeStackTrack.empty())/*Do it if is not empty*/{
-        aiNode* currentNode; 
-        currentNode = aiNodeStackTrack.top();
+        const NodeEntry entry = aiNodeStackTrack.top();
         aiNodeStackTrack.pop();
+        aiNode* currentNode = entry.node;
+        const aiMatrix4x4 nodeTransform =
+            entry.parentTransform * currentNode->mTransformation;
 
         for(unsigned int i=0; i<currentNode->mNumMeshes; i++){
             aiMesh *mesh = scene->mMeshes[currentNode->mMeshes[i]];
-            m_vMesh.push_back(processMesh(mesh, scene));
+            auto processedMesh = processMesh(mesh, scene);
+
+            if (shouldApplyNodeTransforms()) {
+                aiMatrix3x3 normalTransform(nodeTransform);
+                normalTransform.Inverse().Transpose();
+
+                for (auto& vertex : processedMesh->m_vertex) {
+                    aiVector3D position(vertex.position.x,
+                                        vertex.position.y,
+                                        vertex.position.z);
+                    position = nodeTransform * position;
+                    vertex.position = glm::vec3(position.x, position.y, position.z);
+
+                    aiVector3D normal(vertex.normal.x,
+                                      vertex.normal.y,
+                                      vertex.normal.z);
+                    normal = normalTransform * normal;
+                    normal.Normalize();
+                    vertex.normal = glm::vec3(normal.x, normal.y, normal.z);
+                }
+            }
+
+            m_vMesh.push_back(std::move(processedMesh));
 
         }
         // Push children nodes onto the stack
         for (unsigned int i = 0; i < currentNode->mNumChildren; i++) {
-            aiNodeStackTrack.push(currentNode->mChildren[i]);
+            aiNodeStackTrack.push({currentNode->mChildren[i], nodeTransform});
         }
     }
     

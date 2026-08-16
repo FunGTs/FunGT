@@ -57,6 +57,10 @@ public:
     void orbit(float deltaX, float deltaY);     // MMB drag
     void pan(float deltaX, float deltaY);       // Shift+MMB drag
     void zoom(float delta);                     // Mouse wheel
+    void frameBounds(const glm::vec3& boundsMin,
+                     const glm::vec3& boundsMax,
+                     float aspectRatio,
+                     float padding = 1.2f);
 
     // Old FPS-style controls (keep for compatibility)
     void updateInputs(const float& dt, const int dir, const double& offX, const double& offY);

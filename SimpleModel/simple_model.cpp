@@ -1,5 +1,6 @@
 #include "simple_model.hpp"
 #include "Vector/vector3_glm.hpp"
+#include <limits>
 
 
 SimpleModel::SimpleModel() {
@@ -92,6 +93,26 @@ glm::mat4 SimpleModel::getModelMatrix() const
     return m_ModelMatrix;
 }
 
+bool SimpleModel::getWorldBounds(glm::vec3& boundsMin, glm::vec3& boundsMax) const
+{
+    const float largestValue = std::numeric_limits<float>::max();
+    boundsMin = glm::vec3(largestValue);
+    boundsMax = glm::vec3(-largestValue);
+    bool hasVertices = false;
+
+    for (const auto& mesh : m_model->getMeshes()) {
+        for (const auto& vertex : mesh->m_vertex) {
+            const glm::vec3 worldPosition = glm::vec3(
+                m_ModelMatrix * glm::vec4(vertex.position, 1.0f));
+            boundsMin = glm::min(boundsMin, worldPosition);
+            boundsMax = glm::max(boundsMax, worldPosition);
+            hasVertices = true;
+        }
+    }
+
+    return hasVertices;
+}
+
 std::vector<Triangle> SimpleModel::getTriangleList()
 {
     const std::vector<std::unique_ptr<Mesh>>& meshes = m_model->getMeshes();
@@ -154,26 +175,20 @@ std::vector<Triangle> SimpleModel::getTriangleList()
 }
 void SimpleModel::position(float x, float y, float z)
 {
-    m_position.x = x;
-    m_position.y = y;
-    m_position.z = z;
-    m_ModelMatrix = glm::translate(m_ModelMatrix, m_position);
+    m_position = glm::vec3(x, y, z);
+    updateModelMatrix();
 }
 
 void SimpleModel::rotation(float x, float y, float z)
 {
-    m_rotation.x = x;
-    m_rotation.y = y;
-    m_rotation.z = z;
-    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(m_rotation.x), glm::vec3(1.f, 0.f, 0.f));
-    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(m_rotation.y), glm::vec3(0.f, 1.f, 0.f));
-    m_ModelMatrix = glm::rotate(m_ModelMatrix, glm::radians(m_rotation.z), glm::vec3(0.f, 0.f, 1.f));
+    m_rotation = glm::vec3(x, y, z);
+    updateModelMatrix();
 }
 
 void SimpleModel::scale(float s)
 {
     m_scale = glm::vec3(s);
-    m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
+    updateModelMatrix();
 }
 
 void SimpleModel::addCollisionProperty(std::shared_ptr<RigidBody> body)

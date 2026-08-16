@@ -59,6 +59,7 @@ private:
     //Mesh process: 
     std::unique_ptr<Mesh> processMesh(aiMesh *mesh, const aiScene *scene) override;
     std::vector<funGTVERTEX> getVertices(aiMesh *mesh, const aiScene *scene) override;
+    bool shouldApplyNodeTransforms() const override { return false; }
     void extractBoneWeights(std::vector<funGTVERTEX> &vertices, aiMesh* mesh, const aiScene* scene);
     void setVertexBoneData(funGTVERTEX &vertex, int boneID, float weight);
     void setVertexBoneData(funGTVERTEX &vertex);

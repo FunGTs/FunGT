@@ -15,9 +15,9 @@ class SimpleModel : public Renderable {
     std::weak_ptr<RigidBody> m_physicsBody; 
     std::string m_path_fs;
     std::string m_path_vs;
-    glm::mat4 m_ModelMatrix;
-    glm::mat4 m_ViewMatrix;
-    glm::mat4 m_ProjectionMatrix;
+    glm::mat4 m_ModelMatrix{1.0f};
+    glm::mat4 m_ViewMatrix{1.0f};
+    glm::mat4 m_ProjectionMatrix{1.0f};
     glm::vec3 m_position = glm::vec3(0.f);
     glm::vec3 m_rotation = glm::vec3(0.f);
     glm::vec3 m_scale    = glm::vec3(1.0); 
@@ -39,12 +39,13 @@ public:
     void scale(float s = 1.f);
     void scale(float x, float y, float z){
         m_scale = glm::vec3(x, y, z);
-        m_ModelMatrix = glm::scale(m_ModelMatrix, m_scale);
+        updateModelMatrix();
     }
     void setUsePhysicsRigidBody(bool use) { m_usePhysicsRigidBody = use; }
     glm::vec3 getScale() const { return m_scale; } // Assuming uniform scaling
     glm::vec3 getPosition() const { return m_position; }
     glm::vec3 getRotation() const { return m_rotation; }
+    bool getWorldBounds(glm::vec3& boundsMin, glm::vec3& boundsMax) const;
 
     void addCollisionProperty(std::shared_ptr<RigidBody> body);;
     //Override methods from Renderable

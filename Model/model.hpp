@@ -64,8 +64,9 @@ class Model  {
         std::vector<Texture > loadTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
         std::vector<Material> loadMaterials(aiMaterial *mat);
         static void initializeDefaultShaders();
-    protected: 
+    protected:
         virtual std::vector<funGTVERTEX> getVertices(aiMesh *mesh, const aiScene *scene);
+        virtual bool shouldApplyNodeTransforms() const { return true; }
         std::vector<uint32_t> getIndices(aiMesh *mesh, const aiScene *scene);
         std::vector<Texture > getTextures(aiMesh *mesh, const aiScene *scene);
         std::vector<Material> getMaterials(aiMesh *mesh, const aiScene *scene);
