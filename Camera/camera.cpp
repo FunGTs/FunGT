@@ -1,4 +1,6 @@
 #include "camera.hpp"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 
 Camera::Camera() {
@@ -67,6 +69,24 @@ void Camera::zoom(float delta) {
     m_distance -= delta * 0.5f;
     if (m_distance < 1.0f) m_distance = 1.0f;
     if (m_distance > 100.0f) m_distance = 100.0f;
+    updateVectors();
+}
+
+void Camera::frameBounds(const glm::vec3& boundsMin,
+                         const glm::vec3& boundsMax,
+                         float aspectRatio,
+                         float padding)
+{
+    m_vTarget = (boundsMin + boundsMax) * 0.5f;
+
+    const glm::vec3 size = boundsMax - boundsMin;
+    const float radius = glm::max(glm::length(size) * 0.5f, 0.001f);
+    const float verticalFov = glm::radians(m_fov);
+    const float horizontalFov = 2.0f * std::atan(
+        std::tan(verticalFov * 0.5f) * aspectRatio);
+    const float limitingFov = std::min(verticalFov, horizontalFov);
+
+    m_distance = padding * radius / std::sin(limitingFov * 0.5f);
     updateVectors();
 }
 

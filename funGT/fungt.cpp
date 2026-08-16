@@ -137,7 +137,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
    // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
    if (m_imguiLayer) {
        m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
-       m_imguiLayer->addWindow(std::make_unique<SceneHierarchyWindow>(m_sceneManager));
+       m_imguiLayer->addWindow(std::make_unique<SceneHierarchyWindow>(m_sceneManager, &m_camera));
        m_imguiLayer->addWindow(std::make_unique<PropertiesWindow>(&m_camera));
        m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
        m_imguiLayer->addWindow(std::make_unique<LightEditorWindow>(m_sceneManager));

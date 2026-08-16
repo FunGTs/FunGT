@@ -23,6 +23,7 @@ public:
 
     // Implement Renderable interface
     void draw() override;
+    bool showInSceneHierarchy() const override { return false; }
     Shader& getShader() override { return *m_shader; }
 
     void setViewMatrix(const glm::mat4& viewMatrix) override {
