@@ -84,6 +84,7 @@ int CUDATexture::loadTexture(const std::string& path) {
     int idx = textures.size();
     textures.push_back(cudaTex);
     pathToIndex[path] = idx;
+    m_handlesDirty = true;
     std::cout << "  textures size : " << textures.size() << std::endl;
     std::cout << "  [CUDA] Texture index: " << idx << std::endl;
     return idx;
@@ -135,6 +136,6 @@ void CUDATexture::cleanup() {
 
     textures.clear();
     pathToIndex.clear();
+    m_handlesDirty = true;
     std::cout << "  [CUDA] Cleanup complete!" << std::endl;
 }
-

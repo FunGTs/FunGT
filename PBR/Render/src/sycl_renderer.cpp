@@ -140,6 +140,8 @@ std::vector<fungt::Vec3> SYCL_Renderer::RenderScene(
     int sampleOffset
     )
 {
+    prepareTextures();
+
     int imageSize = width * height;
     std::vector<fungt::Vec3> framebuffer(imageSize);
     std::cout << "SYCL_Renderer: Rendering " << width << "x" << height
@@ -270,6 +272,7 @@ void SYCL_Renderer::createQueue(const std::string& name, flib::vendor vendor ,
         flib::sycl_handler::get_device_info(); // Prints current device info
 
         m_queue = flib::sycl_handler::get_queue(name);
+        m_textures = std::make_unique<SYCLTexture>(m_queue);
 
     }
     catch (const std::exception& e)

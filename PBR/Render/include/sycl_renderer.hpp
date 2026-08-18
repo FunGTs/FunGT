@@ -2,6 +2,8 @@
 #define SYCL_RENDERER_HPP
 #include <GL/glew.h>  // MUST be first!
 #include <GLFW/glfw3.h>
+#include <memory>
+#include <stdexcept>
 #include <vector>
 #include <funlib/funlib.hpp>
 #include <sycl/ext/oneapi/bindless_images.hpp>
@@ -16,18 +18,55 @@
 #include "PBR/Render/brdf/cook_torrance.hpp"
 #include "PBR/HitData/hit_data.hpp"
 #include "PBR/Render/shared/core_renderer.hpp"
+#include "PBR/TextureManager/sycl_texture.hpp"
 namespace syclexp = sycl::ext::oneapi::experimental;
 class SYCL_Renderer : public IComputeRenderer {
 private:
     sycl::ext::oneapi::experimental::sampled_image_handle* m_textureHandles = nullptr;
     int m_numTextures = 0;
     sycl::queue m_queue;
+    std::unique_ptr<SYCLTexture> m_textures;
+
+    void prepareTextures() {
+        if (!m_textures) {
+            throw std::runtime_error("SYCL textures requested before queue initialization");
+        }
+        if (m_textures->handlesAreDirty()) {
+            setSyclTextureHandles(m_textures->getImageHandles());
+            m_textures->markHandlesClean();
+        }
+    }
+
+    void setSyclTextureHandles(
+        const std::vector<syclexp::sampled_image_handle>& handles
+    ) {
+        std::cout << "*** SETTING SYCL TEXTURE HANDLES ***" << std::endl;
+
+        if (m_textureHandles) {
+            sycl::free(m_textureHandles, m_queue);
+            m_textureHandles = nullptr;
+        }
+
+        m_numTextures = handles.size();
+        std::cout << "*** NUM SYCL TEXTURE HANDLES *** " << m_numTextures << std::endl;
+
+        if (m_numTextures > 0) {
+            m_textureHandles = sycl::malloc_device<syclexp::sampled_image_handle>(
+                m_numTextures, m_queue
+            );
+            m_queue.memcpy(
+                m_textureHandles,
+                handles.data(),
+                m_numTextures * sizeof(syclexp::sampled_image_handle)
+            ).wait();
+
+            std::cout << "  Uploaded " << m_numTextures << " texture handles to GPU" << std::endl;
+        }
+    }
 
 public:
 
-    SYCL_Renderer(){
-       
-    }
+    SYCL_Renderer() = default;
     std::vector<fungt::Vec3> RenderScene(
         int width,
         int height,
@@ -39,40 +78,15 @@ public:
         int samplesPerPixel,
         int sampleOffset
     ) override;
-    void createQueue(const std::string &name, flib::vendor v = flib::vendor::INTEL, 
+    void createQueue(const std::string &name, flib::vendor v = flib::vendor::INTEL,
                     flib::device dev = flib::device::GPU,
                     flib::backend b = flib::backend::LEVEL_ZERO);
     sycl::queue &getQueue();
-    // MATCHING CUDA PATTERN!
-    void setSyclTextureHandles(
-        const std::vector<syclexp::sampled_image_handle>& handles
-    ) {
-        std::cout << "*** SETTING SYCL TEXTURE HANDLES ***" << std::endl;
-
-        // Free old handles
-        if (m_textureHandles) {
-            sycl::free(m_textureHandles, m_queue);
-            m_textureHandles = nullptr;
+    IDeviceTexture& textures() override {
+        if (!m_textures) {
+            throw std::runtime_error("SYCL texture manager requested before queue initialization");
         }
-
-        m_numTextures = handles.size();
-        std::cout << "*** NUM SYCL TEXTURE HANDLES *** " << m_numTextures << std::endl;
-
-        if (m_numTextures > 0) {
-            // Allocate GPU memory
-            m_textureHandles = sycl::malloc_device<syclexp::sampled_image_handle>(
-                m_numTextures, m_queue
-            );
-
-            // Copy to GPU
-            m_queue.memcpy(
-                m_textureHandles,
-                handles.data(),
-                m_numTextures * sizeof(syclexp::sampled_image_handle)
-            ).wait();
-
-            std::cout << "  Uploaded " << m_numTextures << " texture handles to GPU" << std::endl;
-        }
+        return *m_textures;
     }
     ~SYCL_Renderer() {
         if (m_textureHandles) {

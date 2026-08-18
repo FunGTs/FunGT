@@ -23,14 +23,17 @@ private:
     std::vector<SYCLTextureData> textures;
     std::map<std::string, int> pathToIndex;
     sycl::queue* m_queue;
+    bool m_handlesDirty = false;
 
 public:
     SYCLTexture(sycl::queue& queue);
     ~SYCLTexture();
 
     int loadTexture(const std::string& path) override;
-    int getTextureCount() const override{};
+    int getTextureCount() const override { return static_cast<int>(textures.size()); }
     void cleanup() override;
+    bool handlesAreDirty() const { return m_handlesDirty; }
+    void markHandlesClean() { m_handlesDirty = false; }
 
     // MATCHING CUDA PATTERN - return host-side handles!
     std::vector<syclexp::sampled_image_handle> getImageHandles() {

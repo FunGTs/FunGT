@@ -3,11 +3,9 @@
 // Conditional includes - only include backend headers when enabled
 #ifdef FUNGT_USE_CUDA
 #include "PBR/Render/include/cuda_renderer.hpp"
-#include "PBR/TextureManager/cuda_texture.hpp"
 #endif
 #ifdef FUNGT_USE_SYCL
 #include "PBR/Render/include/sycl_renderer.hpp"
-#include "PBR/TextureManager/sycl_texture.hpp"
 #endif
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../../vendor/stb_image/stb_image_write.h"
@@ -28,7 +26,6 @@ Space::Space(){
         /* code */
         std::cout << "Using CPU to render scene" << std::endl;
         m_computeRenderer = std::make_unique<CPU_Renderer>();
-        m_textureManager = std::make_shared<CPUTexture>();
         break;
     }
 #ifdef FUNGT_USE_CUDA
@@ -97,57 +94,6 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height,int sam
     return frameBuffer;
 }
 
-void Space::sendTexturesToRender()
-{
-    if (!m_computeRenderer) {
-        std::cout << "Error in sendTexturesToRender :  computeRenderer pointer is null" <<std::endl;
-        return;
-    }
-    switch (ComputeRender::GetBackend())
-    {
-    case Compute::Backend::CPU:
-        std::cout << "Sending CPU Textures" << std::endl;
-        
-        break;
-
-#ifdef FUNGT_USE_CUDA
-    case Compute::Backend::CUDA:
-    {
-        std::cout << "Sending CUDA Textures" << std::endl;
-        
-        // Set textures on renderer
-        CUDA_Renderer* cudaRenderer = dynamic_cast<CUDA_Renderer*>(m_computeRenderer.get());
-        if (cudaRenderer && m_textureManager) {
-            auto cudaTexMgr = dynamic_cast<CUDATexture*>(m_textureManager.get());
-            if (cudaTexMgr)
-                cudaRenderer->setCudaTextureObjects(cudaTexMgr->getTextureObjects());
-        }
-        break;
-    }
-#endif
-
-#ifdef FUNGT_USE_SYCL
-    case Compute::Backend::SYCL_CUDA:
-    case Compute::Backend::SYCL:
-    {
-        std::cout << "Sending SYCL Textures" << std::endl;
-        SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
-        if (syclRenderer && m_textureManager) { 
-            // Set textures on renderer
-            auto syclTexMgr = dynamic_cast<SYCLTexture*>(m_textureManager.get());
-            if (syclTexMgr)
-                syclRenderer->setSyclTextureHandles(syclTexMgr->getImageHandles());
-        }
-        break;
-    }
-#endif
-
-    default:
-        throw std::runtime_error("Unknown Compute API!");
-    }
-
-}
-
 void Space::InitComputeRenderBackend()
 {
     if (!m_computeRenderer) {
@@ -159,15 +105,12 @@ void Space::InitComputeRenderBackend()
     {
     case Compute::Backend::CPU:
         std::cout << "Initializing CPU backend" << std::endl;
-        m_textureManager = std::make_shared<CPUTexture>();
         break;
 
 #ifdef FUNGT_USE_CUDA
     case Compute::Backend::CUDA:
     {
         std::cout << "Initializing CUDA backend" << std::endl;
-        m_textureManager = std::make_shared<CUDATexture>();
-
         break;
     }
 #endif
@@ -179,7 +122,6 @@ void Space::InitComputeRenderBackend()
         SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
         if (syclRenderer) {
             syclRenderer->createQueue("intel_queue", flib::vendor::INTEL, flib::device::GPU, flib::backend::LEVEL_ZERO);
-            m_textureManager = std::make_shared<SYCLTexture>(syclRenderer->getQueue());
         }
         break;
     }
@@ -189,7 +131,6 @@ void Space::InitComputeRenderBackend()
         SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
         if (syclRenderer) {
             syclRenderer->createQueue("nvidia_queue", flib::vendor::NVIDIA, flib::device::GPU, flib::backend::CUDA);
-            m_textureManager = std::make_shared<SYCLTexture>(syclRenderer->getQueue());
         }
         break;
     }
@@ -238,10 +179,10 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
         global_material.reflectance = 0.05f;
         global_material.emission = 0.0f;
         global_material.baseColorTexIdx = -1;
-        if (!textures.empty() && m_textureManager != nullptr) {
+        if (!textures.empty()) {
             std::string texPath = textures[0].getPath();
             std::cout << "  Loading texture: " << texPath << std::endl;
-            global_material.baseColorTexIdx = m_textureManager->loadTexture(texPath);
+            global_material.baseColorTexIdx = m_computeRenderer->textures().loadTexture(texPath);
             std::cout << "  Assigned texture index: " << global_material.baseColorTexIdx << std::endl;
         }
         else {
@@ -304,8 +245,6 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
         std::cout << "  Metallic: " << global_material.metallic << std::endl;
     }
 
-
-    sendTexturesToRender();
 }
 void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
     auto primitive = geometry.getPrimitive();
@@ -324,10 +263,10 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
 
     std::cout << "Loading geometry with " << indices.size() / 3 << " triangles" << std::endl;
     int baseColorTexId = -1;
-    if (geometry.isTexturized() && m_textureManager != nullptr) {
+    if (geometry.isTexturized()) {
         std::string texPath = constPrimitive->texture.getPath();
         std::cout << "  Loading texture: " << texPath << std::endl;
-        baseColorTexId = m_textureManager->loadTexture(texPath);
+        baseColorTexId = m_computeRenderer->textures().loadTexture(texPath);
     }
     else {
         std::cout << "  No texture (using base color)" << std::endl;
@@ -375,7 +314,6 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
     }
 
     std::cout << "Geometry loaded. Total triangles in scene: " << m_triangles.size() << std::endl;
-    sendTexturesToRender();
 }
 void Space::loadLightsFromScene(const std::vector<SceneLight>& sceneLights)
 {
@@ -474,5 +412,3 @@ void Space::setSamples(int numOfSamples)
 {
     m_samplesPerPixel = numOfSamples;
 }
-
-

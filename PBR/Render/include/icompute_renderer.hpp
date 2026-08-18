@@ -5,6 +5,7 @@
 #include "Vector/vector3.hpp"
 #include "PBR/BVH/bvh_node.hpp"
 #include "PBR/Light/light.hpp"
+#include "PBR/TextureManager/idevice_texture.hpp"
 // Forward declarations 
 class PBRCamera;
 
@@ -13,6 +14,7 @@ class IComputeRenderer{
 
     public: 
         virtual ~IComputeRenderer() = default;
+        virtual IDeviceTexture& textures() = 0;
         virtual std::vector<fungt::Vec3> RenderScene(
             int width, int height,
             const std::vector<Triangle> &triangleList,

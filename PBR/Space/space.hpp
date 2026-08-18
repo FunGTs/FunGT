@@ -15,9 +15,6 @@
 #include "PBR/Render/include/icompute_renderer.hpp"
 #include "PBR/Render/include/cpu_renderer.hpp"
 
-#include "PBR/TextureManager/idevice_texture.hpp"
-
-#include "PBR/TextureManager/cpu_texture.hpp"
 #include "PBR/BVH/bvh_builder.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
 #include <algorithm>
@@ -29,13 +26,10 @@ class Space {
     std::unique_ptr<IComputeRenderer> m_computeRenderer;
     std::vector<Light> m_lights; 
     int m_samplesPerPixel = 16;
-    std::shared_ptr<IDeviceTexture> m_textureManager;
     std::vector<BVHNode> m_bvh_nodes;
     std::vector<int>     m_bvh_indices;
     std::vector<int> m_emissiveTriIndices;
     
-    void sendTexturesToRender();
-
     public:
         Space();
         Space(std::vector<Triangle>& triangleList);
@@ -70,11 +64,6 @@ class Space {
         void LoadTrianglesToRender(const std::vector<Triangle>& triangles) {
             m_triangles = triangles;
         }
-        std::shared_ptr<IDeviceTexture> getTextureManager() const {
-            return m_textureManager;
-        }
-
-
 };
 
 

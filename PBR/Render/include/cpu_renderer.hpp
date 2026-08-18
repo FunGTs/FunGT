@@ -5,11 +5,14 @@
 #include "../Ray/ray.hpp"
 #include "../HitData/hit_data.hpp"
 #include "PBR/Intersection/intersection.hpp"
+#include "PBR/TextureManager/cpu_texture.hpp"
 
 
 class CPU_Renderer : public IComputeRenderer{
+    CPUTexture m_textures;
 
     public:
+        IDeviceTexture& textures() override { return m_textures; }
         fungt::Vec3 shadeNormal(const fungt::Vec3& normal) {
             // Convert from [-1,1] to [0,1]
             //return 0.5f * (normal + fungt::Vec3(1.0f, 1.0f, 1.0f));
