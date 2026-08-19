@@ -7,6 +7,9 @@
 #ifdef FUNGT_USE_SYCL
 #include "PBR/Render/include/sycl_renderer.hpp"
 #endif
+#ifdef FUNGT_USE_OPENCL
+#include "PBR/Render/include/opencl_renderer.hpp"
+#endif
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../../vendor/stb_image/stb_image_write.h"
 Space::Space(){
@@ -19,6 +22,7 @@ Space::Space(){
     std::cout << "  CUDA = " << static_cast<int>(Compute::Backend::CUDA) << std::endl;
     std::cout << "  SYCL = " << static_cast<int>(Compute::Backend::SYCL) << std::endl;
     std::cout << "  CPU = " << static_cast<int>(Compute::Backend::CPU) << std::endl;
+    std::cout << "  OPENCL = " << static_cast<int>(Compute::Backend::OPENCL) << std::endl;
     switch (ComputeRender::GetBackend())
     {
     case Compute::Backend::CPU:
@@ -45,6 +49,14 @@ Space::Space(){
         std::cout << "Using SYCL to render scene" << std::endl;
         m_computeRenderer = std::make_unique<SYCL_Renderer>();
       
+        break;
+    }
+#endif
+#ifdef FUNGT_USE_OPENCL
+    case Compute::Backend::OPENCL:
+    {
+        std::cout << "Using OpenCL to render scene" << std::endl;
+        m_computeRenderer = std::make_unique<OpenCL_Renderer>();
         break;
     }
 #endif
@@ -132,6 +144,19 @@ void Space::InitComputeRenderBackend()
         if (syclRenderer) {
             syclRenderer->createQueue("nvidia_queue", flib::vendor::NVIDIA, flib::device::GPU, flib::backend::CUDA);
         }
+        break;
+    }
+#endif
+
+#ifdef FUNGT_USE_OPENCL
+    case Compute::Backend::OPENCL:
+    {
+        std::cout << "Initializing OpenCL backend" << std::endl;
+        auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+        if (!openclRenderer) {
+            throw std::runtime_error("OpenCL renderer was not created.");
+        }
+        openclRenderer->initialize();
         break;
     }
 #endif

@@ -8,6 +8,7 @@ namespace Compute{
         CUDA,
         SYCL,
         SYCL_CUDA, // SYCL targeting CUDA devices
+        OPENCL,
     };
 }
 class ComputeRender {

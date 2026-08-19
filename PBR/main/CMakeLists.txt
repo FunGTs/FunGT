@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
-project(pbr_render)
+project(pbr_libraries)
 
 option(FUNGT_USE_CUDA "Enable CUDA backend" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend" ON)
+option(FUNGT_USE_OPENCL "Enable OpenCL backend" ON)
 set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
 set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
 
@@ -34,15 +35,13 @@ endif()
 # Build configuration
 # ────────────────────────────────────────────────────────
 set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/release/linux)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ════════════════════════════════════════════════════════════════════════════
 # SYCL TOOLCHAIN DETECTION
 # ════════════════════════════════════════════════════════════════════════════
-if(UNIX)
+if(FUNGT_USE_SYCL AND UNIX)
     if(DEFINED SYCL_COMPILER_PATH)
         if(NOT EXISTS "${SYCL_COMPILER_PATH}")
             message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
@@ -64,7 +63,7 @@ if(UNIX)
                 "  2. Provide your own: cmake -DSYCL_COMPILER_PATH=/path/to/clang++ ..\n")
         endif()
     endif()
-elseif(WIN32)
+elseif(FUNGT_USE_SYCL AND WIN32)
     if(DEFINED SYCL_COMPILER_PATH)
         if(NOT EXISTS "${SYCL_COMPILER_PATH}")
             message(FATAL_ERROR "SYCL_COMPILER_PATH does not exist: ${SYCL_COMPILER_PATH}")
@@ -142,6 +141,7 @@ set(FUNGT_INCLUDES
 # CORE PBR LIBRARY (no GPU-specific code)
 # ────────────────────────────────────────────────────────
 set(PBR_CORE_FILES
+    ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
     ${FUNGT_BASE_DIR}/PBR/Intersection/intersection.cpp
     ${FUNGT_BASE_DIR}/PBR/BVH/bvh_builder.cpp
     ${FUNGT_BASE_DIR}/PBR/Render/src/compute_backends.cpp
@@ -213,6 +213,8 @@ if(FUNGT_USE_CUDA)
     )
 
     target_compile_definitions(pbr_cuda PUBLIC FUNGT_USE_CUDA)
+    target_compile_definitions(pbr_core PUBLIC FUNGT_USE_CUDA)
+    target_include_directories(pbr_core PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
 
     message(STATUS "CUDA library configured")
     message(STATUS "  Files: cuda_renderer.cu, cuda_texture.cpp")
@@ -257,6 +259,8 @@ if(FUNGT_USE_SYCL)
     target_link_options(pbr_sycl PRIVATE -fsycl -fsycl-targets=${SYCL_TARGETS} ${SYCL_CUDA_ARCH_ARGS})
 
     target_compile_definitions(pbr_sycl PUBLIC FUNGT_USE_SYCL)
+    target_compile_definitions(pbr_core PUBLIC FUNGT_USE_SYCL)
+    target_compile_options(pbr_core PRIVATE -fsycl)
 
     message(STATUS "SYCL library configured")
     message(STATUS "  Files: sycl_renderer.cpp, sycl_texture.cpp")
@@ -269,7 +273,29 @@ endif()
 # ────────────────────────────────────────────────────────
 # Find required packages
 # ────────────────────────────────────────────────────────
-if(FUNGT_USE_SYCL)
+if(FUNGT_USE_OPENCL)
+    set(FUNGT_OPENCL_HEADERS
+        "$ENV{HOME}/Documents/Development/neo-dev/compute-runtime/third_party/opencl_headers"
+        CACHE PATH "Path containing the custom CL headers")
+    set(FUNGT_OPENCL_LOADER
+        "/usr/lib/x86_64-linux-gnu/libOpenCL.so.1"
+        CACHE FILEPATH "OpenCL ICD loader used by the standalone PBR test")
+
+    if(NOT EXISTS "${FUNGT_OPENCL_HEADERS}/CL/cl.h")
+        message(FATAL_ERROR
+            "Custom OpenCL headers not found at: ${FUNGT_OPENCL_HEADERS}")
+    endif()
+    if(NOT EXISTS "${FUNGT_OPENCL_LOADER}")
+        message(FATAL_ERROR
+            "OpenCL ICD loader not found at: ${FUNGT_OPENCL_LOADER}")
+    endif()
+
+    set(OpenCL_INCLUDE_DIRS "${FUNGT_OPENCL_HEADERS}")
+    set(OpenCL_LIBRARIES "${FUNGT_OPENCL_LOADER}")
+    message(STATUS "OpenCL backend uses custom compute-runtime headers:")
+    message(STATUS "  Include: ${OpenCL_INCLUDE_DIRS}")
+    message(STATUS "  Loader:  ${OpenCL_LIBRARIES}")
+elseif(FUNGT_USE_SYCL)
     set(BUNDLED_OPENCL_INCLUDE "${BUNDLED_SYCL_DIR}/include")
     find_library(BUNDLED_OPENCL_LIBRARY
         NAMES OpenCL
@@ -292,13 +318,41 @@ if(FUNGT_USE_SYCL)
             message(FATAL_ERROR "OpenCL library not found!")
         endif()
     endif()
-else()
-    find_package(OpenCL REQUIRED)
-    if(OpenCL_FOUND)
-        message(STATUS "OpenCL found: ${OpenCL_INCLUDE_DIRS}")
-    else()
-        message(FATAL_ERROR "OpenCL library not found!")
-    endif()
+endif()
+
+# ────────────────────────────────────────────────────────
+# OPENCL BACKEND LIBRARY
+# ────────────────────────────────────────────────────────
+if(FUNGT_USE_OPENCL)
+    set(OPENCL_FILES
+        ${FUNGT_BASE_DIR}/PBR/Render/src/opencl_renderer.cpp
+        ${FUNGT_BASE_DIR}/PBR/TextureManager/opencl_texture.cpp
+    )
+
+    add_library(pbr_opencl STATIC ${OPENCL_FILES})
+
+    target_include_directories(pbr_opencl BEFORE PUBLIC
+        ${FUNGT_OPENCL_HEADERS}
+        ${FUNGT_INCLUDES}
+        ${FUNLIB_DIR}/include
+    )
+
+    target_compile_definitions(pbr_opencl PUBLIC
+        FUNGT_USE_OPENCL
+        CL_TARGET_OPENCL_VERSION=300
+    )
+    target_compile_definitions(pbr_core PUBLIC
+        FUNGT_USE_OPENCL
+        CL_TARGET_OPENCL_VERSION=300
+    )
+    target_include_directories(pbr_core BEFORE PRIVATE
+        ${FUNGT_OPENCL_HEADERS}
+    )
+
+    target_link_libraries(pbr_opencl PUBLIC ${FUNGT_OPENCL_LOADER})
+
+    message(STATUS "OpenCL library configured")
+    message(STATUS "  Files: opencl_renderer.cpp, opencl_texture.cpp")
 endif()
 
 find_package(assimp REQUIRED)
@@ -316,51 +370,11 @@ else()
 endif()
 
 # ────────────────────────────────────────────────────────
-# FINAL EXECUTABLE
-# ────────────────────────────────────────────────────────
-add_executable(pbr_render
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
-)
-
-if(FUNGT_USE_SYCL)
-    target_compile_options(pbr_render PRIVATE -fsycl)
-    target_link_options(pbr_render PRIVATE -fsycl)
-    target_compile_definitions(pbr_render PRIVATE FUNGT_USE_SYCL)
-endif()
-
-if(FUNGT_USE_CUDA)
-    target_compile_definitions(pbr_render PRIVATE FUNGT_USE_CUDA)
-    # THE FIX: explicitly give bundled clang++ the CUDA toolkit include path
-    target_include_directories(pbr_render PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
-        set_target_properties(pbr_render PROPERTIES
-        CUDA_ARCHITECTURES "native"
-    )
-
-endif()
-
-target_include_directories(pbr_render PRIVATE
-    ${FUNGT_INCLUDES}
-    ${OpenCL_INCLUDE_DIRS}
-)
-
-target_link_libraries(pbr_render PRIVATE
-    pbr_core
-    $<$<BOOL:${FUNGT_USE_CUDA}>:pbr_cuda>
-    $<$<BOOL:${FUNGT_USE_SYCL}>:pbr_sycl>
-    OpenGL::GL
-    assimp::assimp
-    funlib
-    dl
-    ${OpenCL_LIBRARIES}
-)
-
-# ────────────────────────────────────────────────────────
 # Build summary
 # ────────────────────────────────────────────────────────
 message(STATUS "")
 message(STATUS "══════════════════════════════════════")
-message(STATUS "  RaySpace Render Build Configuration")
+message(STATUS "  PBR Library Build Configuration")
 message(STATUS "══════════════════════════════════════")
 message(STATUS "Build type:       ${CMAKE_BUILD_TYPE}")
 message(STATUS "FunGT base:       ${FUNGT_BASE_DIR}")
@@ -377,6 +391,12 @@ if(FUNGT_USE_SYCL)
 else()
     message(STATUS "SYCL backend:     DISABLED")
 endif()
-message(STATUS "Output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+if(FUNGT_USE_OPENCL)
+    message(STATUS "OpenCL backend:   ENABLED")
+    message(STATUS "OpenCL headers:   ${FUNGT_OPENCL_HEADERS}")
+    message(STATUS "OpenCL loader:    ${FUNGT_OPENCL_LOADER}")
+else()
+    message(STATUS "OpenCL backend:   DISABLED")
+endif()
 message(STATUS "══════════════════════════════════════")
 message(STATUS "")

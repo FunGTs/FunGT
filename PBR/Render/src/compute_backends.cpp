@@ -8,6 +8,7 @@ const std::string ComputeRender::GetBackendName() {
     case Compute::Backend::CUDA: return "CUDA";
     case Compute::Backend::SYCL: return "SYCL";
     case Compute::Backend::SYCL_CUDA: return "SYCL_CUDA";
+    case Compute::Backend::OPENCL: return "OPENCL";
     case Compute::Backend::CPU:  return "CPU";
     default: return "Unknown";
     }

@@ -11,9 +11,17 @@ class PBRCamera;
 
 
 class IComputeRenderer{
+    protected:
+        IComputeRenderer() = default;
 
     public: 
         virtual ~IComputeRenderer() = default;
+        //Avoid copy and move semantics for this interface
+        IComputeRenderer(const IComputeRenderer&) = delete;
+        IComputeRenderer& operator=(const IComputeRenderer&) = delete;
+        IComputeRenderer(IComputeRenderer&&) = delete;
+        IComputeRenderer& operator=(IComputeRenderer&&) = delete;
+        //
         virtual IDeviceTexture& textures() = 0;
         virtual std::vector<fungt::Vec3> RenderScene(
             int width, int height,
