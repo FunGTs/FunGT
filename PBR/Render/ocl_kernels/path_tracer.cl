@@ -203,7 +203,7 @@ inline float3 fgt_path_trace_cook_torrance(
 }
 
 __kernel void path_tracer(
-    __global fgt_vec4* framebuffer,
+    __global float4* framebuffer,
     __global const fgt_triangle_geom* triangle_geometry,
     __global const fgt_triangle_shading* triangle_shading,
     __global const fgt_material_data* materials,
@@ -263,7 +263,7 @@ __kernel void path_tracer(
         num_textures,
         &rng);
 
-    fgt_vec4 accumulated = framebuffer[pixel_index];
+    float4 accumulated = framebuffer[pixel_index];
     accumulated.x += contribution.x;
     accumulated.y += contribution.y;
     accumulated.z += contribution.z;

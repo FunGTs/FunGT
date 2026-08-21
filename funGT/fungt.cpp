@@ -169,20 +169,39 @@ void FunGT::set(const std::function<void()>& renderLambda){
                     m_lightGizmoRenderer->render(ProjectionMatrix);
                 }
         });
+        m_ViewPortLayer->setPathTraceInteropFunction([this](int width, int height, int sample) {
+                auto* viewport = m_layerStack.get<ViewPort>();
+                if (!viewport) return;
+
+                if (!m_progressiveTracer->isInitialized()) {
+                    m_progressiveTracer->initialize(
+                        &m_camera, m_sceneManager, width, height, true);
+                } else if (sample == 0) {
+                    m_progressiveTracer->updateCamera(
+                        &m_camera, width, height);
+                }
+
+                m_progressiveTracer->renderSampleInterop(
+                    sample, viewport->getPathTracePBO());
+                viewport->copyPBOToTexture(width, height);
+            });
         m_ViewPortLayer->setPathTraceFunction([this](int width, int height, int sample) {
-            auto* viewport = m_layerStack.get<ViewPort>();
-            if (!viewport) return;
+                auto* viewport = m_layerStack.get<ViewPort>();
+                if (!viewport) return;
 
-            uint32_t pathTraceTexture = viewport->getPathTraceTexture();
+                if (!m_progressiveTracer->isInitialized()) {
+                    m_progressiveTracer->initialize(
+                        &m_camera, m_sceneManager, width, height);
+                } else if (sample == 0) {
+                    m_progressiveTracer->updateCamera(
+                        &m_camera, width, height);
+                }
 
-            // Initialize on first sample or if not initialized
-            if (sample == 0 || !m_progressiveTracer->isInitialized()) {
-                m_progressiveTracer->initialize(&m_camera, m_sceneManager, width, height);
-            }
-
-            // Render one sample
-            m_progressiveTracer->renderSample(sample, pathTraceTexture);
-
+                m_progressiveTracer->renderSample(
+                    sample, viewport->getPathTraceTexture());
+            });
+        m_ViewPortLayer->setPathTraceReleaseInteropFunction([this]() {
+            m_progressiveTracer->releaseOpenGLInteropResources();
         });
        m_layerStack.PushLayer(std::move(m_ViewPortLayer));
    }

@@ -6,8 +6,10 @@ project(FunGT)
 # ════════════════════════════════════════════════════════════════════════════
 option(FUNGT_USE_CUDA "Enable CUDA backend for NVIDIA GPUs" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend for Intel GPUs" ON)
-set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
-set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
+option(FUNGT_USE_OPENCL "Enable OpenCL backend" ON)
+set(FUNGT_CUDA_ARCH 89 CACHE STRING "NVIDIA GPU compute capability")
+set_property(CACHE FUNGT_CUDA_ARCH PROPERTY STRINGS 50 52 53 60 61 62 70 72 75 80 86 87 89 90)
+set(SYCL_CUDA_ARCH "sm_${FUNGT_CUDA_ARCH}")
 
 # Allow FUNGT_BASE_DIR to be set externally (command line, environment, or cache)
 # Priority: 1. Cache variable, 2. Environment variable, 3. Default fallback
@@ -144,6 +146,15 @@ if(UNIX)
         )
         set(PBR_SYCL_LIB pbr_sycl)
         message(STATUS "PBR SYCL renderer library: ${PBR_LIB_DIR}/libpbr_sycl.a")
+    endif()
+
+    if(FUNGT_USE_OPENCL)
+        add_library(pbr_opencl STATIC IMPORTED)
+        set_target_properties(pbr_opencl PROPERTIES
+            IMPORTED_LOCATION "${PBR_LIB_DIR}/libpbr_opencl.a"
+        )
+        set(PBR_OPENCL_LIB pbr_opencl)
+        message(STATUS "PBR OpenCL renderer library: ${PBR_LIB_DIR}/libpbr_opencl.a")
     endif()
 endif()
 
@@ -372,7 +383,7 @@ if(FUNGT_USE_CUDA)
     set_target_properties(FunGT PROPERTIES
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         CUDA_SEPARABLE_COMPILATION ON
-        CUDA_ARCHITECTURES "native"  
+        CUDA_ARCHITECTURES ${FUNGT_CUDA_ARCH}
     )
 endif()
 # ════════════════════════════════════════════════════════════════════════════
@@ -491,11 +502,12 @@ elseif (UNIX)
         dl
         funlib
         imgui
-        ${OpenCL_LIBRARIES}
         ${CUDA_BACKEND_LIB}
         pbr_core                   
         ${PBR_CUDA_LIB}           
         ${PBR_SYCL_LIB} 
+        ${PBR_OPENCL_LIB}
+        ${OpenCL_LIBRARIES}
         $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cudart_static>
         $<$<BOOL:${FUNGT_USE_CUDA}>:CUDA::cuda_driver>           
     )
@@ -533,6 +545,9 @@ elseif (UNIX)
     if(FUNGT_USE_SYCL)
         target_compile_definitions(FunGT PRIVATE FUNGT_USE_SYCL)
     endif()
+    if(FUNGT_USE_OPENCL)
+        target_compile_definitions(FunGT PRIVATE FUNGT_USE_OPENCL)
+    endif()
     
 endif()
 
@@ -543,12 +558,10 @@ message(STATUS "")
 message(STATUS "════════════════════════════════════════")
 message(STATUS "  FunGT Build Configuration")
 message(STATUS "════════════════════════════════════════")
-message(STATUS "  Main Compiler:  ${CMAKE_CXX_COMPILER}")
+message(STATUS "  Main Compiler:  Intel DPC++")
 message(STATUS "  CUDA Backend:   ${FUNGT_USE_CUDA}")
 message(STATUS "  SYCL Backend:   ${FUNGT_USE_SYCL}")
+message(STATUS "  OpenCL Backend: ${FUNGT_USE_OPENCL}")
 message(STATUS "  Build Type:     ${CMAKE_BUILD_TYPE}")
-if(FUNGT_USE_CUDA)
-    message(STATUS "  CUDA Compiled:  Separately with g++")
-endif()
 message(STATUS "════════════════════════════════════════")
 message(STATUS "")

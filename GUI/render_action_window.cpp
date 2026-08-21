@@ -41,8 +41,27 @@ void RenderWindow::onImGuiRender() {
     // VIEWPORT PREVIEW
     ImGui::SeparatorText("Viewport Preview");
 
+#ifdef FUNGT_USE_OPENCL
+    if (ImGui::Checkbox("Use OpenCL Interop", &m_useOpenCLPreview)) {
+        if (m_viewportPathTrace && m_viewport) {
+            if (m_useOpenCLPreview) {
+                ComputeRender::SetBackend(Compute::Backend::OPENCL);
+            } else {
+                selectComputeBackend();
+            }
+            m_viewport->enablePathTracing(true);
+            m_viewport->resetAccumulation();
+        }
+    }
+#endif
+
     if (ImGui::Checkbox("Enable RaySpace Preview", &m_viewportPathTrace)) {
         if (m_viewport) {
+            if (m_useOpenCLPreview) {
+                ComputeRender::SetBackend(Compute::Backend::OPENCL);
+            } else {
+                selectComputeBackend();
+            }
             m_viewport->enablePathTracing(m_viewportPathTrace);
             if (m_viewportPathTrace) {
                 m_viewport->resetAccumulation();
@@ -158,29 +177,7 @@ void RenderWindow::triggerRender() {
     m_isRendering = true;
 
     try {
-        // SET COMPUTE BACKEND FROM SELECTED DEVICE
-        {
-            const auto& devices = m_gpuManager->getDevices();
-            int activeIdx = m_gpuManager->getActiveDeviceIndex();
-            if (activeIdx >= 0 && activeIdx < static_cast<int>(devices.size())) {
-                const auto& dev = devices[activeIdx];
-                if (dev.backend == fungt::GPUBackend::CUDA) {
-                    ComputeRender::SetBackend(Compute::Backend::CUDA);
-                }
-                else if (dev.backend == fungt::GPUBackend::SYCL) {
-                    bool isNvidia = dev.vendor.find("NVIDIA") != std::string::npos ||
-                        dev.vendor.find("nvidia") != std::string::npos;
-                    ComputeRender::SetBackend(isNvidia ? Compute::Backend::SYCL_CUDA
-                        : Compute::Backend::SYCL);
-                }
-                else {
-                    ComputeRender::SetBackend(Compute::Backend::CPU);
-                }
-            }
-            else {
-                ComputeRender::SetBackend(Compute::Backend::CUDA);
-            }
-        }
+        selectComputeBackend();
         std::cout << "Backend: " << ComputeRender::GetBackendName() << std::endl;
 
         // SYNC CAMERA FROM VIEWPORT
@@ -268,4 +265,29 @@ void RenderWindow::triggerRender() {
     }
 
     m_isRendering = false;
+}
+
+void RenderWindow::selectComputeBackend()
+{
+    const auto& devices = m_gpuManager->getDevices();
+    const int activeIdx = m_gpuManager->getActiveDeviceIndex();
+    if (activeIdx < 0 || activeIdx >= static_cast<int>(devices.size())) {
+        ComputeRender::SetBackend(Compute::Backend::CPU);
+        return;
+    }
+
+    const auto& device = devices[activeIdx];
+    if (device.backend == fungt::GPUBackend::CUDA) {
+        ComputeRender::SetBackend(Compute::Backend::CUDA);
+    } else if (device.backend == fungt::GPUBackend::SYCL) {
+        const bool isNvidia =
+            device.vendor.find("NVIDIA") != std::string::npos ||
+            device.vendor.find("nvidia") != std::string::npos;
+        ComputeRender::SetBackend(
+            isNvidia ? Compute::Backend::SYCL_CUDA : Compute::Backend::SYCL);
+    } else if (device.backend == fungt::GPUBackend::OPENCL) {
+        ComputeRender::SetBackend(Compute::Backend::OPENCL);
+    } else {
+        ComputeRender::SetBackend(Compute::Backend::CPU);
+    }
 }

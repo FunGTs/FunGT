@@ -4,8 +4,9 @@ project(pbr_libraries)
 option(FUNGT_USE_CUDA "Enable CUDA backend" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend" ON)
 option(FUNGT_USE_OPENCL "Enable OpenCL backend" ON)
-set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
-set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
+set(FUNGT_CUDA_ARCH 89 CACHE STRING "NVIDIA GPU compute capability")
+set_property(CACHE FUNGT_CUDA_ARCH PROPERTY STRINGS 50 52 53 60 61 62 70 72 75 80 86 87 89 90)
+set(SYCL_CUDA_ARCH "sm_${FUNGT_CUDA_ARCH}")
 
 # ────────────────────────────────────────────────────────
 # FUNGT_BASE_DIR validation
@@ -209,7 +210,7 @@ if(FUNGT_USE_CUDA)
 
     set_target_properties(pbr_cuda PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
-        CUDA_ARCHITECTURES "native"
+        CUDA_ARCHITECTURES ${FUNGT_CUDA_ARCH}
     )
 
     target_compile_definitions(pbr_cuda PUBLIC FUNGT_USE_CUDA)
@@ -382,7 +383,7 @@ message(STATUS "Default compiler: Bundled Intel clang (SYCL-capable)")
 if(FUNGT_USE_CUDA)
     message(STATUS "CUDA backend:     ENABLED (nvcc)")
     message(STATUS "CUDA includes:    ${CUDAToolkit_INCLUDE_DIRS}")
-    message(STATUS "CUDA architecture: ${SYCL_CUDA_ARCH}")
+    message(STATUS "CUDA architecture: ${FUNGT_CUDA_ARCH}")
 else()
     message(STATUS "CUDA backend:     DISABLED")
 endif()

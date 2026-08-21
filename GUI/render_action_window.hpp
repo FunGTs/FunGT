@@ -23,6 +23,11 @@ private:
     bool m_useViewportSize = false;
     bool m_isRendering = false;
     bool m_viewportPathTrace = false;
+#ifdef FUNGT_USE_OPENCL
+    bool m_useOpenCLPreview = true;
+#else
+    bool m_useOpenCLPreview = false;
+#endif
     int m_previewSamples = 32;
     ViewPort* m_viewport = nullptr;
 
@@ -39,6 +44,7 @@ private:
     int m_viewportHeight = 1080;
 
     void triggerRender();
+    void selectComputeBackend();
 
 public:
     RenderWindow(std::shared_ptr<SceneManager> sceneManager, Camera* camera, ViewPort* viewport,

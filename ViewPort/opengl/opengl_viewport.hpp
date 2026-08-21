@@ -11,6 +11,7 @@ private:
     std::shared_ptr<FrameBuffer> m_frameBuffer;
     std::shared_ptr<FrameBuffer> m_resizeBuffer;
     GLuint m_pathTraceTexture = 0;
+    GLuint m_pathTracePBO = 0;
 
 public:
     OpenGLViewPort();
@@ -22,6 +23,8 @@ public:
     void onImGuiRender() override;
 
     uint32_t getPathTraceTexture() const override { return m_pathTraceTexture; }
+    uint32_t getPathTracePBO() const override { return m_pathTracePBO; }
+    void copyPBOToTexture(int width, int height) override;
 };
 
 #endif // _OPENGL_VIEWPORT_H_

@@ -1,5 +1,6 @@
 #if !defined(_SPACE_H_)
 #define _SPACE_H_
+#include <cstdint>
 #include<vector>
 
 #include "Triangle/triangle.hpp"
@@ -38,16 +39,24 @@ class Space {
 
         std::vector<fungt::Vec3> Render(const int width, const int height,int sampleOffset = 0);
        
-        void InitComputeRenderBackend();
+        void InitComputeRenderBackend(bool oglInterop = false);
+        void RenderOpenGLInterop(
+            int width,
+            int height,
+            int sampleOffset,
+            uint32_t glBufferID);
+        void ReleaseOpenGLInteropResources();
         void LoadModelToRender(const SimpleModel& model);
         void LoadGeometryToRender(const SimpleGeometry& geometry);
         void loadLightsFromScene(const std::vector<SceneLight>& sceneLights);
+        void invalidateScene();
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
         static void SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer,
             int width, int height,
             const std::string& filename);
         void BuildBVH();
         void setSamples(int numOfSamples);
+        void setCamera(const PBRCamera& camera) { m_camera = camera; }
         void ClearSpace() {
             m_triangles.clear();
             m_bvh_nodes.clear();

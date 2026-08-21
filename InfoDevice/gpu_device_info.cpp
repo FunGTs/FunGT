@@ -1,5 +1,8 @@
 #include "gpu_device_info.hpp"
 #include <iostream>
+#ifdef FUNGT_USE_OPENCL
+#include <CL/cl.h>
+#endif
 
 // ════════════════════════════════════════════════════════════════════════════
 // GPU Device Manager Implementation
@@ -57,6 +60,45 @@ void GPUDeviceManager::initialize() {
     }
 #else
     std::cout << "  SYCL backend disabled (compile with -DFUNGT_USE_SYCL=ON)" << std::endl;
+#endif
+
+    // Find OpenCL GPU devices.
+#ifdef FUNGT_USE_OPENCL
+    cl_uint platformCount = 0;
+    if (clGetPlatformIDs(0, nullptr, &platformCount) == CL_SUCCESS) {
+        std::vector<cl_platform_id> platforms(platformCount);
+        clGetPlatformIDs(platformCount, platforms.data(), nullptr);
+
+        for (cl_platform_id platform : platforms) {
+            cl_uint deviceCount = 0;
+            if (clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &deviceCount) != CL_SUCCESS) {
+                continue;
+            }
+
+            std::vector<cl_device_id> devices(deviceCount);
+            clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, deviceCount, devices.data(), nullptr);
+            for (cl_uint i = 0; i < deviceCount; ++i) {
+                char name[256] = {};
+                char vendor[256] = {};
+                cl_ulong memory = 0;
+                cl_uint computeUnits = 0;
+                clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(name), name, nullptr);
+                clGetDeviceInfo(devices[i], CL_DEVICE_VENDOR, sizeof(vendor), vendor, nullptr);
+                clGetDeviceInfo(devices[i], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(memory), &memory, nullptr);
+                clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(computeUnits), &computeUnits, nullptr);
+
+                fungt::GPUDeviceInfo info;
+                info.id = static_cast<int>(i);
+                info.name = name;
+                info.vendor = vendor;
+                info.memory_bytes = static_cast<size_t>(memory);
+                info.compute_units = static_cast<int>(computeUnits);
+                info.backend = fungt::GPUBackend::OPENCL;
+                info.isActive = false;
+                all_devices_.push_back(std::move(info));
+            }
+        }
+    }
 #endif
 
     // Add OpenGL fallback device (always available)

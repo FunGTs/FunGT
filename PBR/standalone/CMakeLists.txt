@@ -14,7 +14,9 @@ set(FUNGT_BASE_DIR
 option(FUNGT_USE_CUDA "Link the CUDA PBR backend" ON)
 option(FUNGT_USE_SYCL "Link the SYCL PBR backend" ON)
 option(FUNGT_USE_OPENCL "Link the OpenCL PBR backend" ON)
-set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL")
+set(FUNGT_CUDA_ARCH 89 CACHE STRING "NVIDIA GPU compute capability")
+set_property(CACHE FUNGT_CUDA_ARCH PROPERTY STRINGS 50 52 53 60 61 62 70 72 75 80 86 87 89 90)
+set(SYCL_CUDA_ARCH "sm_${FUNGT_CUDA_ARCH}")
 
 set(SYCL_COMPILER_PATH
     "/home/juanchuletas/Documents/Development/sycl_workspace/llvm/build/bin/clang++"
@@ -99,7 +101,7 @@ add_executable(pbr_standalone main.cpp)
 
 if(FUNGT_USE_CUDA)
     set_target_properties(pbr_standalone PROPERTIES
-        CUDA_ARCHITECTURES "native"
+        CUDA_ARCHITECTURES ${FUNGT_CUDA_ARCH}
         CUDA_SEPARABLE_COMPILATION ON
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
     )

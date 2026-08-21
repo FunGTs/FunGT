@@ -3,12 +3,11 @@
 #include <algorithm>
 #include <iterator>
 
-void OpenCL_Renderer::initialize()
+void OpenCL_Renderer::initialize(bool useOpenGLInterop)
 {
     if (m_oclcontext && m_oclqueue && m_textureManager) {
         return;
     }
-
     cl_uint platformCount = 0;
     cl_int err = clGetPlatformIDs(0, nullptr, &platformCount);
     if (err != CL_SUCCESS || platformCount == 0) {
@@ -25,18 +24,76 @@ void OpenCL_Renderer::initialize()
             std::to_string(err));
     }
 
-    for (cl_platform_id platform : platforms) {
-        if (!clGetExtensionFunctionAddressForPlatform(
-                platform, "clCreateImageWithPropertiesINTEL")) {
-            continue;
+    std::array<cl_context_properties, 7> contextProperties{};
+    const cl_context_properties* properties = nullptr;
+
+    if (useOpenGLInterop) {
+        const auto glContext = glXGetCurrentContext();
+        const auto glDisplay = glXGetCurrentDisplay();
+        if (!glContext || !glDisplay) {
+            throw std::runtime_error(
+                "OpenGL context is not current in this thread.");
         }
 
-        cl_device_id device = nullptr;
-        err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
-        if (err == CL_SUCCESS && device) {
-            m_oclplatform = platform;
-            m_ocldevice = device;
-            break;
+        using GetGLContextInfo = cl_int (CL_API_CALL *)(
+            const cl_context_properties*,
+            cl_gl_context_info,
+            std::size_t,
+            void*,
+            std::size_t*);
+
+        for (cl_platform_id platform : platforms) {
+            if (!clGetExtensionFunctionAddressForPlatform(
+                    platform, "clCreateImageWithPropertiesINTEL")) {
+                continue;
+            }
+
+            contextProperties = {
+                CL_GL_CONTEXT_KHR,
+                reinterpret_cast<cl_context_properties>(glContext),
+                CL_GLX_DISPLAY_KHR,
+                reinterpret_cast<cl_context_properties>(glDisplay),
+                CL_CONTEXT_PLATFORM,
+                reinterpret_cast<cl_context_properties>(platform),
+                0
+            };
+
+            const auto getGLContextInfo = reinterpret_cast<GetGLContextInfo>(
+                clGetExtensionFunctionAddressForPlatform(
+                    platform, "clGetGLContextInfoKHR"));
+            if (!getGLContextInfo) {
+                continue;
+            }
+
+            cl_device_id glDevice = nullptr;
+            err = getGLContextInfo(
+                contextProperties.data(),
+                CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR,
+                sizeof(glDevice),
+                &glDevice,
+                nullptr);
+            if (err == CL_SUCCESS && glDevice) {
+                m_oclplatform = platform;
+                m_ocldevice = glDevice;
+                properties = contextProperties.data();
+                break;
+            }
+        }
+    } else {
+        for (cl_platform_id platform : platforms) {
+            if (!clGetExtensionFunctionAddressForPlatform(
+                    platform, "clCreateImageWithPropertiesINTEL")) {
+                continue;
+            }
+
+            cl_device_id device = nullptr;
+            err = clGetDeviceIDs(
+                platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
+            if (err == CL_SUCCESS && device) {
+                m_oclplatform = platform;
+                m_ocldevice = device;
+                break;
+            }
         }
     }
 
@@ -55,9 +112,15 @@ void OpenCL_Renderer::initialize()
         sizeof(deviceName), deviceName, nullptr);
     std::cout << "OpenCL platform: " << platformName << std::endl;
     std::cout << "OpenCL device:   " << deviceName << std::endl;
-
+    if (useOpenGLInterop) {
+        char extensions[2048] = {};
+        clGetDeviceInfo(m_ocldevice, CL_DEVICE_EXTENSIONS, sizeof(extensions), extensions, nullptr);
+        if (std::string(extensions).find("cl_khr_gl_sharing") == std::string::npos) {
+            throw std::runtime_error("OpenCL device does not support OpenGL interoperability.");
+        }
+    }
     m_oclcontext = clCreateContext(
-        nullptr, 1, &m_ocldevice, nullptr, nullptr, &err);
+        properties, 1, &m_ocldevice, nullptr, nullptr, &err);
     if (err != CL_SUCCESS || !m_oclcontext) {
         m_oclcontext = nullptr;
         throw std::runtime_error(
@@ -83,6 +146,7 @@ void OpenCL_Renderer::initialize()
 
     // Defer kernel build until textures are loaded for bindless to work
     std::cout << "OpenCL context and command queue initialized (kernel build deferred)." << std::endl;
+
 }
 
 OpenCL_Renderer::~OpenCL_Renderer()
@@ -114,17 +178,34 @@ OpenCL_Renderer::~OpenCL_Renderer()
         clReleaseKernel(m_oclsampleKernel);
         m_oclsampleKernel = nullptr;
     }
+    if (m_ocl_ogldisplayKernel) {
+        clReleaseKernel(m_ocl_ogldisplayKernel);
+        m_ocl_ogldisplayKernel = nullptr;
+    }
 
     if (m_oclprogram) {
         clReleaseProgram(m_oclprogram);
         m_oclprogram = nullptr;
     }
 
+    if (m_oclAccumulationBuffer) {
+        clReleaseMemObject(m_oclAccumulationBuffer);
+        m_oclAccumulationBuffer = nullptr;
+        m_accumulationWidth = 0;
+        m_accumulationHeight = 0;
+    }
+    if (m_oglSharedBuffer) {
+        clReleaseMemObject(m_oglSharedBuffer);
+        m_oglSharedBuffer = nullptr;
+        m_oglBufferID = 0;
+        m_oglBufferWidth = 0;
+        m_oglBufferHeight = 0;
+    }
+
     if (m_oclqueue) {
         clReleaseCommandQueue(m_oclqueue);
         m_oclqueue = nullptr;
     }
-
     if (m_oclcontext) {
         clReleaseContext(m_oclcontext);
         m_oclcontext = nullptr;
@@ -132,6 +213,28 @@ OpenCL_Renderer::~OpenCL_Renderer()
 
     m_ocldevice = nullptr;
     m_oclplatform = nullptr;
+}
+
+void OpenCL_Renderer::releaseOpenGLInteropResources() noexcept
+{
+    if (m_oclqueue) {
+        clFinish(m_oclqueue);
+    }
+
+    if (m_oglSharedBuffer) {
+        clReleaseMemObject(m_oglSharedBuffer);
+        m_oglSharedBuffer = nullptr;
+    }
+    m_oglBufferID = 0;
+    m_oglBufferWidth = 0;
+    m_oglBufferHeight = 0;
+
+    if (m_oclAccumulationBuffer) {
+        clReleaseMemObject(m_oclAccumulationBuffer);
+        m_oclAccumulationBuffer = nullptr;
+    }
+    m_accumulationWidth = 0;
+    m_accumulationHeight = 0;
 }
 
 std::vector<fungt::Vec3> OpenCL_Renderer::RenderScene(int width, 
@@ -226,40 +329,28 @@ std::vector<fungt::Vec3> OpenCL_Renderer::RenderScene(int width,
     const cl_int numTextures = static_cast<cl_int>(m_numTextures);
 
     cl_uint argument = 0;
-    //Lambda to setkernel arguments
-    const auto setKernelArg = [&](cl_kernel kernel, std::size_t size, const void* value) {
-        const cl_int argumentError =
-            clSetKernelArg(kernel, argument++, size, value);
-        if (argumentError != CL_SUCCESS) {
-            throw std::runtime_error(
-                "OpenCL RenderScene failed to set kernel argument " +
-                std::to_string(argument - 1) + ", error " +
-                std::to_string(argumentError));
-        }
-    };
-
     try {
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &framebufferBuffer);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_raySpaceBuffer.triangleGeometry);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_raySpaceBuffer.triangleShading);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_raySpaceBuffer.materials);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_raySpaceBuffer.bvhNodes);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_raySpaceBuffer.lights);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_raySpaceBuffer.emissiveTriangles);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_texturesObj);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &m_textureDimensions);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &numTriangles);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &numMaterials);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &numBVHNodes);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &numLights);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &numEmissiveTriangles);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &numTextures);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_mem), &cameraBuffer);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &width);
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &height);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &framebufferBuffer);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_raySpaceBuffer.triangleGeometry);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_raySpaceBuffer.triangleShading);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_raySpaceBuffer.materials);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_raySpaceBuffer.bvhNodes);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_raySpaceBuffer.lights);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_raySpaceBuffer.emissiveTriangles);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_texturesObj);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &m_textureDimensions);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &numTriangles);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &numMaterials);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &numBVHNodes);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &numLights);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &numEmissiveTriangles);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &numTextures);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_mem), &cameraBuffer);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &width);
+        setKernelArg(m_oclrenderKernel,argument, sizeof(cl_int), &height);
 
         const cl_int initialSampleIndex = sampleOffset;
-        setKernelArg(m_oclrenderKernel, sizeof(cl_int), &initialSampleIndex);
+        setKernelArg(m_oclrenderKernel,argument,sizeof(cl_int), &initialSampleIndex);
 
         const std::size_t localSize[2] = {16, 16};
         const std::size_t globalSize[2] = {
@@ -283,8 +374,6 @@ std::vector<fungt::Vec3> OpenCL_Renderer::RenderScene(int width,
                     std::to_string(err));
             }
 
-            // No wait is needed
-            // The next sample runs after this sample.
             err = clEnqueueNDRangeKernel(
                 m_oclqueue,
                 m_oclrenderKernel,
@@ -306,8 +395,8 @@ std::vector<fungt::Vec3> OpenCL_Renderer::RenderScene(int width,
         // Now add args for the second kernel.
         argument = 0;
 
-        setKernelArg(m_oclsampleKernel, sizeof(cl_mem), &framebufferBuffer);
-        setKernelArg(m_oclsampleKernel, sizeof(cl_int), &samplesPerPixel);
+        setKernelArg(m_oclsampleKernel, argument,sizeof(cl_mem), &framebufferBuffer);
+        setKernelArg(m_oclsampleKernel, argument, sizeof(cl_int), &samplesPerPixel);
 
         // Divide each pixel by samplesPerPixel.
         const std::size_t sampleGlobalSize[1] = {imageSize};
@@ -534,7 +623,6 @@ void OpenCL_Renderer::prepareTextures()
             "OpenCL textures requested before OpenCL initialization.");
     }
 
-    static bool kernelBuilt = false;
     if (m_textureManager->handlesAreDirty() ||
         !m_texturesObj || !m_textureDimensions) {
         setOpenCLTextures(
@@ -542,10 +630,9 @@ void OpenCL_Renderer::prepareTextures()
             m_textureManager->getTextureDimensions());
         m_textureManager->markHandlesClean();
     }
-    if (!kernelBuilt && m_textureManager->getTextureCount() > 0) {
+    if (!m_oclrenderKernel && m_textureManager->getTextureCount() > 0) {
         std::cout << "[prepareTextures] Building kernel AFTER textures loaded" << std::endl;
         buildOCLPrograms();
-        kernelBuilt = true;
     }
 }
 
@@ -593,6 +680,246 @@ void OpenCL_Renderer::setOpenCLTextures(
             std::to_string(err));
     }
     m_numTextures = handles.size();
+}
+
+void OpenCL_Renderer::RenderSceneOpenGLInterop(int width, 
+    int height, 
+    const std::vector<Triangle>& triangles, 
+    const std::vector<BVHNode>& nodes, 
+    const std::vector<Light>& lights, 
+    const std::vector<int>& emissiveTriIndices, 
+    const PBRCamera& camera, int samplesPerPixel, 
+    int sampleOffset, 
+    GLuint glBufferID)
+{
+    if (width <= 0 || height <= 0) {
+        throw std::invalid_argument(
+            "OpenCL RenderSceneOpenGLInterop requires positive image dimensions.");
+    }
+    if (samplesPerPixel <= 0) {
+        throw std::invalid_argument(
+            "OpenCL RenderSceneOpenGLInterop requires at least one sample.");
+    }
+    if (!m_oclcontext || !m_oclqueue) {
+        throw std::runtime_error(
+            "OpenCL RenderSceneOpenGLInterop called before renderer initialization.");
+    }
+    if (glBufferID == 0) {
+        throw std::invalid_argument(
+            "OpenCL RenderSceneOpenGLInterop requires a valid OpenGL buffer.");
+    }
+
+    prepareTextures();
+
+    if (!m_sceneUploaded) {
+        uploadScene(triangles, nodes, lights, emissiveTriIndices);
+        clFinish(m_oclqueue);
+    }
+
+    if (!m_oglSharedBuffer ||
+        m_oglBufferID != glBufferID ||
+        m_oglBufferWidth != width ||
+        m_oglBufferHeight != height) {
+        if (m_oglSharedBuffer) {
+            clReleaseMemObject(m_oglSharedBuffer);
+            m_oglSharedBuffer = nullptr;
+            m_oglBufferID = 0;
+            m_oglBufferWidth = 0;
+            m_oglBufferHeight = 0;
+        }
+        cl_int err = CL_SUCCESS;
+        m_oglSharedBuffer = clCreateFromGLBuffer(
+            m_oclcontext,
+            CL_MEM_WRITE_ONLY,
+            glBufferID,
+            &err);
+        if (err != CL_SUCCESS || !m_oglSharedBuffer) {
+            m_oglSharedBuffer = nullptr;
+            throw std::runtime_error(
+                "Failed to register OpenGL buffer with OpenCL, error " +
+                std::to_string(err));
+        }
+        m_oglBufferID = glBufferID;
+        m_oglBufferWidth = width;
+        m_oglBufferHeight = height;
+    }
+    //Get camera data
+    const fgt_rayspace_camera cameraData =
+        fgt::opencl::translate_rayspace_camera(camera);
+    
+    const std::size_t imageSize =
+        static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
+
+    cl_int err = CL_SUCCESS;
+    bool accumulationBufferCreated = false;
+    if (!m_oclAccumulationBuffer ||
+        m_accumulationWidth != width ||
+        m_accumulationHeight != height) {
+        if (m_oclAccumulationBuffer) {
+            clReleaseMemObject(m_oclAccumulationBuffer);
+            m_oclAccumulationBuffer = nullptr;
+        }
+
+        m_oclAccumulationBuffer = clCreateBuffer(
+            m_oclcontext,
+            CL_MEM_READ_WRITE,
+            imageSize * sizeof(fgt_vec4),
+            nullptr,
+            &err);
+        if (err != CL_SUCCESS || !m_oclAccumulationBuffer) {
+            throw std::runtime_error(
+                "OpenCL RenderSceneOpenGLInterop failed to create accumulation buffer, error " +
+                std::to_string(err));
+        }
+        m_accumulationWidth = width;
+        m_accumulationHeight = height;
+        accumulationBufferCreated = true;
+    }
+
+    // Clear the sum when a new accumulation starts.
+    if (accumulationBufferCreated || sampleOffset == 0) {
+        const fgt_vec4 zeroPixel{0.0f, 0.0f, 0.0f, 0.0f};
+        err = clEnqueueFillBuffer(
+            m_oclqueue,
+            m_oclAccumulationBuffer,
+            &zeroPixel,
+            sizeof(zeroPixel),
+            0,
+            imageSize * sizeof(fgt_vec4),
+            0,
+            nullptr,
+            nullptr);
+        if (err != CL_SUCCESS) {
+            throw std::runtime_error(
+                "OpenCL RenderSceneOpenGLInterop failed to clear accumulation buffer, error " +
+                std::to_string(err));
+        }
+    }
+
+    cl_mem cameraBuffer = clCreateBuffer(
+        m_oclcontext,
+        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+        sizeof(fgt_rayspace_camera),
+        const_cast<fgt_rayspace_camera*>(&cameraData),
+        &err);
+    if (err != CL_SUCCESS || !cameraBuffer) {
+        throw std::runtime_error(
+            "OpenCL RenderSceneOpenGLInterop failed to create camera buffer, error " +
+            std::to_string(err));
+    }
+
+    const cl_int numTriangles = static_cast<cl_int>(m_raySpaceBuffer.numTriangles);
+    const cl_int numMaterials = static_cast<cl_int>(m_raySpaceBuffer.numMaterials);
+    const cl_int numBVHNodes = static_cast<cl_int>(m_raySpaceBuffer.numBVHNodes);
+    const cl_int numLights = static_cast<cl_int>(m_raySpaceBuffer.numLights);
+    const cl_int numEmissiveTriangles = static_cast<cl_int>(m_raySpaceBuffer.numEmissiveTriangles);
+    const cl_int numTextures = static_cast<cl_int>(m_numTextures);
+    cl_uint argument = 0;
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_oclAccumulationBuffer);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_raySpaceBuffer.triangleGeometry);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_raySpaceBuffer.triangleShading);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_raySpaceBuffer.materials);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_raySpaceBuffer.bvhNodes);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_raySpaceBuffer.lights);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_raySpaceBuffer.emissiveTriangles);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_texturesObj);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &m_textureDimensions);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &numTriangles);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &numMaterials);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &numBVHNodes);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &numLights);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &numEmissiveTriangles);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &numTextures);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_mem), &cameraBuffer);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &width);
+    setKernelArg(m_oclrenderKernel, argument, sizeof(cl_int), &height);
+
+    const std::size_t localSize[2] = {16, 16};
+    const std::size_t globalSize[2] = {
+        (static_cast<std::size_t>(width) + localSize[0] - 1) /
+            localSize[0] * localSize[0],
+        (static_cast<std::size_t>(height) + localSize[1] - 1) /
+            localSize[1] * localSize[1]
+    };
+
+    // Add each new sample to the accumulation buffer.
+    for (int sample = 0; sample < samplesPerPixel; ++sample) {
+        const cl_int sampleIndex = sampleOffset + sample;
+        err = clSetKernelArg(
+            m_oclrenderKernel,
+            argument,
+            sizeof(sampleIndex),
+            &sampleIndex);
+        if (err != CL_SUCCESS) {
+            clReleaseMemObject(cameraBuffer);
+            throw std::runtime_error(
+                "OpenCL RenderSceneOpenGLInterop failed to set sample index, error " +
+                std::to_string(err));
+        }
+
+        err = clEnqueueNDRangeKernel(
+            m_oclqueue,
+            m_oclrenderKernel,
+            2,
+            nullptr,
+            globalSize,
+            localSize,
+            0,
+            nullptr,
+            nullptr);
+        if (err != CL_SUCCESS) {
+            clReleaseMemObject(cameraBuffer);
+            throw std::runtime_error(
+                "OpenCL RenderSceneOpenGLInterop failed to enqueue path tracer, error " +
+                std::to_string(err));
+        }
+    }
+
+    clReleaseMemObject(cameraBuffer);
+
+    // Acquire the shared GL buffer
+    glFinish();
+    err = clEnqueueAcquireGLObjects(
+        m_oclqueue, 1, &m_oglSharedBuffer, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        throw std::runtime_error(
+            "OpenCL failed to acquire the OpenGL buffer, error " +
+            std::to_string(err));
+    }
+
+    // Copy and normalize from accumulation buffer to shared buffer
+    const cl_int accumulatedSamples = sampleOffset + samplesPerPixel;
+    const size_t pixelCount = static_cast<size_t>(width) * static_cast<size_t>(height);
+    cl_uint arg = 0;
+    setKernelArg(m_ocl_ogldisplayKernel, arg, sizeof(cl_mem), &m_oclAccumulationBuffer);
+    setKernelArg(m_ocl_ogldisplayKernel, arg, sizeof(cl_mem), &m_oglSharedBuffer);
+    setKernelArg(m_ocl_ogldisplayKernel, arg, sizeof(cl_int), &accumulatedSamples);
+
+    err = clEnqueueNDRangeKernel(
+        m_oclqueue, m_ocl_ogldisplayKernel, 1, nullptr,
+        &pixelCount, nullptr, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        clEnqueueReleaseGLObjects(
+            m_oclqueue, 1, &m_oglSharedBuffer, 0, nullptr, nullptr);
+        clFinish(m_oclqueue);
+        throw std::runtime_error(
+            "OpenCL failed to run display kernel, error " + std::to_string(err));
+    }
+
+    err = clEnqueueReleaseGLObjects(
+        m_oclqueue, 1, &m_oglSharedBuffer, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        throw std::runtime_error(
+            "OpenCL failed to release the OpenGL buffer, error " +
+            std::to_string(err));
+    }
+    err = clFinish(m_oclqueue);
+    if (err != CL_SUCCESS) {
+        throw std::runtime_error(
+            "OpenCL failed while finishing interop commands, error " +
+            std::to_string(err));
+    }
+
 }
 
 void OpenCL_Renderer::buildOCLPrograms()
@@ -686,4 +1013,32 @@ void OpenCL_Renderer::buildOCLPrograms()
         throw std::runtime_error("Failed to create OpenCL sample_framebuffer, error " + std::to_string(err));
     }
 
+    m_ocl_ogldisplayKernel = clCreateKernel(m_oclprogram, "present_framebuffer", &err);
+    if (err != CL_SUCCESS || !m_ocl_ogldisplayKernel) {
+        m_ocl_ogldisplayKernel = nullptr;
+        clReleaseKernel(m_oclsampleKernel);
+        m_oclsampleKernel = nullptr;
+        clReleaseKernel(m_oclrenderKernel);
+        m_oclrenderKernel = nullptr;
+        clReleaseProgram(m_oclprogram);
+        m_oclprogram = nullptr;
+        throw std::runtime_error("Failed to create OpenCL present_framebuffer, error " + std::to_string(err));
+    }
+
+}
+
+void OpenCL_Renderer::setKernelArg(
+    cl_kernel kernel, 
+    cl_uint& argIndex,
+    size_t argSize, 
+    const void* argValue)
+{
+    const cl_int argumentError =
+        clSetKernelArg(kernel, argIndex++, argSize, argValue);
+    if (argumentError != CL_SUCCESS) {
+        throw std::runtime_error(
+            "OpenCL RenderScene failed to set kernel argument " +
+            std::to_string(argIndex - 1) + ", error " +
+            std::to_string(argumentError));
+    }
 }

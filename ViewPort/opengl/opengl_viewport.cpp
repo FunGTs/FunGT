@@ -21,6 +21,11 @@ void OpenGLViewPort::onAttach()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenBuffers(1, &m_pathTracePBO);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pathTracePBO);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 1280 * 720 * 4 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
 void OpenGLViewPort::onDetach()
@@ -28,6 +33,10 @@ void OpenGLViewPort::onDetach()
     if (m_pathTraceTexture != 0) {
         glDeleteTextures(1, &m_pathTraceTexture);
         m_pathTraceTexture = 0;
+    }
+    if (m_pathTracePBO != 0) {
+        glDeleteBuffers(1, &m_pathTracePBO);
+        m_pathTracePBO = 0;
     }
 }
 
@@ -60,11 +69,11 @@ void OpenGLViewPort::onUpdate()
 
     m_frameBuffer->unbind();
 
-    if (m_pathTraceMode && m_PathTraceFunc && m_currentSample < m_maxPreviewSamples) {
+    if (m_pathTraceMode && m_ActivePathTraceFunc && m_currentSample < m_maxPreviewSamples) {
         int width  = static_cast<int>(m_viewportSize.x);
         int height = static_cast<int>(m_viewportSize.y);
 
-        m_PathTraceFunc(width, height, m_currentSample);
+        m_ActivePathTraceFunc(width, height, m_currentSample);
         m_currentSample++;
 
         if (m_currentSample <= 5 || m_currentSample == m_maxPreviewSamples) {
@@ -92,28 +101,44 @@ void OpenGLViewPort::onImGuiRender()
 
     if (diffX > 1.0f || diffY > 1.0f) {
         if (viewportPanelSize.x > 32 && viewportPanelSize.y > 32) {
-            m_viewportSize    = viewportPanelSize;
-            pendingSize       = viewportPanelSize;
-            lastResizeRequest = currentTime;
-            pendingResize     = true;
+            const float pendingDiffX = std::abs(viewportPanelSize.x - pendingSize.x);
+            const float pendingDiffY = std::abs(viewportPanelSize.y - pendingSize.y);
+            if (!pendingResize || pendingDiffX > 1.0f || pendingDiffY > 1.0f) {
+                pendingSize       = viewportPanelSize;
+                lastResizeRequest = currentTime;
+                pendingResize     = true;
+            }
         }
     }
 
     bool isResizing = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
 
     if (pendingResize && !isResizing && (currentTime - lastResizeRequest) > 0.25) {
+        // Release the OpenCL wrapper before changing the GL texture storage.
+        if (m_PathTraceReleaseInteropFunc) {
+            m_PathTraceReleaseInteropFunc();
+        }
+
         FrameBuffSpec spec{
-            static_cast<unsigned int>(m_viewportSize.x),
-            static_cast<unsigned int>(m_viewportSize.y),
+            static_cast<unsigned int>(pendingSize.x),
+            static_cast<unsigned int>(pendingSize.y),
             1
         };
         m_resizeBuffer = FrameBuffer::create(spec);
         glBindTexture(GL_TEXTURE_2D, m_pathTraceTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F,
-            static_cast<int>(m_viewportSize.x),
-            static_cast<int>(m_viewportSize.y),
+            static_cast<int>(pendingSize.x),
+            static_cast<int>(pendingSize.y),
             0, GL_RGBA, GL_FLOAT, nullptr);
         glBindTexture(GL_TEXTURE_2D, 0);
+
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pathTracePBO);
+        glBufferData(GL_PIXEL_UNPACK_BUFFER,
+            static_cast<size_t>(pendingSize.x) * static_cast<size_t>(pendingSize.y) * 4 * sizeof(float),
+            nullptr, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+        m_viewportSize = pendingSize;
         m_currentSample = 0;
         pendingResize   = false;
     }
@@ -124,18 +149,37 @@ void OpenGLViewPort::onImGuiRender()
     else
         texID = m_frameBuffer->GetColorAttachmentRendererID();
 
-    if (m_pathTraceMode) {
-        ImGui::SetCursorPos(ImVec2(10, 30));
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f),
-            "RaySpace: %d/%d samples", m_currentSample, m_maxPreviewSamples);
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), " Using SYCL on iGPU");
-    }
-
+    const ImVec2 imagePosition = ImGui::GetCursorScreenPos();
     ImGui::Image((void*)(intptr_t)texID,
-        m_viewportSize,
+        viewportPanelSize,
         ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+    if (m_pathTraceMode) {
+        const ImU32 textColor = ImGui::ColorConvertFloat4ToU32(
+            ImVec4(1.0f, 0.8f, 0.0f, 1.0f));
+        auto* drawList = ImGui::GetWindowDrawList();
+        drawList->AddText(
+            ImVec2(imagePosition.x + 10.0f, imagePosition.y + 10.0f),
+            textColor,
+            ("RaySpace: " + std::to_string(m_currentSample) + "/" +
+                std::to_string(m_maxPreviewSamples) + " samples").c_str());
+        drawList->AddText(
+            ImVec2(imagePosition.x + 10.0f, imagePosition.y + 30.0f),
+            textColor,
+            ("Using " + ComputeRender::GetBackendName()).c_str());
+    }
 
     ImGui::End();
     ImGui::PopStyleColor();
     ImGui::PopStyleVar();
+}
+
+void OpenGLViewPort::copyPBOToTexture(int width, int height)
+{
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pathTracePBO);
+    glBindTexture(GL_TEXTURE_2D, m_pathTraceTexture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
+        GL_RGBA, GL_FLOAT, nullptr);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }

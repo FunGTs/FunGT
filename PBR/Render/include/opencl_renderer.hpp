@@ -1,8 +1,8 @@
 #if !defined(_OPENCL_RENDERER_H_)
 #define _OPENCL_RENDERER_H_
-
 #include <GL/glew.h>  // MUST be first!
 #include <GLFW/glfw3.h>
+#include <GL/glx.h>
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
 #include <CL/cl_platform.h>
@@ -60,6 +60,7 @@ class OpenCL_Renderer : public IComputeRenderer {
     cl_program m_oclprogram = nullptr;
     cl_kernel m_oclrenderKernel = nullptr;
     cl_kernel m_oclsampleKernel = nullptr;
+    cl_kernel m_ocl_ogldisplayKernel = nullptr;
     cl_mem m_texturesObj = nullptr;
     cl_mem m_textureDimensions = nullptr;
     std::size_t m_numTextures = 0;
@@ -67,6 +68,14 @@ class OpenCL_Renderer : public IComputeRenderer {
     OpenCLRaySpaceBuffer m_raySpaceBuffer;
     bool m_sceneUploaded = false;
 
+    //For OpenGL interop / progressive path tracer (PBO approach)
+    cl_mem m_oglSharedBuffer = nullptr;
+    GLuint m_oglBufferID = 0;
+    int m_oglBufferWidth = 0;
+    int m_oglBufferHeight = 0;
+    cl_mem m_oclAccumulationBuffer = nullptr;
+    int m_accumulationWidth = 0;
+    int m_accumulationHeight = 0;
     void prepareTextures();
     void setOpenCLTextures(
         const std::vector<uint64_t>& handles,
@@ -82,7 +91,7 @@ class OpenCL_Renderer : public IComputeRenderer {
         OpenCL_Renderer()= default;
         ~OpenCL_Renderer() override;
 
-        void initialize();
+        void initialize(bool useOpenGLInterop = false);
 
         IDeviceTexture& textures() override {
             if (!m_textureManager) {
@@ -104,7 +113,26 @@ class OpenCL_Renderer : public IComputeRenderer {
             int sampleOffset
         ) override;
 
+        //Maybe we need another render scene function 
+        //that works with OpenGL interop
+
+        void RenderSceneOpenGLInterop(
+            int width,
+            int height,
+            const std::vector<Triangle>& triangles,
+            const std::vector<BVHNode>& nodes,
+            const std::vector<Light>& lights,
+            const std::vector<int>& emissiveTriIndices,
+            const PBRCamera& camera,
+            int samplesPerPixel,
+            int sampleOffset,
+            GLuint glBufferID
+        );
+        void releaseOpenGLInteropResources() noexcept;
+        void invalidateScene() { m_sceneUploaded = false; }
+    private:
         void buildOCLPrograms();
+        void setKernelArg(cl_kernel kernel, cl_uint &argIndex,size_t argSize,const void* argValue);
 
 };
 

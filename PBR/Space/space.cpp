@@ -106,7 +106,7 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height,int sam
     return frameBuffer;
 }
 
-void Space::InitComputeRenderBackend()
+void Space::InitComputeRenderBackend(bool oglInterop)
 {
     if (!m_computeRenderer) {
         std::cout << "Error: Renderer not created!" << std::endl;
@@ -156,7 +156,7 @@ void Space::InitComputeRenderBackend()
         if (!openclRenderer) {
             throw std::runtime_error("OpenCL renderer was not created.");
         }
-        openclRenderer->initialize();
+        openclRenderer->initialize(oglInterop);
         break;
     }
 #endif
@@ -164,6 +164,46 @@ void Space::InitComputeRenderBackend()
     default:
         throw std::runtime_error("Unknown Compute API!");
     }
+}
+
+void Space::RenderOpenGLInterop(
+    int width,
+    int height,
+    int sampleOffset,
+    uint32_t glBufferID)
+{
+#ifdef FUNGT_USE_OPENCL
+    auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+    if (!openclRenderer) {
+        throw std::runtime_error(
+            "OpenGL interop requires the OpenCL renderer.");
+    }
+
+    openclRenderer->RenderSceneOpenGLInterop(
+        width,
+        height,
+        m_triangles,
+        m_bvh_nodes,
+        m_lights,
+        m_emissiveTriIndices,
+        m_camera,
+        m_samplesPerPixel,
+        sampleOffset,
+        glBufferID);
+#else
+    throw std::runtime_error(
+        "OpenCL support is not enabled.");
+#endif
+}
+
+void Space::ReleaseOpenGLInteropResources()
+{
+#ifdef FUNGT_USE_OPENCL
+    auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+    if (openclRenderer) {
+        openclRenderer->releaseOpenGLInteropResources();
+    }
+#endif
 }
 
 void Space::LoadModelToRender(const SimpleModel& Simplemodel)
@@ -358,6 +398,19 @@ void Space::loadLightsFromScene(const std::vector<SceneLight>& sceneLights)
         m_lights.push_back(Light(pos, intensity, type));
     }
 }
+
+void Space::invalidateScene()
+{
+#ifdef FUNGT_USE_OPENCL
+    if (ComputeRender::GetBackend() == Compute::Backend::OPENCL) {
+        auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+        if (openclRenderer) {
+            openclRenderer->invalidateScene();
+        }
+    }
+#endif
+}
+
 void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height)
 {
     std::vector<unsigned char> pixels(width * height * 3);
@@ -370,10 +423,14 @@ void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, in
 
             fungt::Vec3 color = framebuffer[srcIdx];
 
-            // Clamp and gamma correct
-            color.x = std::pow(std::clamp(color.x, 0.0f, 1.0f), 1.0f / 2.2f);
-            color.y = std::pow(std::clamp(color.y, 0.0f, 1.0f), 1.0f / 2.2f);
-            color.z = std::pow(std::clamp(color.z, 0.0f, 1.0f), 1.0f / 2.2f);
+            //if (Compute::Backend::OPENCL != ComputeRender::GetBackend()) {
+
+                // Clamp and gamma correct
+                color.x = std::pow(std::clamp(color.x, 0.0f, 1.0f), 1.0f / 2.2f);
+                color.y = std::pow(std::clamp(color.y, 0.0f, 1.0f), 1.0f / 2.2f);
+                color.z = std::pow(std::clamp(color.z, 0.0f, 1.0f), 1.0f / 2.2f);
+            //}
+
 
             pixels[dstIdx * 3 + 0] = static_cast<unsigned char>(255.99f * color.x);
             pixels[dstIdx * 3 + 1] = static_cast<unsigned char>(255.99f * color.y);
