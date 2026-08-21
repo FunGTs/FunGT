@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
+#include <array>
 
 #ifndef CL_MEM_BINDLESS_IMAGE_INTEL
 #define CL_MEM_BINDLESS_IMAGE_INTEL 0x10060
@@ -52,6 +53,7 @@ public:
     int getTextureCount() const override { return static_cast<int>(m_textures.size() ); };
     void cleanup() override;
     std::vector<cl_mem> getTextureObjects() const;
+    std::vector<std::array<cl_int, 2>> getTextureDimensions() const;
     const std::vector<uint64_t>& getBindlessHandles() const { return m_bindlessHandles; }
     bool isBindlessMode() const { return m_useBindless; }
     bool handlesAreDirty() const { return m_handlesDirty; }

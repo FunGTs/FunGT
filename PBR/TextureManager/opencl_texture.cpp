@@ -11,6 +11,7 @@ OpenCLTexture::OpenCLTexture(cl_context context, cl_platform_id platform, bool u
             throw std::runtime_error(
                 "OpenCLTexture: bindless image API is not available on the selected platform.");
         }
+        // No early dummy image - it interferes with bindless handle resolution
     }
     std::cout << "OpenCLTexture initialized (" << (m_useBindless ? "bindless" : "bound") << ")" << std::endl;
 }
@@ -94,7 +95,8 @@ int OpenCLTexture::loadTexture(const std::string& path)
     }
     m_pathToIndex[path] = idx;
     std::cout << "  textures size : " << m_textures.size() << std::endl;
-    std::cout << "  [OpenCL] Texture index: " << idx << std::endl;
+    std::cout << "  [OpenCL] Texture index: " << idx
+              << ", handle: " << ocltex.bindlessHandle << std::endl;
     return idx;
 }
 
@@ -105,6 +107,16 @@ std::vector<cl_mem> OpenCLTexture::getTextureObjects() const {
         objs.push_back(tex.image);
     }
     return objs;
+}
+
+std::vector<std::array<cl_int, 2>> OpenCLTexture::getTextureDimensions() const
+{
+    std::vector<std::array<cl_int, 2>> dimensions;
+    dimensions.reserve(m_textures.size());
+    for (const auto& texture : m_textures) {
+        dimensions.push_back({texture.width, texture.height});
+    }
+    return dimensions;
 }
 
 void OpenCLTexture::cleanup()
