@@ -179,6 +179,7 @@ void FunGT::set(const std::function<void()>& renderLambda){
                 } else if (sample == 0) {
                     m_progressiveTracer->updateCamera(
                         &m_camera, width, height);
+                    m_progressiveTracer->reloadLights(m_sceneManager);
                 }
 
                 m_progressiveTracer->renderSampleInterop(
@@ -189,16 +190,11 @@ void FunGT::set(const std::function<void()>& renderLambda){
                 auto* viewport = m_layerStack.get<ViewPort>();
                 if (!viewport) return;
 
-                if (!m_progressiveTracer->isInitialized()) {
-                    m_progressiveTracer->initialize(
-                        &m_camera, m_sceneManager, width, height);
-                } else if (sample == 0) {
-                    m_progressiveTracer->updateCamera(
-                        &m_camera, width, height);
+                if (sample == 0 || !m_progressiveTracer->isInitialized()) {
+                    m_progressiveTracer->initialize(&m_camera, m_sceneManager, width, height);
                 }
-
-                m_progressiveTracer->renderSample(
-                    sample, viewport->getPathTraceTexture());
+                //Render one Sample
+                m_progressiveTracer->renderSample(sample, viewport->getPathTraceTexture());
             });
         m_ViewPortLayer->setPathTraceReleaseInteropFunction([this]() {
             m_progressiveTracer->releaseOpenGLInteropResources();

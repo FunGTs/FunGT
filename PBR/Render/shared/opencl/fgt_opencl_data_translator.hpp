@@ -21,7 +21,6 @@ struct fgt_opencl_scene_data {
     std::vector<fgt_triangle_shading> triangle_shading;
     std::vector<fgt_material_data> materials;
     std::vector<fgt_bvh_node> bvh_nodes;
-    std::vector<fgt_light> lights;
 };
 
 inline fgt_vec3 translate_vec3(const fungt::Vec3& value)
@@ -168,11 +167,9 @@ inline fgt_rayspace_camera translate_rayspace_camera(const PBRCamera& camera)
         translate_vec4(camera.getBasisW())
     };
 }
-
 inline fgt_opencl_scene_data translate_scene_data(
     const std::vector<Triangle>& triangles,
-    const std::vector<BVHNode>& nodes,
-    const std::vector<Light>& lights)
+    const std::vector<BVHNode>& nodes)
 {
     fgt_opencl_scene_data result;
 
@@ -194,9 +191,14 @@ inline fgt_opencl_scene_data translate_scene_data(
         result.bvh_nodes.push_back(translate_bvh_node(node));
     }
 
-    result.lights.reserve(lights.size());
+    return result;
+}
+inline std::vector<fgt_light> load_scene_lights(const std::vector<Light>& lights) {
+
+    std::vector<fgt_light> result;
+    result.reserve(lights.size());
     for (const Light& light : lights) {
-        result.lights.push_back(translate_light(light));
+        result.push_back(translate_light(light));
     }
 
     return result;

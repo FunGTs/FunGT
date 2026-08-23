@@ -83,8 +83,8 @@ class OpenCL_Renderer : public IComputeRenderer {
     void uploadScene(
         const std::vector<Triangle>& triangles,
         const std::vector<BVHNode>& nodes,
-        const std::vector<Light>& lights,
         const std::vector<int>& emissiveTriIndices);
+    void loadSceneLigths(const std::vector<Light> &lights);
     void releaseRaySpaceBuffer(OpenCLRaySpaceBuffer& buffers) noexcept;
 
     public:

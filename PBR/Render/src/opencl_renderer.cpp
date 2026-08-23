@@ -267,7 +267,9 @@ std::vector<fungt::Vec3> OpenCL_Renderer::RenderScene(int width,
             "OpenCL RenderScene: kernel not built (no textures loaded?).");
     }
     if (!m_sceneUploaded) {
-        uploadScene(triangles, nodes, lights, emissiveTriIndices);
+        uploadScene(triangles, nodes, emissiveTriIndices);
+        loadSceneLigths(lights);
+        
     }
 
     const fgt_rayspace_camera cameraData =
@@ -458,7 +460,6 @@ std::vector<fungt::Vec3> OpenCL_Renderer::RenderScene(int width,
 void OpenCL_Renderer::uploadScene(
     const std::vector<Triangle>& triangles,
     const std::vector<BVHNode>& nodes,
-    const std::vector<Light>& lights,
     const std::vector<int>& emissiveTriIndices)
 {
     if (!m_oclcontext) {
@@ -467,7 +468,7 @@ void OpenCL_Renderer::uploadScene(
     }
 
     const fgt::opencl::fgt_opencl_scene_data sceneData =
-        fgt::opencl::translate_scene_data(triangles, nodes, lights);
+        fgt::opencl::translate_scene_data(triangles, nodes);
 
     std::cout << "[uploadScene] Materials texture indices: ";
     for (size_t i = 0; i < sceneData.materials.size(); ++i) {
@@ -485,7 +486,6 @@ void OpenCL_Renderer::uploadScene(
     newBuffers.numTriangles = sceneData.triangle_geometry.size();
     newBuffers.numMaterials = sceneData.materials.size();
     newBuffers.numBVHNodes = sceneData.bvh_nodes.size();
-    newBuffers.numLights = sceneData.lights.size();
     newBuffers.numEmissiveTriangles = emissiveIndices.size();
 
     cl_int err = CL_SUCCESS;
@@ -550,21 +550,6 @@ void OpenCL_Renderer::uploadScene(
         }
     }
 
-    if (!sceneData.lights.empty()) {
-        newBuffers.lights = clCreateBuffer(
-            m_oclcontext,
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            sceneData.lights.size() * sizeof(fgt_light),
-            const_cast<fgt_light*>(sceneData.lights.data()),
-            &err);
-        if (err != CL_SUCCESS || !newBuffers.lights) {
-            releaseRaySpaceBuffer(newBuffers);
-            throw std::runtime_error(
-                "uploadScene: failed to create light buffer, error " +
-                std::to_string(err));
-        }
-    }
-
     if (!emissiveIndices.empty()) {
         newBuffers.emissiveTriangles = clCreateBuffer(
             m_oclcontext,
@@ -587,8 +572,37 @@ void OpenCL_Renderer::uploadScene(
     std::cout << "OpenCL RaySpace scene uploaded: "
               << m_raySpaceBuffer.numTriangles << " triangles, "
               << m_raySpaceBuffer.numMaterials << " materials, "
-              << m_raySpaceBuffer.numBVHNodes << " BVH nodes, "
-              << m_raySpaceBuffer.numLights << " lights." << std::endl;
+        << m_raySpaceBuffer.numBVHNodes << " BVH nodes, " << std::endl;
+}
+
+void OpenCL_Renderer::loadSceneLigths(const std::vector<Light> &lights)
+{
+    cl_int err = CL_SUCCESS;
+    std::vector<fgt_light> scene_lights = fgt::opencl::load_scene_lights(lights);
+
+    if (m_raySpaceBuffer.lights) {
+        clReleaseMemObject(m_raySpaceBuffer.lights);
+        m_raySpaceBuffer.lights = nullptr;
+    }
+
+    m_raySpaceBuffer.numLights = scene_lights.size();
+    if (!scene_lights.empty()) {
+        m_raySpaceBuffer.lights = clCreateBuffer(
+            m_oclcontext,
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            scene_lights.size() * sizeof(fgt_light),
+            const_cast<fgt_light*>(scene_lights.data()),
+            &err);
+        if (err != CL_SUCCESS || !m_raySpaceBuffer.lights) {
+            throw std::runtime_error(
+                "loadSceneLigths: failed to create light buffer, error " +
+                std::to_string(err));
+        }
+    }   
+    std::cout << " Lights Loaded to the Scene : " << m_raySpaceBuffer.numLights<< std::endl;
+    if (!scene_lights.empty()) {
+        std::cout << " [DEBUG] Color intensity : " << scene_lights[0].intensity.x << " , " << scene_lights[0].intensity.y << " ," << scene_lights[0].intensity.z << std::endl;
+    }
 }
 
 void OpenCL_Renderer::releaseRaySpaceBuffer(
@@ -712,9 +726,16 @@ void OpenCL_Renderer::RenderSceneOpenGLInterop(int width,
     prepareTextures();
 
     if (!m_sceneUploaded) {
-        uploadScene(triangles, nodes, lights, emissiveTriIndices);
+        uploadScene(triangles, nodes, emissiveTriIndices);
         clFinish(m_oclqueue);
     }
+
+    // Update lights when a new accumulation starts.
+    if (sampleOffset == 0 || !m_raySpaceBuffer.lights) {
+        loadSceneLigths(lights);
+        clFinish(m_oclqueue);
+    }
+
 
     if (!m_oglSharedBuffer ||
         m_oglBufferID != glBufferID ||

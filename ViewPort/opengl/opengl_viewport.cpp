@@ -101,13 +101,10 @@ void OpenGLViewPort::onImGuiRender()
 
     if (diffX > 1.0f || diffY > 1.0f) {
         if (viewportPanelSize.x > 32 && viewportPanelSize.y > 32) {
-            const float pendingDiffX = std::abs(viewportPanelSize.x - pendingSize.x);
-            const float pendingDiffY = std::abs(viewportPanelSize.y - pendingSize.y);
-            if (!pendingResize || pendingDiffX > 1.0f || pendingDiffY > 1.0f) {
-                pendingSize       = viewportPanelSize;
-                lastResizeRequest = currentTime;
-                pendingResize     = true;
-            }
+            m_viewportSize = viewportPanelSize;
+            pendingSize = viewportPanelSize;
+            lastResizeRequest = currentTime;
+            pendingResize = true;
         }
     }
 
@@ -120,25 +117,24 @@ void OpenGLViewPort::onImGuiRender()
         }
 
         FrameBuffSpec spec{
-            static_cast<unsigned int>(pendingSize.x),
-            static_cast<unsigned int>(pendingSize.y),
+            static_cast<unsigned int>(m_viewportSize.x),
+            static_cast<unsigned int>(m_viewportSize.y),
             1
         };
         m_resizeBuffer = FrameBuffer::create(spec);
         glBindTexture(GL_TEXTURE_2D, m_pathTraceTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F,
-            static_cast<int>(pendingSize.x),
-            static_cast<int>(pendingSize.y),
+            static_cast<int>(m_viewportSize.x),
+            static_cast<int>(m_viewportSize.y),
             0, GL_RGBA, GL_FLOAT, nullptr);
         glBindTexture(GL_TEXTURE_2D, 0);
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_pathTracePBO);
         glBufferData(GL_PIXEL_UNPACK_BUFFER,
-            static_cast<size_t>(pendingSize.x) * static_cast<size_t>(pendingSize.y) * 4 * sizeof(float),
+            static_cast<size_t>(m_viewportSize.x) * static_cast<size_t>(m_viewportSize.y) * 4 * sizeof(float),
             nullptr, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-        m_viewportSize = pendingSize;
         m_currentSample = 0;
         pendingResize   = false;
     }
