@@ -10,6 +10,7 @@ public:
     ~OpenGLProgressivePathTracer() = default;
 
     void renderSample(int sample, uint32_t targetTexture) override;
+    void renderSampleInterop(int sample, uint32_t targetPBO) override;
 };
 
 #endif // OPENGL_PROGRESSIVE_PATH_TRACER_HPP

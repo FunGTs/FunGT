@@ -45,6 +45,8 @@ public:
                 ImGui::Spacing();
                 renderBackendSection("SYCL Devices", fungt::GPUBackend::SYCL);
                 ImGui::Spacing();
+                renderBackendSection("OpenCL Devices", fungt::GPUBackend::OPENCL);
+                ImGui::Spacing();
                 renderBackendSection("OpenGL Fallback", fungt::GPUBackend::OPENGL);
             }
         }

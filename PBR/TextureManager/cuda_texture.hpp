@@ -20,6 +20,7 @@ class CUDATexture : public IDeviceTexture {
 private:
     std::vector<CUDATextureData> textures;
     std::map<std::string, int> pathToIndex;  // Cache: path -> index
+    bool m_handlesDirty = false;
 
 public:
     CUDATexture();
@@ -29,6 +30,8 @@ public:
     int getTextureCount() const override;
     void cleanup() override;
     std::vector<cudaTextureObject_t> getTextureObjects();
+    bool handlesAreDirty() const { return m_handlesDirty; }
+    void markHandlesClean() { m_handlesDirty = false; }
 };
 
 

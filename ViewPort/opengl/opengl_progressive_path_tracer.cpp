@@ -40,3 +40,18 @@ void OpenGLProgressivePathTracer::renderSample(int sample, uint32_t targetTextur
         GL_RGBA, GL_FLOAT, gammaCorrected.data());
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+void OpenGLProgressivePathTracer::renderSampleInterop(int sample, uint32_t targetPBO)
+{
+    if (!m_initialized || !m_space) {
+        std::cerr << "Path tracer not initialized!" << std::endl;
+        return;
+    }
+
+    m_space->setSamples(1);
+    m_space->RenderOpenGLInterop(
+        m_width,
+        m_height,
+        sample,
+        targetPBO);
+}

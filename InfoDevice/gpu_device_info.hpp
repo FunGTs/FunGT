@@ -13,6 +13,7 @@ namespace fungt {
     enum class GPUBackend {
         CUDA,
         SYCL,
+        OPENCL,
         OPENGL  // Fallback
     };
 
@@ -40,6 +41,7 @@ namespace fungt {
             switch (backend) {
             case GPUBackend::CUDA:   return "CUDA";
             case GPUBackend::SYCL:   return "SYCL";
+            case GPUBackend::OPENCL: return "OpenCL";
             case GPUBackend::OPENGL: return "OpenGL";
             default:                 return "Unknown";
             }

@@ -22,16 +22,45 @@ using cudaTextureObject_t = unsigned long long;
 
 #include "PBR/BVH/bvh_node.hpp"
 #include "PBR/Light/light.hpp"
+#include "PBR/TextureManager/cuda_texture.hpp"
 
 #define CUDA_CHECK(err) do { cudaError_t e = (err); if (e != cudaSuccess) { \
     std::cerr << "CUDA error: " << cudaGetErrorString(e) << " at " << __FILE__ << ":" << __LINE__ << std::endl; exit(1); }} while(0)
 
 class CUDA_Renderer : public IComputeRenderer{
-    
+    CUDATexture m_textures;
     cudaTextureObject_t* m_textureObj= nullptr;
     int m_numTextures = 0;
+
+    void prepareTextures() {
+        if (m_textures.handlesAreDirty()) {
+            setCudaTextureObjects(m_textures.getTextureObjects());
+            m_textures.markHandlesClean();
+        }
+    }
+
+    void setCudaTextureObjects(const std::vector<cudaTextureObject_t>& textureObj) {
+        std::cout<<"*** SETTING CUDA TEXTURE OBJECTS*** "<<std::endl;
+        if (m_textureObj) {
+            cudaFree(m_textureObj);
+            m_textureObj = nullptr;
+        }
+        m_numTextures = textureObj.size();
+        std::cout << "*** NUM CUDA TEXTURE OBJECTS*** " << m_numTextures << std::endl;
+        if(m_numTextures>0){
+            CUDA_CHECK(cudaMalloc(&m_textureObj,
+                m_numTextures * sizeof(cudaTextureObject_t)));
+            CUDA_CHECK(cudaMemcpy(m_textureObj,
+                textureObj.data(),
+                m_numTextures * sizeof(cudaTextureObject_t),
+                cudaMemcpyHostToDevice));
+            std::cout << "  Uploaded " << m_numTextures << " textures to GPU" << std::endl;
+        }
+    }
+
     public: 
         CUDA_Renderer() = default;
+        IDeviceTexture& textures() override { return m_textures; }
 
         std::vector<fungt::Vec3> RenderScene(
             int width, 
@@ -44,31 +73,6 @@ class CUDA_Renderer : public IComputeRenderer{
             int samplesPerPixel,
             int sampleOffset
         );
-        void setCudaTextureObjects(const std::vector<cudaTextureObject_t>& textureObj) {
-            std::cout<<"*** SETTING CUDA TEXTURE OBJECTS*** "<<std::endl;
-            // Free old textures
-            if (m_textureObj) {
-                cudaFree(m_textureObj);
-                m_textureObj = nullptr;
-            }
-            m_numTextures = textureObj.size();
-            std::cout << "*** NUM CUDA TEXTURE OBJECTS*** " << m_numTextures << std::endl;
-            if(m_numTextures>0){
-                // Allocate GPU memory
-                CUDA_CHECK(cudaMalloc(&m_textureObj,
-                    m_numTextures * sizeof(cudaTextureObject_t)));
-
-                // Copy to GPU
-                CUDA_CHECK(cudaMemcpy(m_textureObj,
-                    textureObj.data(),
-                    m_numTextures * sizeof(cudaTextureObject_t),
-                    cudaMemcpyHostToDevice));
-
-                std::cout << "  Uploaded " << m_numTextures << " textures to GPU" << std::endl;
-
-            }
-
-        }
         ~CUDA_Renderer(){
             // Cleanup device textures
             if (m_textureObj) {

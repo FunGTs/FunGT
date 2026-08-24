@@ -17,10 +17,9 @@ std::unique_ptr<ProgressivePathTracer> ProgressivePathTracer::create()
 
 void ProgressivePathTracer::initialize(Camera* viewportCam,
     std::shared_ptr<SceneManager> sceneManager,
-    int width, int height)
+    int width, int height, bool ogl_interop)
 {
     std::cout << "Initializing progressive path tracer: " << width << "x" << height << std::endl;
-    ComputeRender::SetBackend(Compute::Backend::SYCL);
     std::cout << "Using backend: " << ComputeRender::GetBackendName() << std::endl;
     m_width = width;
     m_height = height;
@@ -42,7 +41,7 @@ void ProgressivePathTracer::initialize(Camera* viewportCam,
 
     PBRCamera pbrCam(pbrPos, pbrLookAt, pbrUp, fov, aspect);
     m_space = std::make_unique<Space>(pbrCam);
-    m_space->InitComputeRenderBackend();
+    m_space->InitComputeRenderBackend(ogl_interop);
     m_space->loadLightsFromScene(sceneManager->getLights());
 
     const auto& objects = sceneManager->getRenderable();
@@ -81,4 +80,48 @@ void ProgressivePathTracer::reset()
 {
     std::fill(m_accumBuffer.begin(), m_accumBuffer.end(), 0.0f);
     m_initialized = false;
+}
+
+void ProgressivePathTracer::updateCamera(
+    Camera* viewportCam,
+    int width,
+    int height)
+{
+    if (!m_space || !viewportCam || width <= 0 || height <= 0) {
+        return;
+    }
+
+    const glm::vec3 position = viewportCam->getPosition();
+    const glm::vec3 lookAt = position + viewportCam->getFront();
+    const glm::vec3 up = viewportCam->getUp();
+
+    m_width = width;
+    m_height = height;
+    m_space->setCamera(PBRCamera(
+        fungt::Vec3(position.x, position.y, position.z),
+        fungt::Vec3(lookAt.x, lookAt.y, lookAt.z),
+        fungt::Vec3(up.x, up.y, up.z),
+        viewportCam->getFOV(),
+        static_cast<float>(width) / static_cast<float>(height)));
+}
+
+void ProgressivePathTracer::reloadLights(std::shared_ptr<SceneManager> sceneManager)
+{
+    if (m_space && sceneManager) {
+        m_space->loadLightsFromScene(sceneManager->getLights());
+    }
+}
+
+void ProgressivePathTracer::reloadSceneShading(std::shared_ptr<SceneManager> sceneManager)
+{
+    if (m_space && sceneManager) {
+        m_space->loadShadingFromScene(sceneManager->getRenderable());
+    }
+}
+
+void ProgressivePathTracer::releaseOpenGLInteropResources()
+{
+    if (m_space) {
+        m_space->ReleaseOpenGLInteropResources();
+    }
 }

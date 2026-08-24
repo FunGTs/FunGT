@@ -65,6 +65,7 @@
             int index = textures.size();
             textures.push_back(std::move(texData));
             pathToIndex[path] = index;
+            m_handlesDirty = true;
 
             stbi_image_free(data);
 
@@ -120,4 +121,5 @@
 
         textures.clear();
         pathToIndex.clear();
+        m_handlesDirty = true;
     }

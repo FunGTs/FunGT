@@ -202,6 +202,8 @@ std::vector<fungt::Vec3>  CUDA_Renderer::RenderScene(
     int samplesPerPixel,
     int sampleOffset
 ) {
+    prepareTextures();
+
     std::vector<fungt::Vec3> framebuffer;
     const int imageSize = width * height;
     framebuffer.resize(imageSize);

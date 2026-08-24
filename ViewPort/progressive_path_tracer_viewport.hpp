@@ -27,9 +27,14 @@ public:
 
     void initialize(Camera* viewportCam,
         std::shared_ptr<SceneManager> sceneManager,
-        int width, int height);
+        int width, int height, bool ogl_interop = false);
+    void updateCamera(Camera* viewportCam, int width, int height);
+    void reloadLights(std::shared_ptr<SceneManager> sceneManager);
+    void reloadSceneShading(std::shared_ptr<SceneManager> sceneManager);
 
     virtual void renderSample(int sample, uint32_t targetTexture) = 0;
+    virtual void renderSampleInterop(int sample, uint32_t targetPBO) = 0;
+    void releaseOpenGLInteropResources();
 
     void reset();
 

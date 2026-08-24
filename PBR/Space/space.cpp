@@ -3,11 +3,12 @@
 // Conditional includes - only include backend headers when enabled
 #ifdef FUNGT_USE_CUDA
 #include "PBR/Render/include/cuda_renderer.hpp"
-#include "PBR/TextureManager/cuda_texture.hpp"
 #endif
 #ifdef FUNGT_USE_SYCL
 #include "PBR/Render/include/sycl_renderer.hpp"
-#include "PBR/TextureManager/sycl_texture.hpp"
+#endif
+#ifdef FUNGT_USE_OPENCL
+#include "PBR/Render/include/opencl_renderer.hpp"
 #endif
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../../vendor/stb_image/stb_image_write.h"
@@ -21,6 +22,7 @@ Space::Space(){
     std::cout << "  CUDA = " << static_cast<int>(Compute::Backend::CUDA) << std::endl;
     std::cout << "  SYCL = " << static_cast<int>(Compute::Backend::SYCL) << std::endl;
     std::cout << "  CPU = " << static_cast<int>(Compute::Backend::CPU) << std::endl;
+    std::cout << "  OPENCL = " << static_cast<int>(Compute::Backend::OPENCL) << std::endl;
     switch (ComputeRender::GetBackend())
     {
     case Compute::Backend::CPU:
@@ -28,7 +30,6 @@ Space::Space(){
         /* code */
         std::cout << "Using CPU to render scene" << std::endl;
         m_computeRenderer = std::make_unique<CPU_Renderer>();
-        m_textureManager = std::make_shared<CPUTexture>();
         break;
     }
 #ifdef FUNGT_USE_CUDA
@@ -48,6 +49,14 @@ Space::Space(){
         std::cout << "Using SYCL to render scene" << std::endl;
         m_computeRenderer = std::make_unique<SYCL_Renderer>();
       
+        break;
+    }
+#endif
+#ifdef FUNGT_USE_OPENCL
+    case Compute::Backend::OPENCL:
+    {
+        std::cout << "Using OpenCL to render scene" << std::endl;
+        m_computeRenderer = std::make_unique<OpenCL_Renderer>();
         break;
     }
 #endif
@@ -97,58 +106,7 @@ std::vector<fungt::Vec3> Space::Render(const int width, const int height,int sam
     return frameBuffer;
 }
 
-void Space::sendTexturesToRender()
-{
-    if (!m_computeRenderer) {
-        std::cout << "Error in sendTexturesToRender :  computeRenderer pointer is null" <<std::endl;
-        return;
-    }
-    switch (ComputeRender::GetBackend())
-    {
-    case Compute::Backend::CPU:
-        std::cout << "Sending CPU Textures" << std::endl;
-        
-        break;
-
-#ifdef FUNGT_USE_CUDA
-    case Compute::Backend::CUDA:
-    {
-        std::cout << "Sending CUDA Textures" << std::endl;
-        
-        // Set textures on renderer
-        CUDA_Renderer* cudaRenderer = dynamic_cast<CUDA_Renderer*>(m_computeRenderer.get());
-        if (cudaRenderer && m_textureManager) {
-            auto cudaTexMgr = dynamic_cast<CUDATexture*>(m_textureManager.get());
-            if (cudaTexMgr)
-                cudaRenderer->setCudaTextureObjects(cudaTexMgr->getTextureObjects());
-        }
-        break;
-    }
-#endif
-
-#ifdef FUNGT_USE_SYCL
-    case Compute::Backend::SYCL_CUDA:
-    case Compute::Backend::SYCL:
-    {
-        std::cout << "Sending SYCL Textures" << std::endl;
-        SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
-        if (syclRenderer && m_textureManager) { 
-            // Set textures on renderer
-            auto syclTexMgr = dynamic_cast<SYCLTexture*>(m_textureManager.get());
-            if (syclTexMgr)
-                syclRenderer->setSyclTextureHandles(syclTexMgr->getImageHandles());
-        }
-        break;
-    }
-#endif
-
-    default:
-        throw std::runtime_error("Unknown Compute API!");
-    }
-
-}
-
-void Space::InitComputeRenderBackend()
+void Space::InitComputeRenderBackend(bool oglInterop)
 {
     if (!m_computeRenderer) {
         std::cout << "Error: Renderer not created!" << std::endl;
@@ -159,15 +117,12 @@ void Space::InitComputeRenderBackend()
     {
     case Compute::Backend::CPU:
         std::cout << "Initializing CPU backend" << std::endl;
-        m_textureManager = std::make_shared<CPUTexture>();
         break;
 
 #ifdef FUNGT_USE_CUDA
     case Compute::Backend::CUDA:
     {
         std::cout << "Initializing CUDA backend" << std::endl;
-        m_textureManager = std::make_shared<CUDATexture>();
-
         break;
     }
 #endif
@@ -179,7 +134,6 @@ void Space::InitComputeRenderBackend()
         SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
         if (syclRenderer) {
             syclRenderer->createQueue("intel_queue", flib::vendor::INTEL, flib::device::GPU, flib::backend::LEVEL_ZERO);
-            m_textureManager = std::make_shared<SYCLTexture>(syclRenderer->getQueue());
         }
         break;
     }
@@ -189,8 +143,20 @@ void Space::InitComputeRenderBackend()
         SYCL_Renderer* syclRenderer = dynamic_cast<SYCL_Renderer*>(m_computeRenderer.get());
         if (syclRenderer) {
             syclRenderer->createQueue("nvidia_queue", flib::vendor::NVIDIA, flib::device::GPU, flib::backend::CUDA);
-            m_textureManager = std::make_shared<SYCLTexture>(syclRenderer->getQueue());
         }
+        break;
+    }
+#endif
+
+#ifdef FUNGT_USE_OPENCL
+    case Compute::Backend::OPENCL:
+    {
+        std::cout << "Initializing OpenCL backend" << std::endl;
+        auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+        if (!openclRenderer) {
+            throw std::runtime_error("OpenCL renderer was not created.");
+        }
+        openclRenderer->initialize(oglInterop);
         break;
     }
 #endif
@@ -198,6 +164,48 @@ void Space::InitComputeRenderBackend()
     default:
         throw std::runtime_error("Unknown Compute API!");
     }
+}
+
+void Space::RenderOpenGLInterop(
+    int width,
+    int height,
+    int sampleOffset,
+    uint32_t glBufferID)
+{
+#ifdef FUNGT_USE_OPENCL
+    auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+    if (!openclRenderer) {
+        throw std::runtime_error(
+            "OpenGL interop requires the OpenCL renderer.");
+    }
+
+    openclRenderer->RenderSceneOpenGLInterop(
+        width,
+        height,
+        m_triangles,
+        m_bvh_nodes,
+        m_lights,
+        m_emissiveTriIndices,
+        m_camera,
+        m_samplesPerPixel,
+        sampleOffset,
+        glBufferID,
+        m_sceneShadingDirty);
+    m_sceneShadingDirty = false;
+#else
+    throw std::runtime_error(
+        "OpenCL support is not enabled.");
+#endif
+}
+
+void Space::ReleaseOpenGLInteropResources()
+{
+#ifdef FUNGT_USE_OPENCL
+    auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+    if (openclRenderer) {
+        openclRenderer->releaseOpenGLInteropResources();
+    }
+#endif
 }
 
 void Space::LoadModelToRender(const SimpleModel& Simplemodel)
@@ -238,10 +246,10 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
         global_material.reflectance = 0.05f;
         global_material.emission = 0.0f;
         global_material.baseColorTexIdx = -1;
-        if (!textures.empty() && m_textureManager != nullptr) {
+        if (!textures.empty()) {
             std::string texPath = textures[0].getPath();
             std::cout << "  Loading texture: " << texPath << std::endl;
-            global_material.baseColorTexIdx = m_textureManager->loadTexture(texPath);
+            global_material.baseColorTexIdx = m_computeRenderer->textures().loadTexture(texPath);
             std::cout << "  Assigned texture index: " << global_material.baseColorTexIdx << std::endl;
         }
         else {
@@ -304,8 +312,6 @@ void Space::LoadModelToRender(const SimpleModel& Simplemodel)
         std::cout << "  Metallic: " << global_material.metallic << std::endl;
     }
 
-
-    sendTexturesToRender();
 }
 void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
     auto primitive = geometry.getPrimitive();
@@ -324,10 +330,10 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
 
     std::cout << "Loading geometry with " << indices.size() / 3 << " triangles" << std::endl;
     int baseColorTexId = -1;
-    if (geometry.isTexturized() && m_textureManager != nullptr) {
+    if (geometry.isTexturized()) {
         std::string texPath = constPrimitive->texture.getPath();
         std::cout << "  Loading texture: " << texPath << std::endl;
-        baseColorTexId = m_textureManager->loadTexture(texPath);
+        baseColorTexId = m_computeRenderer->textures().loadTexture(texPath);
     }
     else {
         std::cout << "  No texture (using base color)" << std::endl;
@@ -375,7 +381,6 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
     }
 
     std::cout << "Geometry loaded. Total triangles in scene: " << m_triangles.size() << std::endl;
-    sendTexturesToRender();
 }
 void Space::loadLightsFromScene(const std::vector<SceneLight>& sceneLights)
 {
@@ -395,6 +400,114 @@ void Space::loadLightsFromScene(const std::vector<SceneLight>& sceneLights)
         m_lights.push_back(Light(pos, intensity, type));
     }
 }
+
+void Space::loadShadingFromScene(const std::vector<std::shared_ptr<Renderable>>& renderables)
+{
+    std::vector<MaterialData> sceneMaterials;
+    sceneMaterials.reserve(m_triangles.size());
+
+    for (const auto& obj : renderables) {
+        auto simpleModel = std::dynamic_pointer_cast<SimpleModel>(obj);
+        if (simpleModel) {
+            const auto& meshes = simpleModel->getModel().getMeshes();
+            for (const auto& meshPtr : meshes) {
+                MaterialData material;
+                material.baseColor[0] = 0.922f;
+                material.baseColor[1] = 0.467f;
+                material.baseColor[2] = 0.882f;
+                material.metallic = 0.0f;
+                material.roughness = 0.5f;
+                material.reflectance = 0.05f;
+                material.emission = 0.0f;
+                material.baseColorTexIdx = -1;
+
+                if (!meshPtr->m_texture.empty()) {
+                    material.baseColorTexIdx =
+                        m_computeRenderer->textures().loadTexture(meshPtr->m_texture[0].getPath());
+                }
+
+                if (!meshPtr->m_material.empty()) {
+                    const auto& source = meshPtr->m_material[0];
+                    material.baseColor[0] = source.m_baseColor.x;
+                    material.baseColor[1] = source.m_baseColor.y;
+                    material.baseColor[2] = source.m_baseColor.z;
+                    material.metallic = source.m_metallic;
+                    material.roughness = source.m_roughness;
+                    material.reflectance = source.m_reflectance;
+                    material.emission = source.m_emission;
+                }
+
+                const std::size_t triangleCount = meshPtr->m_index.size() / 3;
+                sceneMaterials.insert(sceneMaterials.end(), triangleCount, material);
+            }
+            continue;
+        }
+
+        auto simpleGeometry = std::dynamic_pointer_cast<SimpleGeometry>(obj);
+        if (simpleGeometry) {
+            auto primitive = simpleGeometry->getPrimitive();
+            if (!primitive) {
+                continue;
+            }
+            const Primitive* constPrimitive = primitive.get();
+            const std::vector<unsigned int>& indices = constPrimitive->getIndices();
+
+            MaterialData material;
+            const auto& source = simpleGeometry->getMaterial();
+            material.baseColor[0] = source.baseColor.x;
+            material.baseColor[1] = source.baseColor.y;
+            material.baseColor[2] = source.baseColor.z;
+            material.metallic = source.metallic;
+            material.roughness = source.roughness;
+            material.reflectance = 0.05f;
+            material.emission = 0.0f;
+            material.baseColorTexIdx = -1;
+
+            if (simpleGeometry->isTexturized()) {
+                material.baseColorTexIdx =
+                    m_computeRenderer->textures().loadTexture(constPrimitive->texture.getPath());
+            }
+
+            const std::size_t triangleCount = indices.size() / 3;
+            sceneMaterials.insert(sceneMaterials.end(), triangleCount, material);
+        }
+    }
+
+    if (sceneMaterials.size() != m_triangles.size()) {
+        std::cerr << "Space::loadShadingFromScene() triangle count mismatch: "
+                  << sceneMaterials.size() << " scene materials for "
+                  << m_triangles.size() << " triangles" << std::endl;
+        return;
+    }
+
+    for (std::size_t i = 0; i < m_triangles.size(); ++i) {
+        const std::size_t sourceIndex =
+            m_bvh_indices.empty() ? i : static_cast<std::size_t>(m_bvh_indices[i]);
+        m_triangles[i].material = sceneMaterials[sourceIndex];
+    }
+
+    m_emissiveTriIndices.clear();
+    for (std::size_t i = 0; i < m_triangles.size(); ++i) {
+        if (m_triangles[i].material.emission > 0.0f) {
+            m_emissiveTriIndices.push_back(static_cast<int>(i));
+        }
+    }
+
+    m_sceneShadingDirty = true;
+}
+
+void Space::invalidateScene()
+{
+#ifdef FUNGT_USE_OPENCL
+    if (ComputeRender::GetBackend() == Compute::Backend::OPENCL) {
+        auto* openclRenderer = dynamic_cast<OpenCL_Renderer*>(m_computeRenderer.get());
+        if (openclRenderer) {
+            openclRenderer->invalidateScene();
+        }
+    }
+#endif
+}
+
 void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height)
 {
     std::vector<unsigned char> pixels(width * height * 3);
@@ -407,10 +520,14 @@ void Space::SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, in
 
             fungt::Vec3 color = framebuffer[srcIdx];
 
-            // Clamp and gamma correct
-            color.x = std::pow(std::clamp(color.x, 0.0f, 1.0f), 1.0f / 2.2f);
-            color.y = std::pow(std::clamp(color.y, 0.0f, 1.0f), 1.0f / 2.2f);
-            color.z = std::pow(std::clamp(color.z, 0.0f, 1.0f), 1.0f / 2.2f);
+            //if (Compute::Backend::OPENCL != ComputeRender::GetBackend()) {
+
+                // Clamp and gamma correct
+                color.x = std::pow(std::clamp(color.x, 0.0f, 1.0f), 1.0f / 2.2f);
+                color.y = std::pow(std::clamp(color.y, 0.0f, 1.0f), 1.0f / 2.2f);
+                color.z = std::pow(std::clamp(color.z, 0.0f, 1.0f), 1.0f / 2.2f);
+            //}
+
 
             pixels[dstIdx * 3 + 0] = static_cast<unsigned char>(255.99f * color.x);
             pixels[dstIdx * 3 + 1] = static_cast<unsigned char>(255.99f * color.y);
@@ -474,5 +591,3 @@ void Space::setSamples(int numOfSamples)
 {
     m_samplesPerPixel = numOfSamples;
 }
-
-

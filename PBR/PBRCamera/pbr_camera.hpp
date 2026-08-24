@@ -20,6 +20,9 @@ public:
         lowerLeftCorner = fungt::Vec3(-2, -1.5, -1);
         horizontal = fungt::Vec3(4, 0, 0);
         vertical = fungt::Vec3(0, 3, 0);
+        u = fungt::Vec3(1, 0, 0);
+        v = fungt::Vec3(0, 1, 0);
+        w = fungt::Vec3(0, 0, 1);
         lensRadius = 0;
     }
 
@@ -84,7 +87,20 @@ public:
         horizontal = fungt::Vec3(viewportWidth, 0, 0);
         vertical = fungt::Vec3(0, viewportHeight, 0);
         lowerLeftCorner = origin - horizontal / 2 - vertical / 2 - fungt::Vec3(0, 0, focalLength);
+        u = fungt::Vec3(1, 0, 0);
+        v = fungt::Vec3(0, 1, 0);
+        w = fungt::Vec3(0, 0, 1);
+        lensRadius = 0.0f;
     }
+
+    fgt_device const fungt::Vec3& getOrigin() const { return origin; }
+    fgt_device const fungt::Vec3& getLowerLeftCorner() const { return lowerLeftCorner; }
+    fgt_device const fungt::Vec3& getHorizontal() const { return horizontal; }
+    fgt_device const fungt::Vec3& getVertical() const { return vertical; }
+    fgt_device const fungt::Vec3& getBasisU() const { return u; }
+    fgt_device const fungt::Vec3& getBasisV() const { return v; }
+    fgt_device const fungt::Vec3& getBasisW() const { return w; }
+    fgt_device float getLensRadius() const { return lensRadius; }
 
     // Get ray (with optional depth of field)
     fgt_device fungt::Ray getRay(float u, float v) const {

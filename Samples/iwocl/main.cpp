@@ -9,7 +9,7 @@ int main() {
     //Path to your models:
     ModelPaths iwocl;
 
-    iwocl.path = getAssetPath("demo_assets/iwocl/iwocl.obj");
+    iwocl.path = getAssetPath("assets_local/opencl_logo2/scene.gltf");
     //Backend:
 
     DisplayGraphics::SetBackend(Backend::OpenGL);
@@ -25,7 +25,7 @@ int main() {
     // Creates an animation object
     FunGTSModel iwocl_model = SimpleModel::create();
     iwocl_model->load(iwocl);
-    iwocl_model->position(0.f, 0.f, 0.f);
+    iwocl_model->position(0.f, 5.f, 0.f);
     iwocl_model->rotation(0.f, 0.f, 0.f);
     iwocl_model->scale(5.0);
     
