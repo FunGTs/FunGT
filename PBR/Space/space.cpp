@@ -189,7 +189,9 @@ void Space::RenderOpenGLInterop(
         m_camera,
         m_samplesPerPixel,
         sampleOffset,
-        glBufferID);
+        glBufferID,
+        m_sceneShadingDirty);
+    m_sceneShadingDirty = false;
 #else
     throw std::runtime_error(
         "OpenCL support is not enabled.");
@@ -397,6 +399,101 @@ void Space::loadLightsFromScene(const std::vector<SceneLight>& sceneLights)
 
         m_lights.push_back(Light(pos, intensity, type));
     }
+}
+
+void Space::loadShadingFromScene(const std::vector<std::shared_ptr<Renderable>>& renderables)
+{
+    std::vector<MaterialData> sceneMaterials;
+    sceneMaterials.reserve(m_triangles.size());
+
+    for (const auto& obj : renderables) {
+        auto simpleModel = std::dynamic_pointer_cast<SimpleModel>(obj);
+        if (simpleModel) {
+            const auto& meshes = simpleModel->getModel().getMeshes();
+            for (const auto& meshPtr : meshes) {
+                MaterialData material;
+                material.baseColor[0] = 0.922f;
+                material.baseColor[1] = 0.467f;
+                material.baseColor[2] = 0.882f;
+                material.metallic = 0.0f;
+                material.roughness = 0.5f;
+                material.reflectance = 0.05f;
+                material.emission = 0.0f;
+                material.baseColorTexIdx = -1;
+
+                if (!meshPtr->m_texture.empty()) {
+                    material.baseColorTexIdx =
+                        m_computeRenderer->textures().loadTexture(meshPtr->m_texture[0].getPath());
+                }
+
+                if (!meshPtr->m_material.empty()) {
+                    const auto& source = meshPtr->m_material[0];
+                    material.baseColor[0] = source.m_baseColor.x;
+                    material.baseColor[1] = source.m_baseColor.y;
+                    material.baseColor[2] = source.m_baseColor.z;
+                    material.metallic = source.m_metallic;
+                    material.roughness = source.m_roughness;
+                    material.reflectance = source.m_reflectance;
+                    material.emission = source.m_emission;
+                }
+
+                const std::size_t triangleCount = meshPtr->m_index.size() / 3;
+                sceneMaterials.insert(sceneMaterials.end(), triangleCount, material);
+            }
+            continue;
+        }
+
+        auto simpleGeometry = std::dynamic_pointer_cast<SimpleGeometry>(obj);
+        if (simpleGeometry) {
+            auto primitive = simpleGeometry->getPrimitive();
+            if (!primitive) {
+                continue;
+            }
+            const Primitive* constPrimitive = primitive.get();
+            const std::vector<unsigned int>& indices = constPrimitive->getIndices();
+
+            MaterialData material;
+            const auto& source = simpleGeometry->getMaterial();
+            material.baseColor[0] = source.baseColor.x;
+            material.baseColor[1] = source.baseColor.y;
+            material.baseColor[2] = source.baseColor.z;
+            material.metallic = source.metallic;
+            material.roughness = source.roughness;
+            material.reflectance = 0.05f;
+            material.emission = 0.0f;
+            material.baseColorTexIdx = -1;
+
+            if (simpleGeometry->isTexturized()) {
+                material.baseColorTexIdx =
+                    m_computeRenderer->textures().loadTexture(constPrimitive->texture.getPath());
+            }
+
+            const std::size_t triangleCount = indices.size() / 3;
+            sceneMaterials.insert(sceneMaterials.end(), triangleCount, material);
+        }
+    }
+
+    if (sceneMaterials.size() != m_triangles.size()) {
+        std::cerr << "Space::loadShadingFromScene() triangle count mismatch: "
+                  << sceneMaterials.size() << " scene materials for "
+                  << m_triangles.size() << " triangles" << std::endl;
+        return;
+    }
+
+    for (std::size_t i = 0; i < m_triangles.size(); ++i) {
+        const std::size_t sourceIndex =
+            m_bvh_indices.empty() ? i : static_cast<std::size_t>(m_bvh_indices[i]);
+        m_triangles[i].material = sceneMaterials[sourceIndex];
+    }
+
+    m_emissiveTriIndices.clear();
+    for (std::size_t i = 0; i < m_triangles.size(); ++i) {
+        if (m_triangles[i].material.emission > 0.0f) {
+            m_emissiveTriIndices.push_back(static_cast<int>(i));
+        }
+    }
+
+    m_sceneShadingDirty = true;
 }
 
 void Space::invalidateScene()

@@ -11,6 +11,7 @@
 #include "GraphicsRenderBackend/gpu_buffer.hpp"
 #include "VertexGL/shaderStorageBufferObejct.hpp"
 #include <array>
+#include <cstdint>
 #include <unordered_map>
 
 struct ShaderBucket {
@@ -19,6 +20,15 @@ struct ShaderBucket {
 };
 
 class SceneManager{
+
+    public:
+        enum RaySpaceDirty : uint32_t {
+            RaySpaceDirtyNone     = 0,
+            RaySpaceDirtyLights   = 1u << 0,
+            RaySpaceDirtyShading  = 1u << 1,
+            RaySpaceDirtyGeometry = 1u << 2,
+            RaySpaceDirtyTextures = 1u << 3
+        };
 
     private:
         std::unique_ptr<Shader> m_shader;
@@ -46,6 +56,11 @@ class SceneManager{
         bool m_modelMatrixSSBOInitialized = false;
         std::unordered_map<Renderable*, int> m_modelMatrixIndex;
         glm::vec3 m_ambientColor = glm::vec3(0.3f, 0.3f, 0.3f);
+        uint32_t m_raySpaceDirty =
+            RaySpaceDirtyLights |
+            RaySpaceDirtyShading |
+            RaySpaceDirtyGeometry |
+            RaySpaceDirtyTextures;
 
         static constexpr int MAX_LIGHTS = 32;
         std::unique_ptr<GPUBuffer> m_matricesUBO;
@@ -83,10 +98,20 @@ class SceneManager{
         glm::vec3& getLightSpecular() { return m_lightSpecular; }
 
         //Light
-        void addLight(const SceneLight& light) { m_lights.push_back(light); }
+        void addLight(const SceneLight& light) {
+            m_lights.push_back(light);
+            markRaySpaceDirty(RaySpaceDirtyLights);
+        }
         const std::vector<SceneLight>& getLights() const { return m_lights; }
         std::vector<SceneLight>& getLights() { return m_lights; }
         size_t getLightCount() const { return m_lights.size(); }
+        void markRaySpaceDirty(uint32_t flags) { m_raySpaceDirty |= flags; }
+        bool isRaySpaceDirty(uint32_t flags) const {
+            return (m_raySpaceDirty & flags) != 0;
+        }
+        void clearRaySpaceDirty(uint32_t flags) {
+            m_raySpaceDirty &= ~flags;
+        }
 
 };
 

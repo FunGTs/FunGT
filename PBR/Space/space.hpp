@@ -15,6 +15,7 @@
 #include "PBR/Render/include/compute_backends.hpp"
 #include "PBR/Render/include/icompute_renderer.hpp"
 #include "PBR/Render/include/cpu_renderer.hpp"
+#include "Renderable/renderable.hpp"
 
 #include "PBR/BVH/bvh_builder.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
@@ -30,6 +31,7 @@ class Space {
     std::vector<BVHNode> m_bvh_nodes;
     std::vector<int>     m_bvh_indices;
     std::vector<int> m_emissiveTriIndices;
+    bool m_sceneShadingDirty = false;
     
     public:
         Space();
@@ -49,6 +51,7 @@ class Space {
         void LoadModelToRender(const SimpleModel& model);
         void LoadGeometryToRender(const SimpleGeometry& geometry);
         void loadLightsFromScene(const std::vector<SceneLight>& sceneLights);
+        void loadShadingFromScene(const std::vector<std::shared_ptr<Renderable>>& renderables);
         void invalidateScene();
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
         static void SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer,

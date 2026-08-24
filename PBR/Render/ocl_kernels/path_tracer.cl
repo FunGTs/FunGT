@@ -157,17 +157,20 @@ inline float3 fgt_path_trace_cook_torrance(
                             distance - 0.001f);
 
                         if (!blocked) {
+                            const float3 emissive_light =
+                                light_emission /
+                                (distance_squared + 1.0e-6f);
                             const float3 nee =
                                 fgt_evaluate_cook_torrance(
                                     normal,
                                     view_direction,
                                     light_direction,
                                     hit.material,
-                                    light_emission);
+                                    emissive_light);
                             const float geometry_term =
-                                light_cosine / distance_squared;
+                                light_cosine / light_pdf;
                             radiance += throughput * nee *
-                                geometry_term / light_pdf;
+                                geometry_term;
                         }
                     }
                 }

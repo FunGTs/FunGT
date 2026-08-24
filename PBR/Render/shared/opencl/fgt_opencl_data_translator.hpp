@@ -23,6 +23,12 @@ struct fgt_opencl_scene_data {
     std::vector<fgt_bvh_node> bvh_nodes;
 };
 
+struct fgt_opencl_shading_data {
+    std::vector<fgt_triangle_shading> triangle_shading;
+    std::vector<fgt_material_data> materials;
+    std::vector<fgt_int32> emissive_triangles;
+};
+
 inline fgt_vec3 translate_vec3(const fungt::Vec3& value)
 {
     return {value.x, value.y, value.z};
@@ -167,6 +173,30 @@ inline fgt_rayspace_camera translate_rayspace_camera(const PBRCamera& camera)
         translate_vec4(camera.getBasisW())
     };
 }
+
+inline fgt_opencl_shading_data translate_shading_data(
+    const std::vector<Triangle>& triangles)
+{
+    fgt_opencl_shading_data result;
+    result.triangle_shading.reserve(triangles.size());
+
+    for (std::size_t index = 0; index < triangles.size(); ++index) {
+        const Triangle& triangle = triangles[index];
+        const fgt_int32 material_index =
+            find_or_add_material(triangle.material, result.materials);
+
+        result.triangle_shading.push_back(
+            translate_triangle_shading(triangle, material_index));
+
+        if (triangle.material.emission > 0.0f) {
+            result.emissive_triangles.push_back(
+                static_cast<fgt_int32>(index));
+        }
+    }
+
+    return result;
+}
+
 inline fgt_opencl_scene_data translate_scene_data(
     const std::vector<Triangle>& triangles,
     const std::vector<BVHNode>& nodes)

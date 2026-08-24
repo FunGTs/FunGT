@@ -176,10 +176,20 @@ void FunGT::set(const std::function<void()>& renderLambda){
                 if (!m_progressiveTracer->isInitialized()) {
                     m_progressiveTracer->initialize(
                         &m_camera, m_sceneManager, width, height, true);
+                    m_sceneManager->clearRaySpaceDirty(
+                        SceneManager::RaySpaceDirtyLights |
+                        SceneManager::RaySpaceDirtyShading);
                 } else if (sample == 0) {
                     m_progressiveTracer->updateCamera(
                         &m_camera, width, height);
-                    m_progressiveTracer->reloadLights(m_sceneManager);
+                    if (m_sceneManager->isRaySpaceDirty(SceneManager::RaySpaceDirtyLights)) {
+                        m_progressiveTracer->reloadLights(m_sceneManager);
+                        m_sceneManager->clearRaySpaceDirty(SceneManager::RaySpaceDirtyLights);
+                    }
+                    if (m_sceneManager->isRaySpaceDirty(SceneManager::RaySpaceDirtyShading)) {
+                        m_progressiveTracer->reloadSceneShading(m_sceneManager);
+                        m_sceneManager->clearRaySpaceDirty(SceneManager::RaySpaceDirtyShading);
+                    }
                 }
 
                 m_progressiveTracer->renderSampleInterop(

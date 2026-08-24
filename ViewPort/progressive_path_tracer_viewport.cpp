@@ -112,6 +112,13 @@ void ProgressivePathTracer::reloadLights(std::shared_ptr<SceneManager> sceneMana
     }
 }
 
+void ProgressivePathTracer::reloadSceneShading(std::shared_ptr<SceneManager> sceneManager)
+{
+    if (m_space && sceneManager) {
+        m_space->loadShadingFromScene(sceneManager->getRenderable());
+    }
+}
+
 void ProgressivePathTracer::releaseOpenGLInteropResources()
 {
     if (m_space) {

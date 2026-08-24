@@ -131,28 +131,30 @@ public:
         ImGui::Separator();
         ImGui::Spacing();
 
+        bool materialChanged = false;
+
         ImGui::Text("Base Color");
-        ImGui::ColorEdit3("##BaseColor", &mat.m_baseColor.x, ImGuiColorEditFlags_Float);
+        materialChanged |= ImGui::ColorEdit3("##BaseColor", &mat.m_baseColor.x, ImGuiColorEditFlags_Float);
 
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
 
         ImGui::Text("Metallic");
-        ImGui::SliderFloat("##Metallic", &mat.m_metallic, 0.0f, 1.0f, "%.3f");
+        materialChanged |= ImGui::SliderFloat("##Metallic", &mat.m_metallic, 0.0f, 1.0f, "%.3f");
 
         ImGui::Text("Roughness");
-        ImGui::SliderFloat("##Roughness", &mat.m_roughness, 0.05f, 1.0f, "%.3f");
+        materialChanged |= ImGui::SliderFloat("##Roughness", &mat.m_roughness, 0.05f, 1.0f, "%.3f");
 
         ImGui::Text("Reflectance");
-        ImGui::SliderFloat("##Reflectance", &mat.m_reflectance, 0.0f, 1.0f, "%.3f");
+        materialChanged |= ImGui::SliderFloat("##Reflectance", &mat.m_reflectance, 0.0f, 1.0f, "%.3f");
 
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
         // Emission
         ImGui::Text("Emission");
-        ImGui::SliderFloat("##Emission", &mat.m_emission, 0.0f, 50.0f, "%.1f");
+        materialChanged |= ImGui::SliderFloat("##Emission", &mat.m_emission, 0.0f, 50.0f, "%.1f");
 
         ImGui::Spacing();
         ImGui::Separator();
@@ -160,6 +162,11 @@ public:
         // Reset button
         if (ImGui::Button("Reset to Default", ImVec2(-1, 0))) {
             mat = Material::createDefaultMaterial();
+            materialChanged = true;
+        }
+
+        if (materialChanged) {
+            m_sceneManager->markRaySpaceDirty(SceneManager::RaySpaceDirtyShading);
         }
 
         // Info section

@@ -126,8 +126,10 @@ class OpenCL_Renderer : public IComputeRenderer {
             const PBRCamera& camera,
             int samplesPerPixel,
             int sampleOffset,
-            GLuint glBufferID
+            GLuint glBufferID,
+            bool sceneShadingDirty
         );
+        void updateSceneShading(const std::vector<Triangle>& triangles);
         void releaseOpenGLInteropResources() noexcept;
         void invalidateScene() { m_sceneUploaded = false; }
     private:

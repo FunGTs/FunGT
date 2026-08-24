@@ -605,6 +605,96 @@ void OpenCL_Renderer::loadSceneLigths(const std::vector<Light> &lights)
     }
 }
 
+void OpenCL_Renderer::updateSceneShading(
+    const std::vector<Triangle>& triangles)
+{
+    if (!m_oclcontext || !m_sceneUploaded) {
+        throw std::runtime_error(
+            "updateSceneShading: OpenCL scene is not uploaded.");
+    }
+    if (triangles.size() != m_raySpaceBuffer.numTriangles) {
+        throw std::invalid_argument(
+            "updateSceneShading: triangle count changed.");
+    }
+
+    const fgt::opencl::fgt_opencl_shading_data shadingData =
+        fgt::opencl::translate_shading_data(triangles);
+
+    cl_mem newTriangleShading = nullptr;
+    cl_mem newMaterials = nullptr;
+    cl_mem newEmissiveTriangles = nullptr;
+    cl_int err = CL_SUCCESS;
+
+    if (!shadingData.triangle_shading.empty()) {
+        newTriangleShading = clCreateBuffer(
+            m_oclcontext,
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            shadingData.triangle_shading.size() * sizeof(fgt_triangle_shading),
+            const_cast<fgt_triangle_shading*>(
+                shadingData.triangle_shading.data()),
+            &err);
+        if (err != CL_SUCCESS || !newTriangleShading) {
+            throw std::runtime_error(
+                "updateSceneShading: failed to create triangle shading buffer, error " +
+                std::to_string(err));
+        }
+    }
+
+    if (!shadingData.materials.empty()) {
+        newMaterials = clCreateBuffer(
+            m_oclcontext,
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            shadingData.materials.size() * sizeof(fgt_material_data),
+            const_cast<fgt_material_data*>(shadingData.materials.data()),
+            &err);
+        if (err != CL_SUCCESS || !newMaterials) {
+            if (newTriangleShading) {
+                clReleaseMemObject(newTriangleShading);
+            }
+            throw std::runtime_error(
+                "updateSceneShading: failed to create material buffer, error " +
+                std::to_string(err));
+        }
+    }
+
+    if (!shadingData.emissive_triangles.empty()) {
+        newEmissiveTriangles = clCreateBuffer(
+            m_oclcontext,
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            shadingData.emissive_triangles.size() * sizeof(fgt_int32),
+            const_cast<fgt_int32*>(shadingData.emissive_triangles.data()),
+            &err);
+        if (err != CL_SUCCESS || !newEmissiveTriangles) {
+            if (newMaterials) {
+                clReleaseMemObject(newMaterials);
+            }
+            if (newTriangleShading) {
+                clReleaseMemObject(newTriangleShading);
+            }
+            throw std::runtime_error(
+                "updateSceneShading: failed to create emissive triangle buffer, error " +
+                std::to_string(err));
+        }
+    }
+
+    if (m_raySpaceBuffer.emissiveTriangles) {
+        clReleaseMemObject(m_raySpaceBuffer.emissiveTriangles);
+    }
+    if (m_raySpaceBuffer.materials) {
+        clReleaseMemObject(m_raySpaceBuffer.materials);
+    }
+    if (m_raySpaceBuffer.triangleShading) {
+        clReleaseMemObject(m_raySpaceBuffer.triangleShading);
+    }
+
+    m_raySpaceBuffer.triangleShading = newTriangleShading;
+    m_raySpaceBuffer.materials = newMaterials;
+    m_raySpaceBuffer.emissiveTriangles = newEmissiveTriangles;
+    m_raySpaceBuffer.numMaterials = shadingData.materials.size();
+    m_raySpaceBuffer.numEmissiveTriangles =
+        shadingData.emissive_triangles.size();
+}
+
 void OpenCL_Renderer::releaseRaySpaceBuffer(
     OpenCLRaySpaceBuffer& buffers) noexcept
 {
@@ -704,7 +794,8 @@ void OpenCL_Renderer::RenderSceneOpenGLInterop(int width,
     const std::vector<int>& emissiveTriIndices, 
     const PBRCamera& camera, int samplesPerPixel, 
     int sampleOffset, 
-    GLuint glBufferID)
+    GLuint glBufferID,
+    bool sceneShadingDirty)
 {
     if (width <= 0 || height <= 0) {
         throw std::invalid_argument(
@@ -727,6 +818,12 @@ void OpenCL_Renderer::RenderSceneOpenGLInterop(int width,
 
     if (!m_sceneUploaded) {
         uploadScene(triangles, nodes, emissiveTriIndices);
+        clFinish(m_oclqueue);
+    }
+
+    // Update material/emission buffers only when the scene changed.
+    if (sceneShadingDirty) {
+        updateSceneShading(triangles);
         clFinish(m_oclqueue);
     }
 

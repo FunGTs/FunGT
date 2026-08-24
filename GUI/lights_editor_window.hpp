@@ -74,6 +74,7 @@ public:
         if (m_selectedIndex >= 0 && m_selectedIndex < (int)lights.size()) {
             if (ImGui::Button("Remove Selected")) {
                 lights.erase(lights.begin() + m_selectedIndex);
+                m_sceneManager->markRaySpaceDirty(SceneManager::RaySpaceDirtyLights);
                 m_selectedIndex = -1;
                 ImGui::End();
                 return;
@@ -106,15 +107,17 @@ public:
         ImGui::Spacing();
         ImGui::Separator();
 
+        bool lightChanged = false;
+
         // Common properties
         ImGui::Text("Position");
-        ImGui::DragFloat3("##Pos", &light.position.x, 0.1f);
+        lightChanged |= ImGui::DragFloat3("##Pos", &light.position.x, 0.1f);
 
         ImGui::Text("Color");
-        ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_Float);
+        lightChanged |= ImGui::ColorEdit3("##Color", &light.color.x, ImGuiColorEditFlags_Float);
 
         ImGui::Text("Power");
-        ImGui::DragFloat("##Power", &light.power, 0.1f, 0.0f, 10000.f);
+        lightChanged |= ImGui::DragFloat("##Power", &light.power, 0.1f, 0.0f, 10000.f);
 
         ImGui::Spacing();
         ImGui::Separator();
@@ -124,29 +127,33 @@ public:
         {
         case SceneLightType::Point:
             ImGui::Text("Radius");
-            ImGui::DragFloat("##Radius", &light.radius, 0.01f, 0.0f, 100.f);
+            lightChanged |= ImGui::DragFloat("##Radius", &light.radius, 0.01f, 0.0f, 100.f);
             break;
 
         case SceneLightType::Sun:
             ImGui::Text("Direction");
-            ImGui::DragFloat3("##Dir", &light.direction.x, 0.01f, -1.f, 1.f);
+            lightChanged |= ImGui::DragFloat3("##Dir", &light.direction.x, 0.01f, -1.f, 1.f);
             break;
 
         case SceneLightType::Spot:
             ImGui::Text("Direction");
-            ImGui::DragFloat3("##SpotDir", &light.direction.x, 0.01f, -1.f, 1.f);
+            lightChanged |= ImGui::DragFloat3("##SpotDir", &light.direction.x, 0.01f, -1.f, 1.f);
             ImGui::Text("Inner Angle");
-            ImGui::DragFloat("##Inner", &light.innerAngle, 0.5f, 0.f, light.outerAngle);
+            lightChanged |= ImGui::DragFloat("##Inner", &light.innerAngle, 0.5f, 0.f, light.outerAngle);
             ImGui::Text("Outer Angle");
-            ImGui::DragFloat("##Outer", &light.outerAngle, 0.5f, light.innerAngle, 90.f);
+            lightChanged |= ImGui::DragFloat("##Outer", &light.outerAngle, 0.5f, light.innerAngle, 90.f);
             break;
 
         case SceneLightType::Area:
             ImGui::Text("Normal");
-            ImGui::DragFloat3("##Normal", &light.normal.x, 0.01f, -1.f, 1.f);
+            lightChanged |= ImGui::DragFloat3("##Normal", &light.normal.x, 0.01f, -1.f, 1.f);
             ImGui::Text("Size");
-            ImGui::DragFloat2("##Size", &light.size.x, 0.1f, 0.1f, 100.f);
+            lightChanged |= ImGui::DragFloat2("##Size", &light.size.x, 0.1f, 0.1f, 100.f);
             break;
+        }
+
+        if (lightChanged) {
+            m_sceneManager->markRaySpaceDirty(SceneManager::RaySpaceDirtyLights);
         }
 
         ImGui::End();
