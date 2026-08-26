@@ -6,8 +6,9 @@ project(FunGT)
 # ════════════════════════════════════════════════════════════════════════════
 option(FUNGT_USE_CUDA "Enable CUDA backend for NVIDIA GPUs" ON)
 option(FUNGT_USE_SYCL "Enable SYCL backend for Intel GPUs" ON)
-set(SYCL_CUDA_ARCH sm_75 CACHE STRING "NVIDIA GPU architecture for SYCL CUDA backend")
-set_property(CACHE SYCL_CUDA_ARCH PROPERTY STRINGS sm_50 sm_52 sm_53 sm_60 sm_61 sm_62 sm_70 sm_72 sm_75 sm_80 sm_86 sm_87 sm_89 sm_90)
+set(FUNGT_CUDA_ARCH 89 CACHE STRING "NVIDIA GPU compute capability")
+set_property(CACHE FUNGT_CUDA_ARCH PROPERTY STRINGS 50 52 53 60 61 62 70 72 75 80 86 87 89 90)
+set(SYCL_CUDA_ARCH "sm_${FUNGT_CUDA_ARCH}")
 
 # Allow FUNGT_BASE_DIR to be set externally (command line, environment, or cache)
 # Priority: 1. Cache variable, 2. Environment variable, 3. Default fallback
@@ -189,6 +190,9 @@ include_directories(
     ${FUNGT_BASE_DIR}/GUI/physics
     ${FUNGT_BASE_DIR}/SimpleModel
     ${FUNGT_BASE_DIR}/SimpleGeometry
+    ${FUNGT_BASE_DIR}/MarchingCubes
+    ${FUNGT_BASE_DIR}/Surface
+    ${FUNGT_BASE_DIR}/MoleculeViewer
     ${FUNGT_BASE_DIR}/Physics/CollisionManager
     ${FUNGT_BASE_DIR}/Physics/Contact
     ${FUNGT_BASE_DIR}/Physics/RigidBody
@@ -284,6 +288,11 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
+    ${FUNGT_BASE_DIR}/MarchingCubes/marching_cubes.cpp
+    ${FUNGT_BASE_DIR}/Surface/surface.cpp
+    ${FUNGT_BASE_DIR}/MoleculeViewer/molecule.cpp
+    ${FUNGT_BASE_DIR}/MoleculeViewer/mol_reader.cpp
+    ${FUNGT_BASE_DIR}/MoleculeViewer/molecule_viewer.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/simple_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/Collisions/manifold_collision.cpp
     ${FUNGT_BASE_DIR}/Physics/CollisionManager/collision_manager.cpp
@@ -372,7 +381,7 @@ if(FUNGT_USE_CUDA)
     set_target_properties(FunGT PROPERTIES
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
         CUDA_SEPARABLE_COMPILATION ON
-        CUDA_ARCHITECTURES "native"  
+        CUDA_ARCHITECTURES ${FUNGT_CUDA_ARCH}
     )
 endif()
 # ════════════════════════════════════════════════════════════════════════════
