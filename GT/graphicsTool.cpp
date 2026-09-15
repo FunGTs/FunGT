@@ -1,9 +1,9 @@
 #include "graphicsTool.hpp"
-#include "../MeshGPU/mesh_gpu.hpp"
-#include "../TextureGPU/texture_gpu.hpp"
-#include "../PrimitiveGPU/primitive_gpu.hpp"
-#include "../Shaders/shader.hpp"
-#include "../Model/model.hpp"
+#include "MeshGPU/mesh_gpu.hpp"
+#include "TextureGPU/texture_gpu.hpp"
+#include "PrimitiveGPU/primitive_gpu.hpp"
+#include "Shaders/shader.hpp"
+#include "Model/model.hpp"
 
 Shader* BuildShader() {
     return Shader::create().release();
