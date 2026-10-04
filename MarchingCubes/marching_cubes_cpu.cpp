@@ -1,4 +1,4 @@
-#include "marching_cubes.hpp"
+#include "marching_cubes_cpu.hpp"
 #include "mc_tables.hpp"
 #include <cmath>
 
@@ -34,7 +34,7 @@ namespace fungt {
         return n.normalize();
     }
 
-    MarchingCubes::MarchingCubes()
+    MarchingCubesCPU::MarchingCubesCPU()
         : m_resolution{ 64, 64, 64 }
         , m_isovalue(0.0f)
         , m_boundsMin(-1.0f, -1.0f, -1.0f)
@@ -43,41 +43,41 @@ namespace fungt {
     }
 
 
-    MarchingCubes::~MarchingCubes()
+    MarchingCubesCPU::~MarchingCubesCPU()
     {
     }
 
-    void MarchingCubes::setField(std::function<float(fungt::Vec3)> field)
+    void MarchingCubesCPU::setField(std::function<float(fungt::Vec3)> field)
     {
         m_field = field;
     }
 
-    void MarchingCubes::sampleScalarFieldInside(fungt::Vec3 min, fungt::Vec3 max)
+    void MarchingCubesCPU::sampleScalarFieldInside(fungt::Vec3 min, fungt::Vec3 max)
     {
         m_boundsMin = min;
         m_boundsMax = max;
     }
 
-    void MarchingCubes::setResolution(int x, int y, int z)
+    void MarchingCubesCPU::setResolution(int x, int y, int z)
     {
         m_resolution = { x, y, z };
     }
 
-    void MarchingCubes::setIsovalue(float iso)
+    void MarchingCubesCPU::setIsovalue(float iso)
     {
         m_isovalue = iso;
     }
 
-    const std::vector<PrimitiveVertex>& MarchingCubes::getVertices() const
+    const std::vector<PrimitiveVertex>& MarchingCubesCPU::getVertices() const
     {
         return m_vertices;
     }
 
-    const std::vector<unsigned int>& MarchingCubes::getIndices() const
+    const std::vector<unsigned int>& MarchingCubesCPU::getIndices() const
     {
         return m_indices;
     }
-    void MarchingCubes::execute()
+    void MarchingCubesCPU::execute()
     {
         m_vertices.clear();
         m_indices.clear();
