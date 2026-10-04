@@ -3,6 +3,7 @@
 
 #include "imgui_window.hpp"
 #include "SceneManager/scene_manager.hpp"
+#include "SimpleModel/simple_model.hpp"
 #include <memory>
 
 class SceneHierarchyWindow : public ImGuiWindow {
@@ -125,20 +126,7 @@ public:
             }
         }
 
-        if (ImGui::Button("Add Model", ImVec2(-1, 0))) {
-            // TODO: Open file dialog
-            ImGui::OpenPopup("Load Model");
-        }
-
-        // Simple popup for now
-        if (ImGui::BeginPopup("Load Model")) {
-            ImGui::Text("File browser not implemented yet");
-            ImGui::Text("Use main.cpp to add models for now");
-            if (ImGui::Button("Close")) {
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::EndPopup();
-        }
+        ImGui::TextDisabled("Use File -> Open to add models");
 
         ImGui::End();
     }

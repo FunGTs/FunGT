@@ -108,11 +108,17 @@ class FunGT : public GraphicsTool{
             return m_physicsWorld;
         }
     protected:
-        // Override virtual methods from GraphicsTool
         void onMouseMove(double xpos, double ypos) override;
         void onUpdate(float deltaTime) override;
         void onMouseScroll(double xoffset, double yoffset) override;
 
+    private:
+        void initDefaultScene();
+        void initShaders();
+        void initRenderers();
+        void initUI();
+        void initViewport();
+        void updateProjectionFromViewport();
 };
 typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
 typedef std::shared_ptr<Animation> FunGTAnimation;
