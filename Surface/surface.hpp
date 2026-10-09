@@ -3,7 +3,7 @@
 
 #include "Renderable/renderable.hpp"
 #include "Shaders/shader.hpp"
-#include "MarchingCubes/marching_cubes.hpp"
+#include "MarchingCubes/marching_cubes_cpu.hpp"
 #include "Path_Manager/path_manager.hpp"
 #include "GraphicsRenderBackend/gpu_buffer.hpp"
 #include "Material/material.hpp"
@@ -34,7 +34,7 @@ private:
     Material m_material;
 
 protected:
-    fungt::MarchingCubes m_mc;
+    fungt::MarchingCubesCPU m_mc;
     std::unique_ptr<GPUBuffer> m_buffer;
     unsigned int m_indexCount = 0;
     std::string m_fs;

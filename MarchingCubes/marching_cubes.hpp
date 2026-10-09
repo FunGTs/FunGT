@@ -1,8 +1,18 @@
-#if !defined(_MARCHING_CUBES_HPP)
-#define _MARCHING_CUBES_HPP
+#if !defined(_MARCHING_CUBES_HPP_)
+#define _MARCHING_CUBES_HPP_
+#include <functional>
+#include <vector>
+#include <array>
+#include <algorithm>
+#include "Geometries/primitives.hpp"
+#include "Vector/vector3.hpp"
+
+namespace fungt{
 
 
-class MarchingCubes{
+
+
+    class MarchingCubes {
 
     protected:
         std::function<float(fungt::Vec3)> m_field;
@@ -15,35 +25,39 @@ class MarchingCubes{
         std::vector<unsigned int> m_indices;
     public:
         MarchingCubes() = default;
-        virtual ~MarchingCubes();
-
-        virtual void setField(std::function<float(fungt::Vec3)> field){
-
-        }
-        virtual void sampleScalarFieldInside(fungt::Vec3 min, fungt::Vec3 max){
-
-        }
-        virtual void setResolution(int x, int y, int z){
-
-        }
-        virtual void setIsovalue(float iso){
+        virtual ~MarchingCubes() {
 
         }
 
-        void execute(){
-
-        } 
-
-        const std::vector<PrimitiveVertex>& getVertices() const{
+        virtual void setField(std::function<float(fungt::Vec3)> field) {
 
         }
-        const std::vector<unsigned int>& getIndices() const{
+        virtual void sampleScalarFieldInside(fungt::Vec3 min, fungt::Vec3 max) {
+
+        }
+        virtual void setResolution(int x, int y, int z) {
+
+        }
+        virtual void setIsovalue(float iso) {
 
         }
 
-};
+        virtual void execute() {
+
+        }
+
+        virtual const std::vector<PrimitiveVertex>& getVertices() const {
+            return m_vertices;
+        }
+        virtual const std::vector<unsigned int>& getIndices() const {
+            return m_indices;
+        }
+
+    };
 
 
+
+}
 
 
 #endif // _IMARCHING_CUBES_HPP

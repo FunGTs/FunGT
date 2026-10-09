@@ -1,13 +1,7 @@
 #if !defined(_MARCHING_CUBES_CPU_HPP_)
-#define _MARCHING_CUBES_CPU__HPP_
+#define _MARCHING_CUBES_CPU_HPP_
 
-#include <functional>
-#include <vector>
-#include <array>
-#include <algorithm>
 #include "marching_cubes.hpp"
-#include "Geometries/primitives.hpp"
-#include "Vector/vector3.hpp"
 
 namespace fungt {
 

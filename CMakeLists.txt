@@ -288,7 +288,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/GUI/particle_rtc_window.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
-    ${FUNGT_BASE_DIR}/MarchingCubes/marching_cubes.cpp
+    ${FUNGT_BASE_DIR}/MarchingCubes/marching_cubes_cpu.cpp
     ${FUNGT_BASE_DIR}/Surface/surface.cpp
     ${FUNGT_BASE_DIR}/MoleculeViewer/molecule.cpp
     ${FUNGT_BASE_DIR}/MoleculeViewer/mol_reader.cpp

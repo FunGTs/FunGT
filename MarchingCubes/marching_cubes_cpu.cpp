@@ -35,11 +35,11 @@ namespace fungt {
     }
 
     MarchingCubesCPU::MarchingCubesCPU()
-        : m_resolution{ 64, 64, 64 }
-        , m_isovalue(0.0f)
-        , m_boundsMin(-1.0f, -1.0f, -1.0f)
-        , m_boundsMax(1.0f, 1.0f, 1.0f)
     {
+        m_resolution = { 64, 64, 64 };
+        m_isovalue = 0.0f;
+        m_boundsMin = fungt::Vec3(-1.0f, -1.0f, -1.0f);
+        m_boundsMax = fungt::Vec3(1.0f, 1.0f, 1.0f);
     }
 
 
