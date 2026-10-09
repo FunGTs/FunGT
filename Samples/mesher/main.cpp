@@ -12,16 +12,16 @@ int main()
     myScene->initGL();
 
     FunGTSceneManager scene_manager = myScene->getSceneManager();
-
+    int res = 128;
     // load density grid
-    std::vector<float> density(128 * 128 * 128);
+    std::vector<float> density(res * res * res);
     std::ifstream f("ref_triposr_density.bin", std::ios::binary);
     
     if (!f.is_open()) {
         std::cerr << "Failed to open final_dens.bin" << std::endl;
     }
     f.read((char*)density.data(), density.size() * sizeof(float));
-    int res = 128;
+    
     float radius = 0.87f;
     std::vector<float> sorted_density = density;
     std::sort(sorted_density.begin(), sorted_density.end());
@@ -49,7 +49,7 @@ int main()
         fungt::Vec3(-radius, -radius, -radius),
         fungt::Vec3(radius, radius, radius)
     );
-    surface->setResolution(128, 128, 128);
+    surface->setResolution(res, res, res);
     surface->load();
     myScene->set([&]() {
         scene_manager->addRenderableObj(surface);
