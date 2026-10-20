@@ -113,11 +113,11 @@ namespace fungt {
                 m_boundsMin.y + iy * stepY,
                 m_boundsMin.z + iz * stepZ
             );
-            };
+        };
 
         auto gridVal = [&](int ix, int iy, int iz) -> float {
             return grid[ix + nx * (iy + ny * iz)];
-            };
+        };
 
         unsigned int vertexCount = 0;
 
