@@ -10,6 +10,8 @@
 #include "Layer/layer_stack.hpp"              
 #include "GUI/fungt_gui_headers.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
+#include "Surface/surface.hpp"
+#include "MoleculeViewer/molecule_viewer.hpp"
 #include "ParticleSimulation/particle_simulation.hpp"
 #include "Physics/AnimationCreator/animation_controller.hpp"
 #include "Physics/PhysicsWorld/physics_world.hpp"
@@ -128,5 +130,7 @@ typedef std::shared_ptr<SimpleModel> FunGTSModel;
 typedef std::shared_ptr<SimpleGeometry> FunGTSGeom;
 typedef std::shared_ptr<fungt::SimulationController> FunGTSimController;
 typedef std::shared_ptr<PhysicsWorld> FunGTPhysicsWorld;
+typedef std::shared_ptr<Surface> FunGTSurface;
+typedef std::shared_ptr<MoleculeViewer> FunGTMoleculeViewer;
 
 #endif // _FUNGT_H_
