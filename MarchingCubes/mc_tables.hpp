@@ -1,11 +1,11 @@
 #if !defined(_MC_TABLES_HPP_)
 #define _MC_TABLES_HPP_
-
+#include "gpu/include/fgt_cpu_device.hpp"
 #include <array>
 
 namespace fungt {
 
-static const std::array<int, 256> edgeTable = {
+fgt_device constexpr std::array<int, 256> edgeTable = {
     0x000, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
     0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
     0x190, 0x099, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -40,7 +40,7 @@ static const std::array<int, 256> edgeTable = {
     0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x000
 };
 
-static const std::array<std::array<int, 16>, 256> triTable = {{
+fgt_device constexpr std::array<std::array<int, 16>, 256> triTable = {{
     {{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}},
     {{0,8,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}},
     {{0,1,9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}},
