@@ -90,9 +90,21 @@ std::shared_ptr<SceneManager> FunGT::getSceneManager()
 {
     return m_sceneManager;
 }
-void FunGT::set(const std::function<void()>& renderLambda){
+void FunGT::set(const std::function<void()>& userSetup) {
     std::cout << "Starting FunGT Setting process..." << std::endl;
-    //Lights:
+
+    initDefaultScene();
+    userSetup();
+    initShaders();
+    initRenderers();
+    initUI();
+    initViewport();
+    updateProjectionFromViewport();
+
+    std::cout << "Finished Setting process..." << std::endl;
+}
+
+void FunGT::initDefaultScene() {
     SceneLight defaultLight;
     defaultLight.name = "Point Light";
     defaultLight.type = SceneLightType::Point;
@@ -100,105 +112,117 @@ void FunGT::set(const std::function<void()>& renderLambda){
     defaultLight.color = glm::vec3(1.f, 1.f, 1.f);
     defaultLight.power = 10.f;
     m_sceneManager->addLight(defaultLight);
+
     m_grid = std::make_shared<InfiniteGrid>();
     std::string grid_vs = getAssetPath("shaders/grid_vs.glsl");
     std::string grid_fs = getAssetPath("shaders/grid_fs.glsl");
-    m_grid->init(grid_vs,grid_fs);
+    m_grid->init(grid_vs, grid_fs);
     m_grid->setPlanes(nearPlane, farPlane);
-
     m_sceneManager->addRenderableObj(m_grid);
-    renderLambda();
-    
 
-    ProjectionMatrix = glm::perspective(glm::radians(m_camera.getFOV()),
-                                        static_cast<float>(m_frameBufferWidth)/m_frameBufferHeight,nearPlane, farPlane);
+    ProjectionMatrix = glm::perspective(
+        glm::radians(m_camera.getFOV()),
+        static_cast<float>(m_frameBufferWidth) / m_frameBufferHeight,
+        nearPlane, farPlane
+    );
+}
 
-   for(const auto& node : m_sceneManager->getRenderable()){
-
+void FunGT::initShaders() {
+    for (const auto& node : m_sceneManager->getRenderable()) {
         node->getShader().Bind();
-       
-
     }
-   // CREATE PHYSICS DEBUG RENDERER (NOT a layer! Just a utility)
-   if (m_collisionManager) {
-      
-       if(m_collisionManager->isShowingCollidableBodies()) {
-           m_physicsDebugRenderer = std::make_unique<PhysicsDebugRenderer>(m_collisionManager, m_sceneManager, &m_camera);
-           m_physicsDebugRenderer->setShowCollisionBoxes(true);
-           std::cout << "Collidable bodies will be shown in debug renderer." << std::endl;
-       }
-       // CREATE ANIMATION CONTROLLER
-       m_animationController = std::make_shared<fungt::AnimationController>(m_sceneManager);
-       
-   }
-   //Light gizmo renderer
-   m_lightGizmoRenderer = std::make_unique<LightGizmoRenderer>(m_sceneManager.get(), &m_camera);
-   m_lightGizmoRenderer->init();
-   // SETUP IMGUI LAYERS - ALWAYS (no m_useGUI flag!)
-   if (m_imguiLayer) {
-       m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
-       m_imguiLayer->addWindow(std::make_unique<SceneHierarchyWindow>(m_sceneManager, &m_camera));
-       m_imguiLayer->addWindow(std::make_unique<PropertiesWindow>(&m_camera));
-       m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
-       m_imguiLayer->addWindow(std::make_unique<LightEditorWindow>(m_sceneManager));
-       m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
-       //m_imguiLayer->addWindow(std::make_unique<ParticleRTCWindow>());
-       if(m_ViewPortLayer){
-           ViewPort* viewportPtr = m_ViewPortLayer.get();
-           m_imguiLayer->addWindow(std::make_unique<RenderWindow>(m_sceneManager, &m_camera, viewportPtr, m_imguiLayer->getGPUManager()));
-       }
-       m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
-       m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
-       if(m_animationController){
-           auto animWindow = std::make_unique<AnimationControlWindow>(m_animationController, m_sceneManager, &m_camera);
-           m_animWindow = animWindow.get();
-           m_imguiLayer->addWindow(std::move(animWindow));
-       }
-       m_layerStack.PushLayer(std::move(m_imguiLayer));
-   }
+}
 
-   if (m_ViewPortLayer) {
-       m_ViewPortLayer->setRenderFunction([this]() {
-           // Render all models managed by the SceneManager
-                m_sceneManager->renderScene();
-                // Second: Render wireframes ON TOP of scene (before ImGui!)
-                if (m_physicsDebugRenderer) {
-                    m_physicsDebugRenderer->render();
-                }
-                if (m_lightGizmoRenderer) {
-                    m_lightGizmoRenderer->render(ProjectionMatrix);
-                }
-        });
-        m_ViewPortLayer->setPathTraceFunction([this](int width, int height, int sample) {
-            auto* viewport = m_layerStack.get<ViewPort>();
-            if (!viewport) return;
+void FunGT::initRenderers() {
+    if (m_collisionManager) {
+        if (m_collisionManager->isShowingCollidableBodies()) {
+            m_physicsDebugRenderer = std::make_unique<PhysicsDebugRenderer>(
+                m_collisionManager, m_sceneManager, &m_camera
+            );
+            m_physicsDebugRenderer->setShowCollisionBoxes(true);
+            std::cout << "Collidable bodies will be shown in debug renderer." << std::endl;
+        }
+        m_animationController = std::make_shared<fungt::AnimationController>(m_sceneManager);
+    }
 
-            uint32_t pathTraceTexture = viewport->getPathTraceTexture();
+    m_lightGizmoRenderer = std::make_unique<LightGizmoRenderer>(m_sceneManager.get(), &m_camera);
+    m_lightGizmoRenderer->init();
+}
 
-            // Initialize on first sample or if not initialized
-            if (sample == 0 || !m_progressiveTracer->isInitialized()) {
-                m_progressiveTracer->initialize(&m_camera, m_sceneManager, width, height);
-            }
+void FunGT::initUI() {
+    if (!m_imguiLayer) return;
 
-            // Render one sample
-            m_progressiveTracer->renderSample(sample, pathTraceTexture);
+    m_imguiLayer->setNativeWindow(*m_Window, m_frameBufferWidth, m_frameBufferHeight);
+    m_imguiLayer->setSceneManager(m_sceneManager);
+    m_imguiLayer->addWindow(std::make_unique<SceneHierarchyWindow>(m_sceneManager, &m_camera));
+    m_imguiLayer->addWindow(std::make_unique<PropertiesWindow>(&m_camera));
+    m_imguiLayer->addWindow(std::make_unique<RenderInfoWindow>());
+    m_imguiLayer->addWindow(std::make_unique<LightEditorWindow>(m_sceneManager));
+    m_imguiLayer->addWindow(std::make_unique<MaterialEditorWindow>(m_sceneManager));
 
-        });
-       m_layerStack.PushLayer(std::move(m_ViewPortLayer));
-   }
+    if (m_ViewPortLayer) {
+        ViewPort* viewportPtr = m_ViewPortLayer.get();
+        m_imguiLayer->addWindow(std::make_unique<RenderWindow>(
+            m_sceneManager, &m_camera, viewportPtr, m_imguiLayer->getGPUManager()
+        ));
+    }
 
-   // UPDATE PROJECTION MATRIX BASED ON VIEWPORT SIZE
-   auto* view_port = m_layerStack.get<ViewPort>();
-   if (view_port)   
-   {
-       auto view_port_size = view_port->getViewPortSize();
-       if (view_port_size.x > 0 && view_port_size.y > 0) {
-           ProjectionMatrix = glm::perspective(glm::radians(m_camera.getFOV()),
-               view_port_size.x / view_port_size.y, nearPlane, farPlane);
-       }
-   }
-    std::cout << "Finished Setting process..." << std::endl;
+    m_imguiLayer->addWindow(std::make_unique<ParticleSimDemoWindow>(m_sceneManager));
+    m_imguiLayer->addWindow(std::make_unique<PhysicsControlWindow>(m_simController));
 
+    if (m_animationController) {
+        auto animWindow = std::make_unique<AnimationControlWindow>(
+            m_animationController, m_sceneManager, &m_camera
+        );
+        m_animWindow = animWindow.get();
+        m_imguiLayer->addWindow(std::move(animWindow));
+    }
+
+    m_layerStack.PushLayer(std::move(m_imguiLayer));
+}
+
+void FunGT::initViewport() {
+    if (!m_ViewPortLayer) return;
+
+    m_ViewPortLayer->setRenderFunction([this]() {
+        m_sceneManager->renderScene();
+
+        if (m_physicsDebugRenderer) {
+            m_physicsDebugRenderer->render();
+        }
+        if (m_lightGizmoRenderer) {
+            m_lightGizmoRenderer->render(ProjectionMatrix);
+        }
+    });
+
+    m_ViewPortLayer->setPathTraceFunction([this](int width, int height, int sample) {
+        auto* viewport = m_layerStack.get<ViewPort>();
+        if (!viewport) return;
+
+        uint32_t pathTraceTexture = viewport->getPathTraceTexture();
+
+        if (sample == 0 || !m_progressiveTracer->isInitialized()) {
+            m_progressiveTracer->initialize(&m_camera, m_sceneManager, width, height);
+        }
+
+        m_progressiveTracer->renderSample(sample, pathTraceTexture);
+    });
+
+    m_layerStack.PushLayer(std::move(m_ViewPortLayer));
+}
+
+void FunGT::updateProjectionFromViewport() {
+    auto* view_port = m_layerStack.get<ViewPort>();
+    if (!view_port) return;
+
+    auto view_port_size = view_port->getViewPortSize();
+    if (view_port_size.x > 0 && view_port_size.y > 0) {
+        ProjectionMatrix = glm::perspective(
+            glm::radians(m_camera.getFOV()),
+            view_port_size.x / view_port_size.y,
+            nearPlane, farPlane
+        );
+    }
 }
 
 std::unique_ptr<FunGT> FunGT::createScene(int _width, int _height)
