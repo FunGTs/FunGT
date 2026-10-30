@@ -11,13 +11,7 @@
 #include <memory>
 #include <functional>
 
-struct SurfaceVertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec3 color;
 
-    FUNGT_VERTEX_FORMAT(SurfaceVertex, position, normal, color)
-};
 
 class Surface : public Renderable {
 private:
@@ -34,12 +28,14 @@ private:
     Material m_material;
 
 protected:
-    fungt::MarchingCubesCPU m_mc;
+    bool isGPU = false;
+    std::shared_ptr<fungt::MarchingCubes> m_mc;
     std::unique_ptr<GPUBuffer> m_buffer;
     unsigned int m_indexCount = 0;
+    std::function<void()> m_drawCall;
     std::string m_fs;
     std::string m_vs;
-    Surface();
+    Surface(fungt::MC_MODE mode);
 
 public:
     ~Surface();
@@ -51,6 +47,9 @@ public:
 
     void load();
     virtual void rebuild();
+    void createGPUInteropBuffer();
+    void createGPUBuffer(const std::vector<fungt::MCVertex>& verts,
+                         const std::vector<unsigned int>& indices); 
 
     void position(float x, float y, float z);
     void rotation(float x, float y, float z);
@@ -66,7 +65,7 @@ public:
     void updateModelMatrix() override;
     glm::mat4 getProjectionMatrix() override;
 
-    static std::shared_ptr<Surface> create();
+    static std::shared_ptr<Surface> create(fungt::MC_MODE mode = fungt::MC_MODE::CPU);
 };
 
 #endif // _SURFACE_HPP_
