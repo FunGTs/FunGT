@@ -525,10 +525,12 @@ elseif (UNIX)
     endif()
 
     set(SYCL_SOURCES
+        ${FUNGT_BASE_DIR}/MoleculeViewer/molecule_viewer.cpp
         ${FUNGT_BASE_DIR}/InfoDevice/sycl_backend.cpp
         ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
         ${FUNGT_BASE_DIR}/ParticleSimulation/particle_rtc_sycl_ops.cpp
         ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
+        ${FUNGT_BASE_DIR}/Surface/surface.cpp
     )
 
     list(JOIN SYCL_CUDA_ARCH_ARGS " " SYCL_CUDA_ARCH_STR)

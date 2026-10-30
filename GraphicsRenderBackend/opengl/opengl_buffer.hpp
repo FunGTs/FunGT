@@ -16,6 +16,7 @@ public:
     void bind() override;
     void unbind() override;
     void destroy() override;
+    unsigned int getId() override;
 
     void genVAO()    override;
     void bindVAO()   override;

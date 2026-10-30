@@ -13,8 +13,8 @@ int main()
 
     FunGTSceneManager scene_manager = myScene->getSceneManager();
 
-    FunGTMoleculeViewer mol = MoleculeViewer::create("Samples/mol_viewer/water.xyz");
-    mol->setResolution(80, 80, 80);
+    FunGTMoleculeViewer mol = MoleculeViewer::create("Samples/mol_viewer/mol.xyz", fungt::MC_MODE::GPU);
+    mol->setResolution(160, 160, 160);
     mol->load();
 
     myScene->set([&]() {

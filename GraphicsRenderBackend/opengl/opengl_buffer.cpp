@@ -68,6 +68,10 @@ void OpenGLBuffer::unbind() {
 void OpenGLBuffer::destroy() {
 }
 
+unsigned int OpenGLBuffer::getId() {
+    return m_vbo.getId();
+}
+
 void OpenGLBuffer::update(const void* data, size_t size, size_t offset) {
     m_ubo.setBufferData(data, size, offset);
 }
