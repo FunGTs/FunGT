@@ -17,9 +17,44 @@ void MeshRenderable::load()
         throw std::runtime_error("MeshRenderable::load() - No mesh geometry set!");
     }
 
-    m_shader->create(getAssetPath("shaders/primitive_vs.glsl"),
-                     getAssetPath("shaders/primitive_fs.glsl"));
+    m_shader->create(getAssetPath("shaders/fungt_default.vs"),
+                     getAssetPath("shaders/fungt_default.fs"));
     m_meshgeom->InitGraphics();
+}
+
+void MeshRenderable::position(float x, float y, float z)
+{
+    m_position = glm::vec3(x, y, z);
+}
+
+void MeshRenderable::rotation(float x, float y, float z)
+{
+    m_rotation = glm::vec3(x, y, z);
+}
+
+void MeshRenderable::scale(float s)
+{
+    m_scale = glm::vec3(s);
+}
+
+void MeshRenderable::scale(float x, float y, float z)
+{
+    m_scale = glm::vec3(x, y, z);
+}
+
+glm::vec3 MeshRenderable::getPosition() const
+{
+    return m_position;
+}
+
+glm::vec3 MeshRenderable::getRotation() const
+{
+    return m_rotation;
+}
+
+glm::vec3 MeshRenderable::getScale() const
+{
+    return m_scale;
 }
 
 void MeshRenderable::draw()

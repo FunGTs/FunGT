@@ -9,10 +9,10 @@
 
 struct MeshGeomGPUVertex {
     glm::vec3 vertex_position;
-    glm::vec3 vertex_normal;
-    glm::vec2 vertex_texcoord;
+    glm::vec3 normal_position;
+    glm::vec2 texture_position;
 
-    FUNGT_NEXT_VERTEX_FORMAT(MeshGeomGPUVertex, vertex_position, vertex_normal, vertex_texcoord)
+    FUNGT_NEXT_VERTEX_FORMAT(MeshGeomGPUVertex, vertex_position, normal_position, texture_position)
 };
 
 struct MeshGeomGPUSkin {

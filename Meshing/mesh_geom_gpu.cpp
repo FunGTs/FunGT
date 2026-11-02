@@ -33,10 +33,10 @@ void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
 
             MeshGeomGPUVertex vertex;
             vertex.vertex_position = meshGeometry.m_positions[positionIndex];
-            vertex.vertex_normal = meshGeometry.m_cornerNormals.empty()
+            vertex.normal_position = meshGeometry.m_cornerNormals.empty()
                 ? glm::vec3(0.0f)
                 : meshGeometry.m_cornerNormals[sourceCorner];
-            vertex.vertex_texcoord = meshGeometry.m_cornerUVs.empty()
+            vertex.texture_position = meshGeometry.m_cornerUVs.empty()
                 ? glm::vec2(0.0f)
                 : meshGeometry.m_cornerUVs[sourceCorner];
             vertices.push_back(vertex);

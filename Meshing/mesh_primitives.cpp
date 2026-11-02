@@ -1,12 +1,12 @@
 #include "mesh_primitives.hpp"
 
-MeshGeometry createCubeMeshGeometry(float size)
+std::shared_ptr<MeshGeometry> createCubeMeshGeometry(float size)
 {
     const float halfSize = size * 0.5f;
 
-    MeshGeometry mesh;
+    std::shared_ptr<MeshGeometry> mesh = std::make_shared<MeshGeometry>();
 
-    mesh.m_positions = {
+    mesh->m_positions = {
         glm::vec3(-halfSize, -halfSize, -halfSize),
         glm::vec3( halfSize, -halfSize, -halfSize),
         glm::vec3( halfSize,  halfSize, -halfSize),
@@ -17,8 +17,8 @@ MeshGeometry createCubeMeshGeometry(float size)
         glm::vec3(-halfSize,  halfSize,  halfSize)
     };
 
-    mesh.m_faceOffsets = {0, 4, 8, 12, 16, 20, 24};
-    mesh.m_cornerVertices = {
+    mesh->m_faceOffsets = {0, 4, 8, 12, 16, 20, 24};
+    mesh->m_cornerVertices = {
         0, 3, 2, 1, // Back   (-Z)
         4, 5, 6, 7, // Front  (+Z)
         0, 4, 7, 3, // Left   (-X)
@@ -27,7 +27,7 @@ MeshGeometry createCubeMeshGeometry(float size)
         3, 7, 6, 2  // Top    (+Y)
     };
 
-    mesh.m_cornerUVs = {
+    mesh->m_cornerUVs = {
         glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
         glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
         glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
@@ -36,7 +36,7 @@ MeshGeometry createCubeMeshGeometry(float size)
         glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f)
     };
 
-    mesh.m_cornerNormals = {
+    mesh->m_cornerNormals = {
         glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3( 0.0f,  0.0f, -1.0f),
         glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3( 0.0f,  0.0f,  1.0f),
         glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(-1.0f,  0.0f,  0.0f),
@@ -45,7 +45,7 @@ MeshGeometry createCubeMeshGeometry(float size)
         glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3( 0.0f,  1.0f,  0.0f)
     };
 
-    mesh.m_faceMaterials = {0, 0, 0, 0, 0, 0};
+    mesh->m_faceMaterials = {0, 0, 0, 0, 0, 0};
 
     return mesh;
 }

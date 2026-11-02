@@ -29,6 +29,13 @@ class MeshRenderable : public Renderable{
         explicit MeshRenderable(std::shared_ptr<MeshGeometry> meshgeom);
 
         void load();
+        void position(float x = 0.0f, float y = 0.0f, float z = 0.0f);
+        void rotation(float x = 0.0f, float y = 0.0f, float z = 0.0f);
+        void scale(float s = 1.0f);
+        void scale(float x, float y, float z);
+        glm::vec3 getPosition() const;
+        glm::vec3 getRotation() const;
+        glm::vec3 getScale() const;
         void draw() override;
         Shader& getShader() override;
         glm::mat4 getModelMatrix() const override;

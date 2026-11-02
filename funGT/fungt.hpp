@@ -12,6 +12,8 @@
 #include "SimpleGeometry/simple_geometry.hpp"
 #include "Surface/surface.hpp"
 #include "MoleculeViewer/molecule_viewer.hpp"
+#include "Meshing/mesh_primitives.hpp"
+#include "Meshing/mesh_renderable.hpp"
 #include "ParticleSimulation/particle_simulation.hpp"
 #include "Physics/AnimationCreator/animation_controller.hpp"
 #include "Physics/PhysicsWorld/physics_world.hpp"
