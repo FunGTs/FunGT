@@ -13,12 +13,25 @@ int main()
 
     FunGTSceneManager sceneManager = scene->getSceneManager();
 
-    std::shared_ptr<MeshGeometry> meshGeometry = createCubeMeshGeometry();
-    std::shared_ptr<MeshRenderable> cube = std::make_shared<MeshRenderable>(meshGeometry);
+    std::shared_ptr<MeshRenderable> cube =
+        std::make_shared<MeshRenderable>(createCubeMeshGeometry());
+    std::shared_ptr<MeshRenderable> sphere =
+        std::make_shared<MeshRenderable>(createSphereMeshGeometry());
+    std::shared_ptr<MeshRenderable> plane =
+        std::make_shared<MeshRenderable>(createPlaneMeshGeometry(12.0f, 12.0f));
+
+    cube->position(-2.0f, -0.5f, 0.0f);
+    sphere->position(2.0f, 0.0f, 0.0f);
+    plane->position(0.0f, -1.0f, 0.0f);
+
     cube->load();
+    sphere->load();
+    plane->load();
 
     scene->set([&]() {
         sceneManager->addRenderableObj(cube);
+        sceneManager->addRenderableObj(sphere);
+        sceneManager->addRenderableObj(plane);
     });
 
     scene->render([&]() {

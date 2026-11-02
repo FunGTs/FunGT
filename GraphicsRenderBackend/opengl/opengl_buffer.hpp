@@ -32,6 +32,8 @@ public:
     void createIndexBuffer(const uint32_t* data, size_t count) override;
     void bindVertexStreams(const Shader& shader) override;
     void drawIndexed(size_t indexCount, DrawMode mode = DrawMode::Triangles) override;
+    void drawIndexedRange(size_t indexCount, size_t indexOffset,
+                          DrawMode mode = DrawMode::Triangles) override;
     void drawArrays(size_t vertexCount, DrawMode mode = DrawMode::Triangles) override;
     void drawIndexedInstanced(size_t indexCount, int instanceCount, DrawMode mode = DrawMode::Triangles) override;
     void drawArraysInstanced(size_t vertexCount, int instanceCount, DrawMode mode = DrawMode::Triangles) override;

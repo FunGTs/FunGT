@@ -14,6 +14,7 @@ void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
     }
 
     std::vector<MeshGeomGPUVertex> vertices;
+    std::vector<std::vector<uint32_t>> indicesPerMaterial(meshGeometry.m_materials.size());
     std::vector<uint32_t> indices;
 
     vertices.reserve(meshGeometry.cornerCount());
@@ -26,6 +27,9 @@ void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
 
         const uint32_t firstVertex = static_cast<uint32_t>(vertices.size());
         const size_t cornerOffset = meshGeometry.m_faceOffsets[faceIndex];
+        const uint32_t materialIndex = meshGeometry.m_faceMaterials.empty()
+            ? 0
+            : meshGeometry.m_faceMaterials[faceIndex];
 
         for (size_t cornerIndex = 0; cornerIndex < face.count; ++cornerIndex) {
             const size_t sourceCorner = cornerOffset + cornerIndex;
@@ -43,18 +47,38 @@ void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
         }
 
         for (uint32_t cornerIndex = 1; cornerIndex + 1 < face.count; ++cornerIndex) {
-            indices.push_back(firstVertex);
-            indices.push_back(firstVertex + cornerIndex);
-            indices.push_back(firstVertex + cornerIndex + 1);
+            indicesPerMaterial[materialIndex].push_back(firstVertex);
+            indicesPerMaterial[materialIndex].push_back(firstVertex + cornerIndex);
+            indicesPerMaterial[materialIndex].push_back(firstVertex + cornerIndex + 1);
         }
     }
 
-    if (vertices.empty() || indices.empty()) {
+    if (vertices.empty()) {
         return;
     }
 
     cache = new MeshGeomGPU();
     cache->m_buffer = GPUBuffer::create();
+
+    for (uint32_t materialIndex = 0; materialIndex < indicesPerMaterial.size(); ++materialIndex) {
+        const std::vector<uint32_t>& materialIndices = indicesPerMaterial[materialIndex];
+        if (materialIndices.empty()) {
+            continue;
+        }
+
+        cache->m_materialRanges.push_back({
+            materialIndex,
+            static_cast<uint32_t>(indices.size()),
+            static_cast<uint32_t>(materialIndices.size())
+        });
+        indices.insert(indices.end(), materialIndices.begin(), materialIndices.end());
+    }
+
+    if (indices.empty()) {
+        delete cache;
+        cache = nullptr;
+        return;
+    }
 
     cache->m_buffer->genVAO();
     cache->m_buffer->bindVAO();
@@ -74,18 +98,14 @@ void FreeMeshGeomGPU(MeshGeomGPU* cache)
 
 void DrawMeshGeomGPU(MeshGeomGPU& cache, const MeshGeometry& meshGeometry, Shader& shader)
 {
-    size_t indexCount = 0;
-
-    for (size_t faceIndex = 0; faceIndex < meshGeometry.faceCount(); ++faceIndex) {
-        const MeshGeometry::FaceCorners face = meshGeometry.faceCorners(faceIndex);
-        if (face.count >= 3) {
-            indexCount += (face.count - 2) * 3;
-        }
-    }
-
     cache.m_buffer->bindVAO();
     cache.m_buffer->bindVertexStreams(shader);
-    cache.m_buffer->drawIndexed(indexCount);
+
+    for (const MeshGeomGPUMaterialRange& range : cache.m_materialRanges) {
+        meshGeometry.m_materials[range.m_materialIndex].sendToShader(shader);
+        cache.m_buffer->drawIndexedRange(range.m_indexCount, range.m_indexOffset);
+    }
+
     cache.m_buffer->unbindVAO();
 }
 

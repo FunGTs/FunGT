@@ -16,7 +16,6 @@ class MeshRenderable : public Renderable{
 
         std::shared_ptr<MeshGeometry> m_meshgeom;
         std::unique_ptr<Shader> m_shader; 
-        Material material;
 
         glm::mat4 m_modelMatrix = glm::mat4(1.0f);
         glm::mat4 m_viewMatrix = glm::mat4(1.0f);
@@ -36,6 +35,7 @@ class MeshRenderable : public Renderable{
         glm::vec3 getPosition() const;
         glm::vec3 getRotation() const;
         glm::vec3 getScale() const;
+        std::shared_ptr<MeshGeometry> getMeshGeometry() const;
         void draw() override;
         Shader& getShader() override;
         glm::mat4 getModelMatrix() const override;

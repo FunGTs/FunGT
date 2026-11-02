@@ -178,6 +178,12 @@ void OpenGLBuffer::drawIndexed(size_t indexCount, DrawMode mode) {
     glDrawElements(toGLMode(mode), static_cast<GLsizei>(indexCount), GL_UNSIGNED_INT, (void*)0);
 }
 
+void OpenGLBuffer::drawIndexedRange(size_t indexCount, size_t indexOffset, DrawMode mode)
+{
+    glDrawElements(toGLMode(mode), static_cast<GLsizei>(indexCount), GL_UNSIGNED_INT,
+                   reinterpret_cast<const GLvoid*>(indexOffset * sizeof(uint32_t)));
+}
+
 void OpenGLBuffer::drawArrays(size_t vertexCount, DrawMode mode) {
     glDrawArrays(toGLMode(mode), 0, static_cast<GLsizei>(vertexCount));
 }

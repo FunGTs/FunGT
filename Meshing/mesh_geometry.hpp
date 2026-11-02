@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "include/glmath.hpp"
+#include "Material/material.hpp"
 
 class MeshGeomGPU;
 class Shader;
@@ -23,6 +24,7 @@ public:
     std::vector<glm::vec2> m_cornerUVs;
     std::vector<glm::vec3> m_cornerNormals;
     std::vector<uint32_t> m_faceMaterials;
+    std::vector<Material> m_materials = {Material::createDefaultMaterial()};
     MeshGeomGPU* m_gpuCache = nullptr;
 
     static void (*s_gpuBuild)(MeshGeometry&, MeshGeomGPU*&);
@@ -112,6 +114,25 @@ public:
         return true;
     }
 
+    std::vector<Material>& getMaterials()
+    {
+        return m_materials;
+    }
+
+    const std::vector<Material>& getMaterials() const
+    {
+        return m_materials;
+    }
+
+    void setMaterials(std::vector<Material> materials)
+    {
+        if (materials.empty()) {
+            materials.push_back(Material::createDefaultMaterial());
+        }
+
+        m_materials = std::move(materials);
+    }
+
     size_t vertexCount() const { return m_positions.size(); }
     size_t faceCount() const { return m_faceOffsets.empty() ? 0 : m_faceOffsets.size() - 1; }
     size_t cornerCount() const { return m_cornerVertices.size(); }
@@ -136,7 +157,8 @@ public:
 
     bool isValid() const
     {
-        if (!isValidFaceOffsets(m_faceOffsets, m_cornerVertices.size())) {
+        if (m_materials.empty() ||
+            !isValidFaceOffsets(m_faceOffsets, m_cornerVertices.size())) {
             return false;
         }
 
@@ -146,9 +168,20 @@ public:
             }
         }
 
+        if (!m_faceMaterials.empty()) {
+            if (m_faceMaterials.size() != faceCount()) {
+                return false;
+            }
+
+            for (const uint32_t materialIndex : m_faceMaterials) {
+                if (materialIndex >= m_materials.size()) {
+                    return false;
+                }
+            }
+        }
+
         return (m_cornerUVs.empty() || m_cornerUVs.size() == m_cornerVertices.size()) &&
-               (m_cornerNormals.empty() || m_cornerNormals.size() == m_cornerVertices.size()) &&
-               (m_faceMaterials.empty() || m_faceMaterials.size() == faceCount());
+               (m_cornerNormals.empty() || m_cornerNormals.size() == m_cornerVertices.size());
     }
 
 private:

@@ -4,6 +4,7 @@
 #include "imgui_window.hpp"
 #include "../SceneManager/scene_manager.hpp"
 #include "../SimpleModel/simple_model.hpp"
+#include "../Meshing/mesh_renderable.hpp"
 #include <memory>
 
 class MaterialEditorWindow : public ImGuiWindow {
@@ -11,12 +12,16 @@ private:
     std::shared_ptr<SceneManager> m_sceneManager;
     int m_selectedObjectIndex;
     int m_selectedMeshIndex;
+    int m_selectedMeshRenderableIndex;
+    int m_selectedMaterialIndex;
 
 public:
     MaterialEditorWindow(std::shared_ptr<SceneManager> sceneManager)
         : m_sceneManager(sceneManager)
         , m_selectedObjectIndex(0)
         , m_selectedMeshIndex(0)
+        , m_selectedMeshRenderableIndex(0)
+        , m_selectedMaterialIndex(0)
     {
     }
 
@@ -31,6 +36,98 @@ public:
 
         const auto& allObjects = m_sceneManager->getRenderable();
 
+        std::vector<std::shared_ptr<MeshRenderable>> meshRenderables;
+        for (auto& object : allObjects) {
+            auto meshRenderable = std::dynamic_pointer_cast<MeshRenderable>(object);
+            if (meshRenderable) {
+                meshRenderables.push_back(meshRenderable);
+            }
+        }
+
+        if (!meshRenderables.empty()) {
+            if (m_selectedMeshRenderableIndex >= meshRenderables.size()) {
+                m_selectedMeshRenderableIndex = 0;
+            }
+
+            ImGui::Text("New Mesh Objects");
+            ImGui::SameLine();
+            if (ImGui::BeginCombo("##MeshRenderableSelect",
+                                  ("Mesh " + std::to_string(m_selectedMeshRenderableIndex)).c_str())) {
+                for (int i = 0; i < meshRenderables.size(); ++i) {
+                    const bool isSelected = m_selectedMeshRenderableIndex == i;
+                    if (ImGui::Selectable(("Mesh " + std::to_string(i)).c_str(), isSelected)) {
+                        m_selectedMeshRenderableIndex = i;
+                        m_selectedMaterialIndex = 0;
+                    }
+                    if (isSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            std::shared_ptr<MeshGeometry> geometry =
+                meshRenderables[m_selectedMeshRenderableIndex]->getMeshGeometry();
+            std::vector<Material>& materials = geometry->getMaterials();
+
+            if (m_selectedMaterialIndex >= materials.size()) {
+                m_selectedMaterialIndex = 0;
+            }
+
+            ImGui::Text("Material Slot");
+            ImGui::SameLine();
+            if (ImGui::BeginCombo("##MeshMaterialSelect",
+                                  std::to_string(m_selectedMaterialIndex).c_str())) {
+                for (int i = 0; i < materials.size(); ++i) {
+                    const bool isSelected = m_selectedMaterialIndex == i;
+                    std::string label = materials[i].m_name.empty()
+                        ? "Material " + std::to_string(i)
+                        : materials[i].m_name;
+                    if (ImGui::Selectable(label.c_str(), isSelected)) {
+                        m_selectedMaterialIndex = i;
+                    }
+                    if (isSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            if (ImGui::Button("Add Material")) {
+                materials.push_back(Material::createDefaultMaterial());
+                m_selectedMaterialIndex = static_cast<int>(materials.size()) - 1;
+            }
+
+            Material& material = materials[m_selectedMaterialIndex];
+
+            ImGui::Text("Material:");
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.4f, 0.7f, 1.0f, 1.0f), "%s", material.m_name.c_str());
+
+            ImGui::Text("Base Color");
+            ImGui::ColorEdit3("##MeshBaseColor", &material.m_baseColor.x, ImGuiColorEditFlags_Float);
+
+            ImGui::Text("Metallic");
+            ImGui::SliderFloat("##MeshMetallic", &material.m_metallic, 0.0f, 1.0f, "%.3f");
+
+            ImGui::Text("Roughness");
+            ImGui::SliderFloat("##MeshRoughness", &material.m_roughness, 0.05f, 1.0f, "%.3f");
+
+            ImGui::Text("Reflectance");
+            ImGui::SliderFloat("##MeshReflectance", &material.m_reflectance, 0.0f, 1.0f, "%.3f");
+
+            ImGui::Text("Emission");
+            ImGui::SliderFloat("##MeshEmission", &material.m_emission, 0.0f, 50.0f, "%.1f");
+
+            if (ImGui::Button("Reset Mesh Material", ImVec2(-1, 0))) {
+                material = Material::createDefaultMaterial();
+            }
+
+            ImGui::Text("Faces: %zu", geometry->faceCount());
+            ImGui::Text("Material Slots: %zu", materials.size());
+            ImGui::Separator();
+        }
+
         // Filter to only SimpleModel objects (skip InfiniteGrid, etc.)
         std::vector<std::shared_ptr<SimpleModel>> models;
         for (auto& obj : allObjects) {
@@ -41,8 +138,9 @@ public:
         }
 
         if (models.empty()) {
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No models in scene");
-            ImGui::Text("Load a model to edit materials");
+            if (meshRenderables.empty()) {
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No mesh objects in scene");
+            }
             ImGui::End();
             return;
         }

@@ -50,6 +50,8 @@ public:
 
     // Draw — backend translates to gl/vk draw calls
     virtual void drawIndexed(size_t indexCount, DrawMode mode = DrawMode::Triangles) {}
+    virtual void drawIndexedRange(size_t indexCount, size_t indexOffset,
+                                  DrawMode mode = DrawMode::Triangles) {}
     virtual void drawArrays(size_t vertexCount, DrawMode mode = DrawMode::Triangles) {}
     virtual void drawIndexedInstanced(size_t indexCount, int instanceCount, DrawMode mode = DrawMode::Triangles) {}
     virtual void drawArraysInstanced(size_t vertexCount, int instanceCount, DrawMode mode = DrawMode::Triangles) {}

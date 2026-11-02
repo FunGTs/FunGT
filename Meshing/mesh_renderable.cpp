@@ -57,10 +57,14 @@ glm::vec3 MeshRenderable::getScale() const
     return m_scale;
 }
 
+std::shared_ptr<MeshGeometry> MeshRenderable::getMeshGeometry() const
+{
+    return m_meshgeom;
+}
+
 void MeshRenderable::draw()
 {
     if (m_meshgeom) {
-        material.sendToShader(*m_shader);
         m_shader->setUniform1i("hasTexture", 0);
         m_meshgeom->draw(*m_shader);
     }
