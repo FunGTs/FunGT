@@ -3,7 +3,10 @@
 #include <cstddef>
 #include <memory>
 #include "vertex_format.hpp"
+#include "../GraphicsRenderBackendNext/vertex_format.hpp"
 #include "../Renders/display_graphics.hpp"
+
+class Shader;
 
 enum class BufferType {
     Vertex,
@@ -38,6 +41,12 @@ public:
 
     // Vertex layout — Vulkan uses it for pipeline, OpenGL bakes it into the VAO
     virtual void applyFormat(const VertexFormat& fmt) {}
+
+    // Named vertex streams for the new mesh path.
+    virtual void createVertexStream(uint32_t streamIndex, const void* data, size_t size,
+                                    const GraphicsRenderBackendNext::VertexFormat& format) {}
+    virtual void createIndexBuffer(const uint32_t* data, size_t count) {}
+    virtual void bindVertexStreams(const Shader& shader) {}
 
     // Draw — backend translates to gl/vk draw calls
     virtual void drawIndexed(size_t indexCount, DrawMode mode = DrawMode::Triangles) {}

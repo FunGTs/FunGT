@@ -6,6 +6,11 @@
 #include "../../VertexGL/vertexBuffers.hpp"
 #include "../../VertexGL/vertexIndices.hpp"
 #include "../../VertexGL/uniform_buffer_object.hpp"
+#include <vector>
+struct OpenGLVertexStream {
+    std::unique_ptr<VertexBuffer> m_buffer;
+    GraphicsRenderBackendNext::VertexFormat m_format;
+};
 
 class OpenGLBuffer : public GPUBuffer {
 public:
@@ -22,6 +27,10 @@ public:
     void unbindVAO() override;
 
     void applyFormat(const VertexFormat& fmt) override;
+    void createVertexStream(uint32_t streamIndex, const void* data, size_t size,
+                            const GraphicsRenderBackendNext::VertexFormat& format) override;
+    void createIndexBuffer(const uint32_t* data, size_t count) override;
+    void bindVertexStreams(const Shader& shader) override;
     void drawIndexed(size_t indexCount, DrawMode mode = DrawMode::Triangles) override;
     void drawArrays(size_t vertexCount, DrawMode mode = DrawMode::Triangles) override;
     void drawIndexedInstanced(size_t indexCount, int instanceCount, DrawMode mode = DrawMode::Triangles) override;
@@ -36,6 +45,8 @@ private:
     VertexBuffer       m_vbo;
     VertexIndex        m_ebo;
     UniformBufferObject m_ubo;
+    std::vector<OpenGLVertexStream> m_vertexStreams;
+    bool m_hasNextIndexBuffer = false;
 };
 
 #endif // _OPENGL_BUFFER_HPP_

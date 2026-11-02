@@ -1,0 +1,32 @@
+#if !defined(_MESH_GEOM_GPU_HPP_)
+#define _MESH_GEOM_GPU_HPP_
+
+#include <cstddef>
+#include <memory>
+#include "GraphicsRenderBackend/gpu_buffer.hpp"
+#include "GraphicsRenderBackendNext/vertex_format.hpp"
+#include "mesh_geometry.hpp"
+
+struct MeshGeomGPUVertex {
+    glm::vec3 vertex_position;
+    glm::vec3 vertex_normal;
+    glm::vec2 vertex_texcoord;
+
+    FUNGT_NEXT_VERTEX_FORMAT(MeshGeomGPUVertex, vertex_position, vertex_normal, vertex_texcoord)
+};
+
+struct MeshGeomGPUSkin {
+    glm::uvec4 jointIds;
+    glm::vec4 weights;
+
+    FUNGT_NEXT_VERTEX_FORMAT(MeshGeomGPUSkin, jointIds, weights)
+};
+
+class MeshGeomGPU {
+public:
+    std::unique_ptr<GPUBuffer> m_buffer;
+};
+
+void RegisterMeshGeomGPUCallbacks();
+
+#endif // _MESH_GEOM_GPU_HPP_

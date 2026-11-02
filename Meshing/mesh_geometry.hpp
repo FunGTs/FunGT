@@ -8,6 +8,9 @@
 
 #include "include/glmath.hpp"
 
+class MeshGeomGPU;
+class Shader;
+
 class MeshGeometry {
 public:
     struct FaceCorners {
@@ -20,6 +23,38 @@ public:
     std::vector<glm::vec2> m_cornerUVs;
     std::vector<glm::vec3> m_cornerNormals;
     std::vector<uint32_t> m_faceMaterials;
+    MeshGeomGPU* m_gpuCache = nullptr;
+
+    static void (*s_gpuBuild)(MeshGeometry&, MeshGeomGPU*&);
+    static void (*s_gpuFree)(MeshGeomGPU*);
+    static void (*s_gpuDraw)(MeshGeomGPU&, const MeshGeometry&, Shader&);
+
+    ~MeshGeometry()
+    {
+        if (s_gpuFree && m_gpuCache) {
+            s_gpuFree(m_gpuCache);
+        }
+    }
+
+    void InitGraphics()
+    {
+        if (s_gpuBuild && !m_gpuCache) {
+            s_gpuBuild(*this, m_gpuCache);
+        }
+    }
+
+    void attachGPUCache(MeshGeomGPU* cache)
+    {
+        m_gpuCache = cache;
+    }
+
+    void draw(Shader& shader)
+    {
+        if (s_gpuDraw && m_gpuCache) {
+            s_gpuDraw(*m_gpuCache, *this, shader);
+        }
+    }
+
     void clear()
     {
         m_positions.clear();

@@ -1,11 +1,21 @@
 #include "opengl_buffer.hpp"
 #include "../vertex_format.hpp"
+#include "../../Shaders/shader.hpp"
 
 static uint32_t toGLType(AttrBaseType t) {
     switch (t) {
         case AttrBaseType::Float: return GL_FLOAT;
         case AttrBaseType::Int:   return GL_INT;
         case AttrBaseType::UInt:  return GL_UNSIGNED_INT;
+    }
+    return GL_FLOAT;
+}
+
+static uint32_t toGLType(GraphicsRenderBackendNext::AttrBaseType t) {
+    switch (t) {
+        case GraphicsRenderBackendNext::AttrBaseType::Float: return GL_FLOAT;
+        case GraphicsRenderBackendNext::AttrBaseType::Int:   return GL_INT;
+        case GraphicsRenderBackendNext::AttrBaseType::UInt:  return GL_UNSIGNED_INT;
     }
     return GL_FLOAT;
 }
@@ -82,6 +92,74 @@ void OpenGLBuffer::unbindVAO() { m_vao.unbind(); }
 
 void OpenGLBuffer::applyFormat(const VertexFormat& fmt) {
     applyVertexFormat(fmt);
+}
+
+void OpenGLBuffer::createVertexStream(
+    uint32_t streamIndex,
+    const void* data,
+    size_t size,
+    const GraphicsRenderBackendNext::VertexFormat& format)
+{
+    if (m_vertexStreams.size() <= streamIndex) {
+        m_vertexStreams.resize(streamIndex + 1);
+    }
+
+    OpenGLVertexStream& stream = m_vertexStreams[streamIndex];
+    if (!stream.m_buffer) {
+        stream.m_buffer = std::make_unique<VertexBuffer>();
+        stream.m_buffer->genVB();
+    }
+
+    stream.m_format = format;
+    stream.m_buffer->bind();
+    stream.m_buffer->bufferData(data, static_cast<unsigned int>(size));
+}
+
+void OpenGLBuffer::createIndexBuffer(const uint32_t* data, size_t count)
+{
+    if (!m_hasNextIndexBuffer) {
+        m_ebo.genVI();
+        m_hasNextIndexBuffer = true;
+    }
+
+    m_ebo.bind();
+    m_ebo.indexData(data, static_cast<unsigned int>(count * sizeof(uint32_t)));
+}
+
+void OpenGLBuffer::bindVertexStreams(const Shader& shader)
+{
+    for (const OpenGLVertexStream& stream : m_vertexStreams) {
+        if (!stream.m_buffer) {
+            continue;
+        }
+
+        stream.m_buffer->bind();
+
+        for (const GraphicsRenderBackendNext::VertexAttribute& attribute :
+             stream.m_format.m_attributes) {
+            const int location = shader.getVertexAttributeLocation(attribute.m_name);
+            if (location < 0) {
+                continue;
+            }
+
+            glEnableVertexAttribArray(static_cast<GLuint>(location));
+
+            if (attribute.m_isInt) {
+                glVertexAttribIPointer(static_cast<GLuint>(location),
+                                       static_cast<GLint>(attribute.m_count),
+                                       toGLType(attribute.m_baseType),
+                                       static_cast<GLsizei>(stream.m_format.m_stride),
+                                       reinterpret_cast<const GLvoid*>(attribute.m_offset));
+            } else {
+                glVertexAttribPointer(static_cast<GLuint>(location),
+                                      static_cast<GLint>(attribute.m_count),
+                                      toGLType(attribute.m_baseType),
+                                      GL_FALSE,
+                                      static_cast<GLsizei>(stream.m_format.m_stride),
+                                      reinterpret_cast<const GLvoid*>(attribute.m_offset));
+            }
+        }
+    }
 }
 
 static GLenum toGLMode(DrawMode m) {

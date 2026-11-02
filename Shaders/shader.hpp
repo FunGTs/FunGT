@@ -17,6 +17,8 @@ public:
     virtual void Bind()   = 0;
     virtual void unBind() = 0;
 
+    virtual int getVertexAttributeLocation(const std::string& name) const = 0;
+
     virtual void setUniform1i(const std::string& name, int value) = 0;
     virtual void setUniform1f(float value, const std::string& name) = 0;
     virtual void set1i(int value, const std::string& name) = 0;
