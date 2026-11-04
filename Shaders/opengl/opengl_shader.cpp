@@ -85,6 +85,11 @@ void OpenGLShader::linkProgram(GLuint vShader, GLuint geomShader, GLuint fShader
     std::cout << "leaving linking" << std::endl;
 }
 
+int OpenGLShader::getVertexAttributeLocation(const std::string& name) const
+{
+    return glGetAttribLocation(m_idP, name.c_str());
+}
+
 void OpenGLShader::create(const std::string& pathVert, const std::string& pathFrag)
 {
     bool errorVS = false, errorFS = false;

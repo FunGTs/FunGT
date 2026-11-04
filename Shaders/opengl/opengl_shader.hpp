@@ -15,6 +15,8 @@ public:
     void Bind()   override;
     void unBind() override;
 
+    int getVertexAttributeLocation(const std::string& name) const override;
+
     void setUniform1i(const std::string& name, int value) override;
     void setUniform1f(float value, const std::string& name) override;
     void set1i(int value, const std::string& name) override;
