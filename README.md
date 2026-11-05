@@ -88,27 +88,6 @@ cmake --build .
 sudo make install
 ```
 
-### GLM installation
-
-Please do a from source install:
-
-Go to https://github.com/g-truc/glm/releases/tag/1.0.1 and download the source code (zip).
-
-1. Unzip the file
-
-2. Install
-
-```bash
-    cd glm-1.0.1
-    cmake \
-        -DGLM_BUILD_TESTS=OFF \
-        -DBUILD_SHARED_LIBS=OFF \
-        -B build .
-    cmake --build build -- all
-    cmake --build build -- install
-```
-
-
 ## Clone the repository
 
 ```bash
