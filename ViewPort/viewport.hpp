@@ -7,10 +7,13 @@
 #include <cmath>
 #include <functional>
 
+enum class GeomMesh;
+
 class ViewPort : public Layer {
 protected:
     ImVec2 m_viewportSize = ImVec2(1280, 720);
     std::function<void()> m_RenderFunc;
+    std::function<void(GeomMesh)> m_AddGeomMeshFunc;
     std::function<void(int, int, int)> m_PathTraceFunc;
     bool m_pathTraceMode = false;
     int m_currentSample = 0;
@@ -24,6 +27,9 @@ public:
 
     void setRenderFunction(const std::function<void()>& func) {
         m_RenderFunc = func;
+    }
+    void setAddGeomMeshFunction(const std::function<void(GeomMesh)>& func) {
+        m_AddGeomMeshFunc = func;
     }
     void setPathTraceFunction(const std::function<void(int, int, int)>& func) {
         m_PathTraceFunc = func;

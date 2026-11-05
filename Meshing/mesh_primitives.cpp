@@ -1,7 +1,29 @@
 #include "mesh_primitives.hpp"
+#include "mesh_renderable.hpp"
 
 #include <cmath>
 #include <initializer_list>
+
+std::shared_ptr<MeshRenderable> createGeomMesh(GeomMesh geomMesh)
+{
+    std::shared_ptr<MeshGeometry> geometry;
+
+    switch (geomMesh) {
+    case GeomMesh::Cube:
+        geometry = createCubeMeshGeometry();
+        break;
+
+    case GeomMesh::Sphere:
+        geometry = createSphereMeshGeometry();
+        break;
+
+    case GeomMesh::Plane:
+        geometry = createPlaneMeshGeometry();
+        break;
+    }
+
+    return std::make_shared<MeshRenderable>(geometry);
+}
 
 std::shared_ptr<MeshGeometry> createCubeMeshGeometry(float size)
 {

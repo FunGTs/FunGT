@@ -1,4 +1,5 @@
 #include "opengl_viewport.hpp"
+#include "../../Meshing/mesh_primitives.hpp"
 
 OpenGLViewPort::OpenGLViewPort()
 {
@@ -134,6 +135,29 @@ void OpenGLViewPort::onImGuiRender()
     ImGui::Image((void*)(intptr_t)texID,
         m_viewportSize,
         ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 8.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 5.0f));
+
+    if (ImGui::BeginPopupContextItem("ViewportContext")) {
+        ImGui::TextDisabled("Add Shape");
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Cube") && m_AddGeomMeshFunc) {
+            m_AddGeomMeshFunc(GeomMesh::Cube);
+        }
+        if (ImGui::MenuItem("Sphere") && m_AddGeomMeshFunc) {
+            m_AddGeomMeshFunc(GeomMesh::Sphere);
+        }
+        if (ImGui::MenuItem("Plane") && m_AddGeomMeshFunc) {
+            m_AddGeomMeshFunc(GeomMesh::Plane);
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::PopStyleVar(3);
 
     ImGui::End();
     ImGui::PopStyleColor();
