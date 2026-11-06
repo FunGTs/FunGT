@@ -153,6 +153,9 @@ void OpenGLViewPort::onImGuiRender()
         if (ImGui::MenuItem("Plane") && m_AddGeomMeshFunc) {
             m_AddGeomMeshFunc(GeomMesh::Plane);
         }
+        if (ImGui::MenuItem("Torus") && m_AddGeomMeshFunc) {
+            m_AddGeomMeshFunc(GeomMesh::Torus);
+        }
 
         ImGui::EndPopup();
     }

@@ -20,6 +20,10 @@ std::shared_ptr<MeshRenderable> createGeomMesh(GeomMesh geomMesh)
     case GeomMesh::Plane:
         geometry = createPlaneMeshGeometry();
         break;
+
+    case GeomMesh::Torus:
+        geometry = createTorusMeshGeometry();
+        break;
     }
 
     return std::make_shared<MeshRenderable>(geometry);
@@ -206,6 +210,77 @@ std::shared_ptr<MeshGeometry> createSphereMeshGeometry(float radius,
     }
 
     mesh->m_faceOffsets.push_back(static_cast<uint32_t>(mesh->m_cornerVertices.size()));
+
+    return mesh;
+}
+
+std::shared_ptr<MeshGeometry> createTorusMeshGeometry(float majorRadius,
+                                                       float minorRadius,
+                                                       int majorSegments,
+                                                       int minorSegments)
+{
+    constexpr float pi = 3.14159265358979323846f;
+
+    std::shared_ptr<MeshGeometry> mesh = std::make_shared<MeshGeometry>();
+    if (majorSegments < 3 || minorSegments < 3) {
+        return mesh;
+    }
+
+    for (int major = 0; major < majorSegments; ++major) {
+        const float u = 2.0f * pi * static_cast<float>(major) / majorSegments;
+        const float cosU = std::cos(u);
+        const float sinU = std::sin(u);
+
+        for (int minor = 0; minor < minorSegments; ++minor) {
+            const float v = 2.0f * pi * static_cast<float>(minor) / minorSegments;
+            const float ringRadius = majorRadius + minorRadius * std::cos(v);
+
+            mesh->m_positions.emplace_back(ringRadius * cosU,
+                                           ringRadius * sinU,
+                                           minorRadius * std::sin(v));
+        }
+    }
+
+    mesh->m_faceOffsets.push_back(0);
+
+    for (int major = 0; major < majorSegments; ++major) {
+        const int nextMajor = (major + 1) % majorSegments;
+        const float u0 = static_cast<float>(major) / majorSegments;
+        const float u1 = static_cast<float>(major + 1) / majorSegments;
+
+        for (int minor = 0; minor < minorSegments; ++minor) {
+            const int nextMinor = (minor + 1) % minorSegments;
+            const float v0 = static_cast<float>(minor) / minorSegments;
+            const float v1 = static_cast<float>(minor + 1) / minorSegments;
+
+            const uint32_t a = static_cast<uint32_t>(major * minorSegments + minor);
+            const uint32_t b = static_cast<uint32_t>(nextMajor * minorSegments + minor);
+            const uint32_t c = static_cast<uint32_t>(major * minorSegments + nextMinor);
+            const uint32_t d = static_cast<uint32_t>(nextMajor * minorSegments + nextMinor);
+
+            mesh->m_cornerVertices.insert(mesh->m_cornerVertices.end(), {a, b, d, c});
+            mesh->m_cornerUVs.insert(mesh->m_cornerUVs.end(), {
+                glm::vec2(u0, v0),
+                glm::vec2(u1, v0),
+                glm::vec2(u1, v1),
+                glm::vec2(u0, v1)
+            });
+
+            const auto addNormal = [&](float u, float v) {
+                mesh->m_cornerNormals.emplace_back(std::cos(v) * std::cos(u),
+                                                    std::cos(v) * std::sin(u),
+                                                    std::sin(v));
+            };
+
+            addNormal(2.0f * pi * u0, 2.0f * pi * v0);
+            addNormal(2.0f * pi * u1, 2.0f * pi * v0);
+            addNormal(2.0f * pi * u1, 2.0f * pi * v1);
+            addNormal(2.0f * pi * u0, 2.0f * pi * v1);
+
+            mesh->m_faceMaterials.push_back(0);
+            mesh->m_faceOffsets.push_back(static_cast<uint32_t>(mesh->m_cornerVertices.size()));
+        }
+    }
 
     return mesh;
 }
