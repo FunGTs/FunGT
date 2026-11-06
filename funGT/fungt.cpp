@@ -195,6 +195,15 @@ void FunGT::initViewport() {
         }
     });
 
+    m_ViewPortLayer->setAddGeomMeshFunction([this](GeomMesh geomMesh) {
+        auto shape = createGeomMesh(geomMesh);
+
+        shape->position(0.0f, 0.0f, 0.0f);
+        shape->load();
+
+        m_sceneManager->addRenderableObj(shape);
+    });
+
     m_ViewPortLayer->setPathTraceFunction([this](int width, int height, int sample) {
         auto* viewport = m_layerStack.get<ViewPort>();
         if (!viewport) return;
