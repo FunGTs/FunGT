@@ -4,7 +4,9 @@
 #include "../SceneManager/scene_manager.hpp"
 #include "../CubeMap/cube_map.hpp"
 //#include "../Physics/ParticleSystem/noise_particle.hpp"
+#if !defined(FUNGT_DISABLE_PARTICLE_SIMULATION)
 #include "../ParticleSimulation/particle_simulation.hpp"
+#endif
 #include "../Path_Manager/path_manager.hpp"
 #include "../InfoWindow/infowindow.hpp"
 #include "../Physics/Clothing/clothing.hpp"

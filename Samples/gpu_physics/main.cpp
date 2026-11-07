@@ -18,9 +18,9 @@ int main() {
     myGame->setBackgroundColor();
     myGame->initGL();
 
-    flib::sycl_handler::select_backend_device("OpenCL", "GPU");
-    flib::sycl_handler::create_gl_interop_context();
-    flib::sycl_handler::get_device_info();
+    flib::sycl_handler::register_queue("gl_queue", flib::device::GPU, flib::vendor::INTEL, flib::backend::OPENCL);
+    flib::sycl_handler::create_gl_interop_context("gl_queue");
+    flib::sycl_handler::get_device_info("gl_queue");
 
     gpu::PhysicsWorld gpuPhysics;
     auto gpuCollision = gpuPhysics.getCollisionManager();
@@ -35,7 +35,7 @@ int main() {
     
     auto groundBox = std::make_shared<geometry::Box>(20.0f, 1.0f, 20.0f);
     auto ground = GPUGeometry::create(gpuCollision, GPUGeometryType::Box, groundBox);
-    ground->load(getAssetPath("img/box.jpg"));
+    ground->load(getAssetPath("assets_local/img/box.jpg"));
     std::cout << "GROUND: startIndex=" << ground->getStartIndex()
         << ", instanceCount=" << ground->getInstanceCount() << std::endl;
     // Balls
@@ -75,7 +75,7 @@ int main() {
    
 
     auto balls = GPUGeometry::create(gpuCollision, GPUGeometryType::Sphere);
-    balls->load(getAssetPath("img/BeachBallColor.jpg"));
+    balls->load(getAssetPath("assets_local/img/ball.jpg"));
     std::cout << "BALLS: startIndex=" << balls->getStartIndex()
         << ", instanceCount=" << balls->getInstanceCount() << std::endl;
     FunGTSceneManager scene_manager = myGame->getSceneManager();

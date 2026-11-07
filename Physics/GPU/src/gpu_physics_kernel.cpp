@@ -43,7 +43,7 @@ void gpu::PhysicsKernel::initMemoryAllocations(int maxBodies)
     m_capacity = maxBodies;
     m_numBodies = 0;
 
-    m_queue = flib::sycl_handler::get_queue();
+    m_queue = flib::sycl_handler::get_queue("gl_queue");
     if (!checkGPUMemory(m_queue, maxBodies, m_worldSize, m_cellSize)) {
         throw std::runtime_error("Not enough GPU memory for requested body count");
     }

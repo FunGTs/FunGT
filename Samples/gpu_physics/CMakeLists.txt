@@ -81,7 +81,6 @@ include_directories(
     ${FUNGT_BASE_DIR}/Matrix
     ${FUNGT_BASE_DIR}/SceneManager
     ${FUNGT_BASE_DIR}/CubeMap
-    ${FUNGT_BASE_DIR}/ParticleSimulation
     ${FUNGT_BASE_DIR}/Random
     ${FUNGT_BASE_DIR}/Path_Manager
     ${FUNGT_BASE_DIR}/InfoWindow
@@ -134,7 +133,6 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Matrix/matrix3x3f.cpp
     ${FUNGT_BASE_DIR}/SceneManager/scene_manager.cpp
     ${FUNGT_BASE_DIR}/CubeMap/cube_map.cpp
-    ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation.cpp
     ${FUNGT_BASE_DIR}/Random/random.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/InfoWindow/infowindow.cpp
@@ -155,6 +153,7 @@ set(SOURCE_FILES
 
 # Add executable
 add_executable(FunGT ${SOURCE_FILES})
+target_compile_definitions(FunGT PRIVATE FUNGT_DISABLE_PARTICLE_SIMULATION)
 
 # Platform-specific configurations
 if (WIN32)

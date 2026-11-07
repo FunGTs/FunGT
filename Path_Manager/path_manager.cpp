@@ -6,8 +6,8 @@ std::string findProjectRoot(){
     // Traverse up to find the "FunGT" folder
     while (current.has_parent_path()) {
         if (std::filesystem::exists(current / "resources") &&
-            std::filesystem::exists(current / "img") &&
-            std::filesystem::exists(current / "Animations")) {
+            std::filesystem::exists(current / "assets_local") &&
+            std::filesystem::exists(current / "Animation")) {
             return current.string(); // Found project root
         }
         current = current.parent_path();
