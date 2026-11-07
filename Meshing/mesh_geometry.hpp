@@ -18,11 +18,13 @@ public:
         const uint32_t* vertices = nullptr;
         size_t count = 0;
     };
+    std::string m_name; //Name of the current mesh
     std::vector<glm::vec3> m_positions;
     std::vector<uint32_t> m_faceOffsets;
     std::vector<uint32_t> m_cornerVertices;
     std::vector<glm::vec2> m_cornerUVs;
     std::vector<glm::vec3> m_cornerNormals;
+    std::vector<glm::vec4> m_cornerColors;
     std::vector<uint32_t> m_faceMaterials;
     std::vector<Material> m_materials = {Material::createDefaultMaterial()};
     MeshGeomGPU* m_gpuCache = nullptr;
@@ -64,6 +66,7 @@ public:
         m_cornerVertices.clear();
         m_cornerUVs.clear();
         m_cornerNormals.clear();
+        m_cornerColors.clear();
         m_faceMaterials.clear();
     }
 
@@ -101,6 +104,16 @@ public:
         }
 
         m_cornerNormals = std::move(cornerNormals);
+        return true;
+    }
+
+    bool setCornerColors(std::vector<glm::vec4> cornerColors)
+    {
+        if (cornerColors.size() != m_cornerVertices.size()) {
+            return false;
+        }
+
+        m_cornerColors = std::move(cornerColors);
         return true;
     }
 
@@ -153,6 +166,7 @@ public:
     const std::vector<uint32_t>& cornerVertices() const { return m_cornerVertices; }
     const std::vector<glm::vec2>& cornerUVs() const { return m_cornerUVs; }
     const std::vector<glm::vec3>& cornerNormals() const { return m_cornerNormals; }
+    const std::vector<glm::vec4>& cornerColors() const { return m_cornerColors; }
     const std::vector<uint32_t>& faceMaterials() const { return m_faceMaterials; }
 
     bool isValid() const
@@ -181,7 +195,8 @@ public:
         }
 
         return (m_cornerUVs.empty() || m_cornerUVs.size() == m_cornerVertices.size()) &&
-               (m_cornerNormals.empty() || m_cornerNormals.size() == m_cornerVertices.size());
+               (m_cornerNormals.empty() || m_cornerNormals.size() == m_cornerVertices.size()) &&
+               (m_cornerColors.empty() || m_cornerColors.size() == m_cornerVertices.size());
     }
 
 private:

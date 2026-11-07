@@ -20,6 +20,7 @@ layout(std140, binding = 1) uniform LightsBlock {
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 textureCoords;
+in vec4 vertexColor;
 
 out vec4 vs_color;
 
@@ -27,6 +28,7 @@ uniform vec3     viewPos;
 uniform Material material;
 uniform sampler2D texture_diffuse1;
 uniform bool     hasTexture;
+uniform bool     hasVertexColor;
 uniform samplerCube irradianceMap;
 uniform bool     hasIBL;
 uniform float    iblIntensity;
@@ -63,11 +65,13 @@ vec3 fresnelSchlick(float cosTheta, vec3 f0)
 
 void main()
 {
-    vec3 baseColor;
+    vec3 baseColor = material.baseColor;
+
     if (hasTexture)
-        baseColor = texture(texture_diffuse1, textureCoords).rgb;
-    else
-        baseColor = material.baseColor;
+        baseColor *= texture(texture_diffuse1, textureCoords).rgb;
+
+    if (hasVertexColor)
+        baseColor *= vertexColor.rgb;
 
     vec3 norm    = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);

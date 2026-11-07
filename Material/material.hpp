@@ -1,6 +1,10 @@
 #if !defined(_MATERIAL_FUNGT_H_)
 #define _MATERIAL_FUNGT_H_
+#include <memory>
+
 #include "Shaders/shader.hpp"
+#include "Textures/textures.hpp"
+
 class Material
 {   public:
         glm::vec3 m_baseColor = glm::vec3(0.8f);
@@ -11,6 +15,7 @@ class Material
 
     public:
         std::string m_name;
+        std::shared_ptr<Texture> m_baseColorTexture;
         Material() = default;
         Material(glm::vec3 baseColor, float metallic, float roughness,
                  float reflectance, std::string name, float emission = 0.0f);

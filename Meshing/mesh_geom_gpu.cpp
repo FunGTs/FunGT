@@ -43,6 +43,9 @@ void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
             vertex.texture_position = meshGeometry.m_cornerUVs.empty()
                 ? glm::vec2(0.0f)
                 : meshGeometry.m_cornerUVs[sourceCorner];
+            vertex.color = meshGeometry.m_cornerColors.empty()
+                ? glm::vec4(1.0f)
+                : meshGeometry.m_cornerColors[sourceCorner];
             vertices.push_back(vertex);
         }
 
@@ -100,9 +103,21 @@ void DrawMeshGeomGPU(MeshGeomGPU& cache, const MeshGeometry& meshGeometry, Shade
 {
     cache.m_buffer->bindVAO();
     cache.m_buffer->bindVertexStreams(shader);
+    shader.setUniform1i("hasVertexColor", meshGeometry.m_cornerColors.empty() ? 0 : 1);
 
     for (const MeshGeomGPUMaterialRange& range : cache.m_materialRanges) {
-        meshGeometry.m_materials[range.m_materialIndex].sendToShader(shader);
+        const Material& material = meshGeometry.m_materials[range.m_materialIndex];
+        material.sendToShader(shader);
+
+        if (material.m_baseColorTexture) {
+            shader.setUniform1i("hasTexture", 1);
+            shader.set1i(0, "texture_diffuse1");
+            material.m_baseColorTexture->active(0);
+        }
+        else {
+            shader.setUniform1i("hasTexture", 0);
+        }
+
         cache.m_buffer->drawIndexedRange(range.m_indexCount, range.m_indexOffset);
     }
 

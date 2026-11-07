@@ -51,11 +51,16 @@ public:
 
             ImGui::Text("New Mesh Objects");
             ImGui::SameLine();
+            const char* selectedMeshName =
+                meshRenderables[m_selectedMeshRenderableIndex]
+                    ->getMeshGeometry()
+                    ->m_name
+                    .c_str();
             if (ImGui::BeginCombo("##MeshRenderableSelect",
-                                  ("Mesh " + std::to_string(m_selectedMeshRenderableIndex)).c_str())) {
+                selectedMeshName)) {
                 for (int i = 0; i < meshRenderables.size(); ++i) {
                     const bool isSelected = m_selectedMeshRenderableIndex == i;
-                    if (ImGui::Selectable(("Mesh " + std::to_string(i)).c_str(), isSelected)) {
+                    if (ImGui::Selectable(meshRenderables[i]->getMeshGeometry()->m_name.c_str(), isSelected)) {
                         m_selectedMeshRenderableIndex = i;
                         m_selectedMaterialIndex = 0;
                     }

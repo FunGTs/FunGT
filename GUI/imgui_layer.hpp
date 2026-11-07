@@ -6,7 +6,7 @@
 #include "Path_Manager/path_manager.hpp"
 #include "render_settings_window.hpp"
 #include "SceneManager/scene_manager.hpp"
-#include "SimpleModel/simple_model.hpp"
+#include "Meshing/mesh_importer.hpp"
 #include "IconsFontAwesome5.h"
 #include <memory>
 #include <filesystem>
@@ -514,12 +514,18 @@ private:
         }
 
         try {
-            ModelPaths paths;
-            paths.path = m_selectedFile;
+            const std::vector<std::shared_ptr<MeshRenderable>> renderables =
+                importStaticMesh(m_selectedFile);
 
-            auto model = SimpleModel::create();
-            model->load(paths);
-            m_sceneManager->addRenderableObj(model);
+            if (renderables.empty()) {
+                m_loadError = "The selected model contains no renderable meshes";
+                return;
+            }
+
+            for (const std::shared_ptr<MeshRenderable>& renderable : renderables) {
+                renderable->load();
+                m_sceneManager->addRenderableObj(renderable);
+            }
 
             m_showFileBrowser = false;
             m_selectedFile.clear();

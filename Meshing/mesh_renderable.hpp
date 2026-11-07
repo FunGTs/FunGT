@@ -19,9 +19,11 @@ class MeshRenderable : public Renderable{
 
         glm::mat4 m_modelMatrix = glm::mat4(1.0f);
         glm::mat4 m_viewMatrix = glm::mat4(1.0f);
+        glm::mat4 m_importedModelMatrix = glm::mat4(1.0f);
         glm::vec3 m_position = glm::vec3(0.0f);
         glm::vec3 m_rotation = glm::vec3(0.0f);
         glm::vec3 m_scale = glm::vec3(1.0f);
+        bool m_hasImportedModelMatrix = false;
 
 
     public:
@@ -32,6 +34,7 @@ class MeshRenderable : public Renderable{
         void rotation(float x = 0.0f, float y = 0.0f, float z = 0.0f);
         void scale(float s = 1.0f);
         void scale(float x, float y, float z);
+        void setModelMatrix(const glm::mat4& modelMatrix);
         glm::vec3 getPosition() const;
         glm::vec3 getRotation() const;
         glm::vec3 getScale() const;
