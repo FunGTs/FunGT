@@ -118,6 +118,24 @@ void DrawMeshGeomGPU(MeshGeomGPU& cache, const MeshGeometry& meshGeometry, Shade
             shader.setUniform1i("hasTexture", 0);
         }
 
+        if (material.m_metallicRoughnessTexture) {
+            shader.setUniform1i("hasMetallicRoughnessTexture", 1);
+            shader.set1i(2, "metallicRoughnessTexture");
+            material.m_metallicRoughnessTexture->active(2);
+        }
+        else {
+            shader.setUniform1i("hasMetallicRoughnessTexture", 0);
+        }
+
+        if (material.m_occlusionTexture) {
+            shader.setUniform1i("hasOcclusionTexture", 1);
+            shader.set1i(3, "occlusionTexture");
+            material.m_occlusionTexture->active(3);
+        }
+        else {
+            shader.setUniform1i("hasOcclusionTexture", 0);
+        }
+
         cache.m_buffer->drawIndexedRange(range.m_indexCount, range.m_indexOffset);
     }
 

@@ -72,6 +72,10 @@ void OpenGLShader::linkProgram(GLuint vShader, GLuint geomShader, GLuint fShader
     if (diffuseLoc != -1) glUniform1i(diffuseLoc, 0);
     GLint irradianceLoc = glGetUniformLocation(m_idP, "irradianceMap");
     if (irradianceLoc != -1) glUniform1i(irradianceLoc, 1);
+    GLint prefilterLoc = glGetUniformLocation(m_idP, "prefilterMap");
+    if (prefilterLoc != -1) glUniform1i(prefilterLoc, 5);
+    GLint brdfLoc = glGetUniformLocation(m_idP, "brdfLUT");
+    if (brdfLoc != -1) glUniform1i(brdfLoc, 6);
     glUseProgram(0);
 
     glValidateProgram(m_idP);

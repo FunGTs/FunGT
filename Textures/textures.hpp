@@ -34,6 +34,7 @@ public:
     void genTextureHDR(const std::string& path);
     void genTextureCubeMap(const std::vector<std::string>& faces);
     void allocateEmptyCubemap(int faceSize, bool mipmaps);
+    void allocateEmptyFloat2D(int width, int height);
     void active(unsigned int slot = 0);
     void bind();
     void unBind();

@@ -31,37 +31,39 @@ glm::mat4 toGlmMatrix(const aiMatrix4x4& matrix)
         matrix.a4, matrix.b4, matrix.c4, matrix.d4);
 }
 
-std::shared_ptr<Texture> loadTexture(const std::string& path, TextureCache& textureCache)
+std::shared_ptr<Texture> loadTexture(const std::string& path,
+                                     TextureColorSpace colorSpace,
+                                     TextureCache& textureCache)
 {
-    const auto found = textureCache.find(path);
+    const std::string cacheKey = path +
+        (colorSpace == TextureColorSpace::SRGB ? "#srgb" : "#linear");
+
+    const auto found = textureCache.find(cacheKey);
     if (found != textureCache.end()) {
         return found->second;
     }
 
     auto texture = std::make_shared<Texture>();
-    texture->genTexture(path);
+    texture->genTexture(path, colorSpace);
     texture->setPath(path);
-    texture->setTypeName("texture_diffuse");
 
-    textureCache[path] = texture;
+    textureCache[cacheKey] = texture;
     return texture;
 }
 
-std::shared_ptr<Texture> loadBaseColorTexture(aiMaterial* assimpMaterial,
-                                              const std::filesystem::path& modelDirectory,
-                                              TextureCache& textureCache)
+std::shared_ptr<Texture> loadMaterialTexture(
+    aiMaterial* assimpMaterial,
+    aiTextureType textureType,
+    const std::filesystem::path& modelDirectory,
+    TextureColorSpace colorSpace,
+    TextureCache& textureCache)
 {
-    aiString texturePath;
-    aiTextureType textureType = aiTextureType_DIFFUSE;
-
     if (assimpMaterial->GetTextureCount(textureType) == 0) {
-#if ASSIMP_VERSION_MAJOR >= 5
-        textureType = aiTextureType_BASE_COLOR;
-#endif
+        return nullptr;
     }
 
-    if (assimpMaterial->GetTextureCount(textureType) == 0 ||
-        assimpMaterial->GetTexture(textureType, 0, &texturePath) != AI_SUCCESS) {
+    aiString texturePath;
+    if (assimpMaterial->GetTexture(textureType, 0, &texturePath) != AI_SUCCESS) {
         return nullptr;
     }
 
@@ -70,20 +72,134 @@ std::shared_ptr<Texture> loadBaseColorTexture(aiMaterial* assimpMaterial,
         return nullptr;
     }
 
-    const std::string fullPath = (modelDirectory / relativePath).lexically_normal().string();
-    return loadTexture(fullPath, textureCache);
+    const std::string fullPath =
+        (modelDirectory / relativePath).lexically_normal().string();
+    return loadTexture(fullPath, colorSpace, textureCache);
 }
 
+std::shared_ptr<Texture> loadBaseColorTexture(aiMaterial* assimpMaterial,
+                                              const std::filesystem::path& modelDirectory,
+                                              TextureCache& textureCache)
+{
+    std::shared_ptr<Texture> texture = loadMaterialTexture(
+        assimpMaterial,
+        aiTextureType_BASE_COLOR,
+        modelDirectory,
+        TextureColorSpace::SRGB,
+        textureCache);
+
+    if (texture) {
+        return texture;
+    }
+
+    return loadMaterialTexture(
+        assimpMaterial,
+        aiTextureType_DIFFUSE,
+        modelDirectory,
+        TextureColorSpace::SRGB,
+        textureCache);
+}
 Material importMaterial(aiMaterial* assimpMaterial,
                         const std::filesystem::path& modelDirectory,
                         TextureCache& textureCache)
 {
+    if (!assimpMaterial) {
+        return Material::createDefaultMaterial();
+    }
+
     aiString name;
+    assimpMaterial->Get(AI_MATKEY_NAME, name);
+
+    // Assimp can expose metallic/roughness defaults alongside this workflow.
+    float glossiness = 1.0f;
+    if (assimpMaterial->Get(AI_MATKEY_GLOSSINESS_FACTOR, glossiness) == AI_SUCCESS) {
+        aiColor3D diffuseColor(1.0f, 1.0f, 1.0f);
+        aiColor3D specularColor(1.0f, 1.0f, 1.0f);
+        assimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
+        assimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
+
+        const glm::vec3 baseColor(diffuseColor.r, diffuseColor.g, diffuseColor.b);
+        const float roughness = glm::clamp(1.0f - glossiness, 0.05f, 1.0f);
+        const float reflectance = glm::clamp(
+            (specularColor.r + specularColor.g + specularColor.b) / 3.0f,
+            0.0f,
+            1.0f);
+
+        Material material(baseColor, 0.0f, roughness, reflectance, name.C_Str());
+        material.m_baseColorTexture = loadMaterialTexture(
+            assimpMaterial,
+            aiTextureType_DIFFUSE,
+            modelDirectory,
+            TextureColorSpace::SRGB,
+            textureCache);
+        material.m_normalTexture = loadMaterialTexture(
+            assimpMaterial,
+            aiTextureType_NORMALS,
+            modelDirectory,
+            TextureColorSpace::Linear,
+            textureCache);
+        material.m_occlusionTexture = loadMaterialTexture(
+            assimpMaterial,
+            aiTextureType_AMBIENT_OCCLUSION,
+            modelDirectory,
+            TextureColorSpace::Linear,
+            textureCache);
+        return material;
+    }
+
+    aiColor4D pbrBaseColor(1.0f, 1.0f, 1.0f, 1.0f);
+    float pbrMetallic = 1.0f;
+    float pbrRoughness = 1.0f;
+
+    const bool isPBR =
+        assimpMaterial->GetTextureCount(aiTextureType_BASE_COLOR) > 0 ||
+        assimpMaterial->GetTextureCount(aiTextureType_METALNESS) > 0 ||
+        assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) > 0 ||
+        assimpMaterial->Get(AI_MATKEY_BASE_COLOR, pbrBaseColor) == AI_SUCCESS ||
+        assimpMaterial->Get(AI_MATKEY_METALLIC_FACTOR, pbrMetallic) == AI_SUCCESS ||
+        assimpMaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, pbrRoughness) == AI_SUCCESS;
+
+
+    if (isPBR) {
+        assimpMaterial->Get(AI_MATKEY_BASE_COLOR, pbrBaseColor);
+        assimpMaterial->Get(AI_MATKEY_METALLIC_FACTOR, pbrMetallic);
+        assimpMaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, pbrRoughness);
+
+        Material material(
+            glm::vec3(pbrBaseColor.r, pbrBaseColor.g, pbrBaseColor.b),
+            pbrMetallic,
+            pbrRoughness,
+            0.04f,
+            name.C_Str());
+        material.m_baseColorTexture = loadBaseColorTexture(
+            assimpMaterial,
+            modelDirectory,
+            textureCache);
+        material.m_metallicRoughnessTexture = loadMaterialTexture(
+            assimpMaterial,
+            aiTextureType_METALNESS,
+            modelDirectory,
+            TextureColorSpace::Linear,
+            textureCache);
+        material.m_normalTexture = loadMaterialTexture(
+            assimpMaterial,
+            aiTextureType_NORMALS,
+            modelDirectory,
+            TextureColorSpace::Linear,
+            textureCache);
+        material.m_occlusionTexture = loadMaterialTexture(
+            assimpMaterial,
+            aiTextureType_AMBIENT_OCCLUSION,
+            modelDirectory,
+            TextureColorSpace::Linear,
+            textureCache);
+        return material;
+    }
+
     aiColor3D diffuseColor(0.8f, 0.8f, 0.8f);
     aiColor3D specularColor(0.04f, 0.04f, 0.04f);
     float shininess = 2.0f;
 
-    assimpMaterial->Get(AI_MATKEY_NAME, name);
     assimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
     assimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
     assimpMaterial->Get(AI_MATKEY_SHININESS, shininess);
@@ -154,6 +270,7 @@ std::shared_ptr<MeshGeometry> importMeshGeometry(aiMesh* assimpMesh,
     }
 
     Material material = Material::createDefaultMaterial();
+
     if (assimpMesh->mMaterialIndex < scene->mNumMaterials) {
         material = importMaterial(scene->mMaterials[assimpMesh->mMaterialIndex],
                                   modelDirectory,

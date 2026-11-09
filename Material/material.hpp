@@ -16,6 +16,9 @@ class Material
     public:
         std::string m_name;
         std::shared_ptr<Texture> m_baseColorTexture;
+        std::shared_ptr<Texture> m_metallicRoughnessTexture;
+        std::shared_ptr<Texture> m_normalTexture;
+        std::shared_ptr<Texture> m_occlusionTexture;
         Material() = default;
         Material(glm::vec3 baseColor, float metallic, float roughness,
                  float reflectance, std::string name, float emission = 0.0f);
