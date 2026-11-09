@@ -197,19 +197,22 @@ Material importMaterial(aiMaterial* assimpMaterial,
     }
 
     aiColor3D diffuseColor(0.8f, 0.8f, 0.8f);
-    aiColor3D specularColor(0.04f, 0.04f, 0.04f);
     float shininess = 2.0f;
+    float indexOfRefraction = 1.5f;
 
     assimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
-    assimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, specularColor);
     assimpMaterial->Get(AI_MATKEY_SHININESS, shininess);
+    assimpMaterial->Get(AI_MATKEY_REFRACTI, indexOfRefraction);
+
+    if (indexOfRefraction <= 1.0f) {
+        indexOfRefraction = 1.5f;
+    }
 
     const glm::vec3 baseColor(diffuseColor.r, diffuseColor.g, diffuseColor.b);
     const float roughness = glm::clamp(std::sqrt(2.0f / (shininess + 2.0f)), 0.05f, 1.0f);
-    const float reflectance = glm::clamp(
-        (specularColor.r + specularColor.g + specularColor.b) / 3.0f,
-        0.0f,
-        1.0f);
+    const float iorRatio =
+        (indexOfRefraction - 1.0f) / (indexOfRefraction + 1.0f);
+    const float reflectance = glm::clamp(iorRatio * iorRatio, 0.0f, 1.0f);
 
     Material material(baseColor, 0.0f, roughness, reflectance, name.C_Str());
     material.m_baseColorTexture = loadBaseColorTexture(
