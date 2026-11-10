@@ -64,6 +64,18 @@ void VulkanRenderDevice::createDebugCallback()
         .pUserData = nullptr
     };
 
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessenger = VK_NULL_HANDLE;
+    vkCreateDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT");
+    if (!vkCreateDebugUtilsMessenger) {
+        OGLDEV_ERROR("Cannot find address of vkCreateDebugUtilsMessenger\n");
+        exit(1);
+    }
+
+    VkResult res = vkCreateDebugUtilsMessenger(m_instance, &MessengerCreateInfo, NULL, &m_debugMessenger);
+    CHECK_VK_RESULT(res, "debug utils messenger");
+
+    printf("Debug utils messenger created\n");
+
 
 
 }
