@@ -5,7 +5,12 @@
 #include "InfoDevice/gpu_device_info.hpp"
 #include "Path_Manager/path_manager.hpp"
 #include "render_settings_window.hpp"
+#include "SceneManager/scene_manager.hpp"
+#include "SimpleModel/simple_model.hpp"
+#include "IconsFontAwesome5.h"
 #include <memory>
+#include <filesystem>
+#include <algorithm>
 
 class ImGuiLayer : public Layer {
 
@@ -17,6 +22,14 @@ private:
     std::shared_ptr<GPUDeviceManager> m_gpuManager;
     RenderSettingsWindow* m_renderSettingsWindow;  // Just a pointer
 
+    std::shared_ptr<SceneManager> m_sceneManager;
+    bool m_showFileBrowser = false;
+    std::string m_currentPath;
+    std::string m_selectedFile;
+    std::vector<std::filesystem::directory_entry> m_dirEntries;
+    std::string m_loadError;
+    const std::vector<std::string> m_modelExtensions = {".obj", ".fbx", ".gltf", ".glb", ".dae"};
+
 public:
     ImGuiLayer()
         : Layer("IMGUI LAYER")
@@ -25,6 +38,11 @@ public:
     }
 
     std::shared_ptr<GPUDeviceManager> getGPUManager() const { return m_gpuManager; }
+
+    void setSceneManager(std::shared_ptr<SceneManager> sm) {
+        m_sceneManager = sm;
+        m_currentPath = findProjectRoot();
+    }
 
     void addWindow(std::unique_ptr<ImGuiWindow> window)
     {
@@ -203,6 +221,21 @@ public:
             std::cerr << "Failed to load font!" << std::endl;
         }
 
+        // Merge FontAwesome icons into the base font.
+        static const ImWchar iconRange[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+        ImFontConfig iconConfig;
+        iconConfig.MergeMode = true;
+        iconConfig.PixelSnapH = true;
+        std::string iconPath = getAssetPath("GUI/fonts/awesome/fa-solid-900.ttf");
+        ImFont* iconFont = io.Fonts->AddFontFromFileTTF(
+            iconPath.c_str(), 16.0f, &iconConfig, iconRange
+        );
+
+        if (iconFont == nullptr)
+        {
+            std::cerr << "Failed to load icon font!" << std::endl;
+        }
+
         // Build font atlas
         unsigned char* tex_pixels = nullptr;
         int tex_width, tex_height;
@@ -301,7 +334,10 @@ public:
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("File")) {
                 if (ImGui::MenuItem("Open", "Ctrl+O")) {
-                    // TODO: Handle file open
+                    m_showFileBrowser = true;
+                    m_loadError.clear();
+                    m_selectedFile.clear();
+                    refreshDirectory();
                 }
                 if (ImGui::MenuItem("Save", "Ctrl+S")) {
                     // TODO: Handle file save
@@ -358,6 +394,139 @@ public:
         }
 
         ImGui::End();
+
+        if (m_showFileBrowser) {
+            renderFileBrowser();
+        }
+    }
+
+private:
+    void refreshDirectory() {
+        m_dirEntries.clear();
+        try {
+            if (!std::filesystem::exists(m_currentPath) ||
+                !std::filesystem::is_directory(m_currentPath)) {
+                m_currentPath = findProjectRoot();
+            }
+            for (const auto& entry : std::filesystem::directory_iterator(m_currentPath)) {
+                try {
+                    if (entry.is_directory()) {
+                        m_dirEntries.push_back(entry);
+                    } else if (entry.is_regular_file()) {
+                        std::string ext = entry.path().extension().string();
+                        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                        for (const auto& validExt : m_modelExtensions) {
+                            if (ext == validExt) {
+                                m_dirEntries.push_back(entry);
+                                break;
+                            }
+                        }
+                    }
+                } catch (...) {}
+            }
+            std::sort(m_dirEntries.begin(), m_dirEntries.end(),
+                [](const auto& a, const auto& b) {
+                    if (a.is_directory() != b.is_directory()) return a.is_directory();
+                    return a.path().filename() < b.path().filename();
+                });
+        } catch (...) {
+            m_currentPath = findProjectRoot();
+        }
+    }
+
+    void renderFileBrowser() {
+        ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
+        if (!ImGui::Begin("Open Model", &m_showFileBrowser)) {
+            ImGui::End();
+            return;
+        }
+
+        ImGui::Text("Path: %s", m_currentPath.c_str());
+
+        if (ImGui::Button(ICON_FA_ARROW_LEFT)) {
+            std::filesystem::path parent = std::filesystem::path(m_currentPath).parent_path();
+            if (!parent.empty()) {
+                m_currentPath = parent.string();
+                m_selectedFile.clear();
+                refreshDirectory();
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_SYNC_ALT)) {
+            refreshDirectory();
+        }
+
+        ImGui::Separator();
+
+        ImGui::BeginChild("FileList", ImVec2(0, -80), true);
+        for (size_t i = 0; i < m_dirEntries.size(); ++i) {
+            const auto& entry = m_dirEntries[i];
+            bool isDir = entry.is_directory();
+            std::string name = (isDir ? ICON_FA_FOLDER "  " : ICON_FA_FILE "  ")
+                + entry.path().filename().string();
+
+            bool isSelected = (m_selectedFile == entry.path().string());
+            if (ImGui::Selectable(name.c_str(), isSelected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                if (isDir) {
+                    if (ImGui::IsMouseDoubleClicked(0)) {
+                        m_currentPath = entry.path().string();
+                        m_selectedFile.clear();
+                        refreshDirectory();
+                        break;
+                    }
+                } else {
+                    m_selectedFile = entry.path().string();
+                    if (ImGui::IsMouseDoubleClicked(0)) {
+                        loadModel();
+                        break;
+                    }
+                }
+            }
+        }
+        ImGui::EndChild();
+
+        if (!m_loadError.empty()) {
+            ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%s", m_loadError.c_str());
+        }
+
+        ImGui::Text("Selected: %s", m_selectedFile.empty() ? "(none)" :
+            std::filesystem::path(m_selectedFile).filename().string().c_str());
+
+        if (ImGui::Button("Open", ImVec2(120, 0))) {
+            loadModel();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            m_showFileBrowser = false;
+        }
+
+        ImGui::End();
+    }
+
+    void loadModel() {
+        if (m_selectedFile.empty()) {
+            m_loadError = "No file selected";
+            return;
+        }
+        if (!m_sceneManager) {
+            m_loadError = "SceneManager not set";
+            return;
+        }
+
+        try {
+            ModelPaths paths;
+            paths.path = m_selectedFile;
+
+            auto model = SimpleModel::create();
+            model->load(paths);
+            m_sceneManager->addRenderableObj(model);
+
+            m_showFileBrowser = false;
+            m_selectedFile.clear();
+        }
+        catch (const std::exception& e) {
+            m_loadError = std::string("Failed: ") + e.what();
+        }
     }
 };
 

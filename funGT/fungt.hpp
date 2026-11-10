@@ -10,6 +10,10 @@
 #include "Layer/layer_stack.hpp"              
 #include "GUI/fungt_gui_headers.hpp"
 #include "SimpleGeometry/simple_geometry.hpp"
+#include "Surface/surface.hpp"
+#include "MoleculeViewer/molecule_viewer.hpp"
+#include "Meshing/mesh_primitives.hpp"
+#include "Meshing/mesh_renderable.hpp"
 #include "ParticleSimulation/particle_simulation.hpp"
 #include "Physics/AnimationCreator/animation_controller.hpp"
 #include "Physics/PhysicsWorld/physics_world.hpp"
@@ -108,11 +112,17 @@ class FunGT : public GraphicsTool{
             return m_physicsWorld;
         }
     protected:
-        // Override virtual methods from GraphicsTool
         void onMouseMove(double xpos, double ypos) override;
         void onUpdate(float deltaTime) override;
         void onMouseScroll(double xoffset, double yoffset) override;
 
+    private:
+        void initDefaultScene();
+        void initShaders();
+        void initRenderers();
+        void initUI();
+        void initViewport();
+        void updateProjectionFromViewport();
 };
 typedef std::shared_ptr<CubeMap> FunGTCubeMap; //cubemap shared pointer
 typedef std::shared_ptr<Animation> FunGTAnimation;
@@ -122,5 +132,7 @@ typedef std::shared_ptr<SimpleModel> FunGTSModel;
 typedef std::shared_ptr<SimpleGeometry> FunGTSGeom;
 typedef std::shared_ptr<fungt::SimulationController> FunGTSimController;
 typedef std::shared_ptr<PhysicsWorld> FunGTPhysicsWorld;
+typedef std::shared_ptr<Surface> FunGTSurface;
+typedef std::shared_ptr<MoleculeViewer> FunGTMoleculeViewer;
 
 #endif // _FUNGT_H_

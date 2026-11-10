@@ -3,16 +3,9 @@
 #include <vector>
 #include "../include/glmath.hpp"
 #include "../Textures/textures.hpp"
-#include "../GraphicsRenderBackend/vertex_format.hpp"
 #include "Shaders/shader.hpp"
+#include "primitive_vertex.hpp"
 
-struct PrimitiveVertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 texcoord;
-
-    FUNGT_VERTEX_FORMAT(PrimitiveVertex, position, normal, texcoord)
-};
 
 class PrimitiveGPU;
 

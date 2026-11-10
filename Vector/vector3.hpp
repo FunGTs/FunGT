@@ -91,6 +91,13 @@ namespace fungt{
                 if (i == 1) return y;
                 return z;
             }
+            fgt_device Vec3 lerp(const Vec3& other, float t) const {
+                return Vec3(
+                    x + t * (other.x - x),
+                    y + t * (other.y - y),
+                    z + t * (other.z - z)
+                );
+            }
     };
     fgt_device inline fungt::Vec3 operator*(float scalar, const fungt::Vec3& v) {
         return fungt::Vec3(v.x * scalar, v.y * scalar, v.z * scalar);
