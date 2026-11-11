@@ -59,7 +59,7 @@ class SceneManager{
         ~SceneManager();
         void loadShaders(std::string &vs_pat, std::string &fs_path);
         Shader& getShader();
-        std::vector<std::shared_ptr<Renderable>> getRenderable();
+        const std::vector<std::shared_ptr<Renderable>>& getRenderable() const;
         void updateViewMatrix(const glm::mat4 &viewMatrix);
         void updateProjectionMatrix(const glm::mat4 &projectionMatrix);
         void updateModelMatrix(const glm::mat4 &modelMatrix); 
