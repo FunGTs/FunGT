@@ -5,6 +5,7 @@ SceneManager::SceneManager()
     : m_shader(Shader::create())
 {
     std::cout<<"Scene Manager Constructor"<<std::endl;
+    m_VectorOfRenderNodes.reserve(10);
 }
 
 void SceneManager::initUBOs()
@@ -98,7 +99,7 @@ void SceneManager::loadShaders(std::string &vs_pat, std::string &fs_path)
 Shader& SceneManager::getShader(){
     return *m_shader;
 }
-std::vector<std::shared_ptr<Renderable>> SceneManager::getRenderable()
+const std::vector<std::shared_ptr<Renderable>>& SceneManager::getRenderable() const
 {
     return m_VectorOfRenderNodes;
 }

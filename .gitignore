@@ -10,4 +10,4 @@ toolchain/
 **/release/
 # toolchain recursive
 **/toolchain/
-assets_local/
+Assets_local/
