@@ -36,9 +36,9 @@ public:
 
         const auto& allObjects = m_sceneManager->getRenderable();
 
-        std::vector<std::shared_ptr<MeshRenderable>> meshRenderables;
-        for (auto& object : allObjects) {
-            auto meshRenderable = std::dynamic_pointer_cast<MeshRenderable>(object);
+        std::vector<MeshRenderable*> meshRenderables;
+        for (const auto& object : allObjects) {
+            auto* meshRenderable = dynamic_cast<MeshRenderable*>(object.get());
             if (meshRenderable) {
                 meshRenderables.push_back(meshRenderable);
             }
@@ -129,9 +129,9 @@ public:
         }
 
         // Filter to only SimpleModel objects (skip InfiniteGrid, etc.)
-        std::vector<std::shared_ptr<SimpleModel>> models;
-        for (auto& obj : allObjects) {
-            auto model = std::dynamic_pointer_cast<SimpleModel>(obj);
+        std::vector<SimpleModel*> models;
+        for (const auto& obj : allObjects) {
+            auto* model = dynamic_cast<SimpleModel*>(obj.get());
             if (model) {
                 models.push_back(model);
             }
@@ -172,7 +172,7 @@ public:
         }
 
         // Get the selected model
-        auto& selectedModel = models[m_selectedObjectIndex];
+        SimpleModel* selectedModel = models[m_selectedObjectIndex];
 
         const auto& meshes = selectedModel->getMeshes();
         

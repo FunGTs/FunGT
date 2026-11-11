@@ -23,13 +23,13 @@ public:
         ImGui::Text("Objects:");
         ImGui::Separator();
 
-        const auto renderables = m_sceneManager->getRenderable();
-        std::vector<std::shared_ptr<Renderable>> visibleRenderables;
+        const auto& renderables = m_sceneManager->getRenderable();
+        std::vector<Renderable*> visibleRenderables;
         visibleRenderables.reserve(renderables.size());
 
         for (const auto& renderable : renderables) {
             if (renderable->showInSceneHierarchy()) {
-                visibleRenderables.push_back(renderable);
+                visibleRenderables.push_back(renderable.get());
             }
         }
 
@@ -51,7 +51,7 @@ public:
 
         if (m_selectedIndex >= 0 &&
             m_selectedIndex < static_cast<int>(visibleRenderables.size())) {
-            auto model = std::dynamic_pointer_cast<SimpleModel>(
+            auto* model = dynamic_cast<SimpleModel*>(
                 visibleRenderables[static_cast<size_t>(m_selectedIndex)]);
 
             if (model) {
