@@ -6,20 +6,30 @@
 #include <utility>
 
 MeshRenderable::MeshRenderable(std::shared_ptr<MeshGeometry> meshgeom)
-    : m_meshgeom(std::move(meshgeom))
+    : m_shader(Shader::create())
+{
+    if (meshgeom) {
+        m_meshgeoms.push_back(std::move(meshgeom));
+    }
+}
+
+MeshRenderable::MeshRenderable(std::vector<std::shared_ptr<MeshGeometry>> meshgeoms)
+    : m_meshgeoms(std::move(meshgeoms))
     , m_shader(Shader::create())
 {
 }
 
 void MeshRenderable::load()
 {
-    if (!m_meshgeom) {
+    if (m_meshgeoms.empty()) {
         throw std::runtime_error("MeshRenderable::load() - No mesh geometry set!");
     }
 
     m_shader->create(getAssetPath("shaders/fungt_default.vs"),
                      getAssetPath("shaders/fungt_default.fs"));
-    m_meshgeom->InitGraphics();
+    for (const auto& meshgeom : m_meshgeoms) {
+        meshgeom->InitGraphics();
+    }
 }
 
 void MeshRenderable::position(float x, float y, float z)
@@ -70,13 +80,23 @@ glm::vec3 MeshRenderable::getScale() const
 
 std::shared_ptr<MeshGeometry> MeshRenderable::getMeshGeometry() const
 {
-    return m_meshgeom;
+    if (m_meshgeoms.empty()) {
+        return nullptr;
+    }
+
+    return m_meshgeoms.front();
+}
+
+const std::vector<std::shared_ptr<MeshGeometry>>&
+MeshRenderable::getGeomMeshes() const
+{
+    return m_meshgeoms;
 }
 
 void MeshRenderable::draw()
 {
-    if (m_meshgeom) {
-        m_meshgeom->draw(*m_shader);
+    for (const auto& meshgeom : m_meshgeoms) {
+        meshgeom->draw(*m_shader);
     }
 }
 

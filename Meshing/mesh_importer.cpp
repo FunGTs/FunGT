@@ -224,6 +224,7 @@ Material importMaterial(aiMaterial* assimpMaterial,
 
 std::shared_ptr<MeshGeometry> importMeshGeometry(aiMesh* assimpMesh,
                                                  const aiScene* scene,
+                                                 const aiMatrix4x4& nodeTransform,
                                                  const std::filesystem::path& modelDirectory,
                                                  TextureCache& textureCache)
 {
@@ -232,9 +233,15 @@ std::shared_ptr<MeshGeometry> importMeshGeometry(aiMesh* assimpMesh,
     geometry->m_positions.reserve(assimpMesh->mNumVertices);
     geometry->m_faceOffsets.push_back(0);
 
+    const glm::mat4 transform = toGlmMatrix(nodeTransform);
+    const glm::mat3 normalTransform =
+        glm::transpose(glm::inverse(glm::mat3(transform)));
+
     for (unsigned int vertexIndex = 0; vertexIndex < assimpMesh->mNumVertices; ++vertexIndex) {
         const aiVector3D& position = assimpMesh->mVertices[vertexIndex];
-        geometry->m_positions.emplace_back(position.x, position.y, position.z);
+        const glm::vec4 transformedPosition =
+            transform * glm::vec4(position.x, position.y, position.z, 1.0f);
+        geometry->m_positions.emplace_back(transformedPosition);
     }
 
     const bool hasVertexColors = assimpMesh->HasVertexColors(0);
@@ -247,7 +254,9 @@ std::shared_ptr<MeshGeometry> importMeshGeometry(aiMesh* assimpMesh,
 
             if (assimpMesh->HasNormals()) {
                 const aiVector3D& normal = assimpMesh->mNormals[vertexIndex];
-                geometry->m_cornerNormals.emplace_back(normal.x, normal.y, normal.z);
+                const glm::vec3 transformedNormal = glm::normalize(
+                    normalTransform * glm::vec3(normal.x, normal.y, normal.z));
+                geometry->m_cornerNormals.push_back(transformedNormal);
             }
             else {
                 geometry->m_cornerNormals.emplace_back(0.0f);
@@ -286,7 +295,7 @@ std::shared_ptr<MeshGeometry> importMeshGeometry(aiMesh* assimpMesh,
 
 }
 
-std::vector<std::shared_ptr<MeshRenderable>> importStaticMesh(const std::string& path)
+std::shared_ptr<MeshRenderable> importStaticMesh(const std::string& path)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(
@@ -301,8 +310,7 @@ std::vector<std::shared_ptr<MeshRenderable>> importStaticMesh(const std::string&
 
     const std::filesystem::path modelDirectory = std::filesystem::path(path).parent_path();
     TextureCache textureCache;
-    std::vector<std::shared_ptr<MeshGeometry>> geometryCache(scene->mNumMeshes);
-    std::vector<std::shared_ptr<MeshRenderable>> renderables;
+    std::vector<std::shared_ptr<MeshGeometry>> geometries;
     std::vector<NodeEntry> nodes;
 
     nodes.push_back({scene->mRootNode, aiMatrix4x4()});
@@ -316,17 +324,12 @@ std::vector<std::shared_ptr<MeshRenderable>> importStaticMesh(const std::string&
 
         for (unsigned int meshSlot = 0; meshSlot < entry.m_node->mNumMeshes; ++meshSlot) {
             const unsigned int meshIndex = entry.m_node->mMeshes[meshSlot];
-            if (!geometryCache[meshIndex]) {
-                geometryCache[meshIndex] = importMeshGeometry(
-                    scene->mMeshes[meshIndex],
-                    scene,
-                    modelDirectory,
-                    textureCache);
-            }
-
-            auto renderable = std::make_shared<MeshRenderable>(geometryCache[meshIndex]);
-            renderable->setModelMatrix(toGlmMatrix(nodeTransform));
-            renderables.push_back(std::move(renderable));
+            geometries.push_back(importMeshGeometry(
+                scene->mMeshes[meshIndex],
+                scene,
+                nodeTransform,
+                modelDirectory,
+                textureCache));
         }
 
         for (unsigned int childIndex = 0; childIndex < entry.m_node->mNumChildren; ++childIndex) {
@@ -334,5 +337,9 @@ std::vector<std::shared_ptr<MeshRenderable>> importStaticMesh(const std::string&
         }
     }
 
-    return renderables;
+    if (geometries.empty()) {
+        throw std::runtime_error("The selected model contains no renderable meshes");
+    }
+
+    return std::make_shared<MeshRenderable>(std::move(geometries));
 }

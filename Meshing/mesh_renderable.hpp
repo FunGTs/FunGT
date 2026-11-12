@@ -2,6 +2,7 @@
 #define _MESH_RENDERABLE_HPP_
 
 #include <memory>
+#include <vector>
 
 #include "Renderable/renderable.hpp"
 #include "mesh_geometry.hpp"
@@ -14,7 +15,7 @@ class MeshRenderable : public Renderable{
 
     private: 
 
-        std::shared_ptr<MeshGeometry> m_meshgeom;
+        std::vector<std::shared_ptr<MeshGeometry>> m_meshgeoms;
         std::unique_ptr<Shader> m_shader; 
 
         glm::mat4 m_modelMatrix = glm::mat4(1.0f);
@@ -28,6 +29,7 @@ class MeshRenderable : public Renderable{
 
     public:
         explicit MeshRenderable(std::shared_ptr<MeshGeometry> meshgeom);
+        explicit MeshRenderable(std::vector<std::shared_ptr<MeshGeometry>> meshgeoms);
 
         void load();
         void position(float x = 0.0f, float y = 0.0f, float z = 0.0f);
@@ -39,6 +41,7 @@ class MeshRenderable : public Renderable{
         glm::vec3 getRotation() const;
         glm::vec3 getScale() const;
         std::shared_ptr<MeshGeometry> getMeshGeometry() const;
+        const std::vector<std::shared_ptr<MeshGeometry>>& getGeomMeshes() const;
         void draw() override;
         Shader& getShader() override;
         glm::mat4 getModelMatrix() const override;

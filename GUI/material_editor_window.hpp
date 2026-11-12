@@ -13,6 +13,7 @@ private:
     int m_selectedObjectIndex;
     int m_selectedMeshIndex;
     int m_selectedMeshRenderableIndex;
+    int m_selectedMeshGeometryIndex;
     int m_selectedMaterialIndex;
 
 public:
@@ -21,6 +22,7 @@ public:
         , m_selectedObjectIndex(0)
         , m_selectedMeshIndex(0)
         , m_selectedMeshRenderableIndex(0)
+        , m_selectedMeshGeometryIndex(0)
         , m_selectedMaterialIndex(0)
     {
     }
@@ -62,6 +64,7 @@ public:
                     const bool isSelected = m_selectedMeshRenderableIndex == i;
                     if (ImGui::Selectable(meshRenderables[i]->getMeshGeometry()->m_name.c_str(), isSelected)) {
                         m_selectedMeshRenderableIndex = i;
+                        m_selectedMeshGeometryIndex = 0;
                         m_selectedMaterialIndex = 0;
                     }
                     if (isSelected) {
@@ -71,8 +74,42 @@ public:
                 ImGui::EndCombo();
             }
 
+            const auto& geometries =
+                meshRenderables[m_selectedMeshRenderableIndex]->getGeomMeshes();
+
+            if (m_selectedMeshGeometryIndex >= geometries.size()) {
+                m_selectedMeshGeometryIndex = 0;
+            }
+
+            if (geometries.size() > 1) {
+                const std::string currentGeometryName =
+                    geometries[m_selectedMeshGeometryIndex]->m_name.empty()
+                        ? "Mesh " + std::to_string(m_selectedMeshGeometryIndex)
+                        : geometries[m_selectedMeshGeometryIndex]->m_name;
+
+                ImGui::Text("Mesh");
+                ImGui::SameLine();
+                if (ImGui::BeginCombo("##MeshGeometrySelect",
+                                      currentGeometryName.c_str())) {
+                    for (int i = 0; i < geometries.size(); ++i) {
+                        const bool isSelected = m_selectedMeshGeometryIndex == i;
+                        const std::string geometryName = geometries[i]->m_name.empty()
+                            ? "Mesh " + std::to_string(i)
+                            : geometries[i]->m_name;
+                        if (ImGui::Selectable(geometryName.c_str(), isSelected)) {
+                            m_selectedMeshGeometryIndex = i;
+                            m_selectedMaterialIndex = 0;
+                        }
+                        if (isSelected) {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+            }
+
             std::shared_ptr<MeshGeometry> geometry =
-                meshRenderables[m_selectedMeshRenderableIndex]->getMeshGeometry();
+                geometries[m_selectedMeshGeometryIndex];
             std::vector<Material>& materials = geometry->getMaterials();
 
             if (m_selectedMaterialIndex >= materials.size()) {

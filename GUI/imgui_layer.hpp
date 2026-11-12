@@ -514,18 +514,16 @@ private:
         }
 
         try {
-            const std::vector<std::shared_ptr<MeshRenderable>> renderables =
+            const std::shared_ptr<MeshRenderable> renderable =
                 importStaticMesh(m_selectedFile);
 
-            if (renderables.empty()) {
+            if (!renderable) {
                 m_loadError = "The selected model contains no renderable meshes";
                 return;
             }
 
-            for (const std::shared_ptr<MeshRenderable>& renderable : renderables) {
-                renderable->load();
-                m_sceneManager->addRenderableObj(renderable);
-            }
+            renderable->load();
+            m_sceneManager->addRenderableObj(renderable);
 
             m_showFileBrowser = false;
             m_selectedFile.clear();
