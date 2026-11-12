@@ -40,6 +40,7 @@ class MeshRenderable : public Renderable{
         glm::vec3 getPosition() const;
         glm::vec3 getRotation() const;
         glm::vec3 getScale() const;
+        bool getWorldBounds(glm::vec3& boundsMin, glm::vec3& boundsMax) const;
         std::shared_ptr<MeshGeometry> getMeshGeometry() const;
         const std::vector<std::shared_ptr<MeshGeometry>>& getGeomMeshes() const;
         void draw() override;

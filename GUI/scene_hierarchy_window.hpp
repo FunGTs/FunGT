@@ -5,7 +5,7 @@
 #include "CubeMap/cube_map.hpp"
 #include "Path_Manager/path_manager.hpp"
 #include "SceneManager/scene_manager.hpp"
-#include "SimpleModel/simple_model.hpp"
+#include "Meshing/mesh_renderable.hpp"
 #include <algorithm>
 #include <filesystem>
 #include <memory>
@@ -72,35 +72,35 @@ public:
 
         if (m_selectedIndex >= 0 &&
             m_selectedIndex < static_cast<int>(visibleRenderables.size())) {
-            auto* model = dynamic_cast<SimpleModel*>(
+            auto* meshRenderable = dynamic_cast<MeshRenderable*>(
                 visibleRenderables[static_cast<size_t>(m_selectedIndex)]);
 
-            if (model) {
-                glm::vec3 position = model->getPosition();
-                glm::vec3 rotation = model->getRotation();
-                glm::vec3 scale = model->getScale();
+            if (meshRenderable) {
+                glm::vec3 position = meshRenderable->getPosition();
+                glm::vec3 rotation = meshRenderable->getRotation();
+                glm::vec3 scale = meshRenderable->getScale();
 
                 ImGui::Text("Transform");
                 if (ImGui::DragFloat3("Position", &position.x, 0.1f)) {
-                    model->position(position.x, position.y, position.z);
+                    meshRenderable->position(position.x, position.y, position.z);
                 }
                 if (ImGui::Button("Reset Position", ImVec2(-1, 0))) {
-                    model->position();
+                    meshRenderable->position();
                 }
 
                 if (ImGui::SliderFloat3("Rotation", &rotation.x,
                                         -180.0f, 180.0f, "%.1f deg")) {
-                    model->rotation(rotation.x, rotation.y, rotation.z);
+                    meshRenderable->rotation(rotation.x, rotation.y, rotation.z);
                 }
                 if (ImGui::Button("Reset Rotation", ImVec2(-1, 0))) {
-                    model->rotation();
+                    meshRenderable->rotation();
                 }
 
                 if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.001f)) {
-                    model->scale(scale.x, scale.y, scale.z);
+                    meshRenderable->scale(scale.x, scale.y, scale.z);
                 }
                 if (ImGui::Button("Reset Scale", ImVec2(-1, 0))) {
-                    model->scale();
+                    meshRenderable->scale();
                 }
 
                 if (ImGui::Button("Frame Selected", ImVec2(-1, 0))) {
@@ -111,7 +111,7 @@ public:
                         ? displaySize.x / displaySize.y
                         : 1.0f;
 
-                    if (model->getWorldBounds(boundsMin, boundsMax)) {
+                    if (meshRenderable->getWorldBounds(boundsMin, boundsMax)) {
                         m_camera->frameBounds(boundsMin, boundsMax, aspectRatio);
                     }
                 }
@@ -122,7 +122,7 @@ public:
                     auto& lights = m_sceneManager->getLights();
 
                     if (!lights.empty() &&
-                        model->getWorldBounds(boundsMin, boundsMax)) {
+                        meshRenderable->getWorldBounds(boundsMin, boundsMax)) {
                         const glm::vec3 center =
                             (boundsMin + boundsMax) * 0.5f;
                         const float radius = glm::max(
@@ -134,9 +134,9 @@ public:
                 }
 
                 if (ImGui::Button("Reset All", ImVec2(-1, 0))) {
-                    model->position();
-                    model->rotation();
-                    model->scale();
+                    meshRenderable->position();
+                    meshRenderable->rotation();
+                    meshRenderable->scale();
                 }
 
                 ImGui::Separator();

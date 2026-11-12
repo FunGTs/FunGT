@@ -2,6 +2,7 @@
 
 #include "Path_Manager/path_manager.hpp"
 
+#include <limits>
 #include <stdexcept>
 #include <utility>
 
@@ -36,24 +37,28 @@ void MeshRenderable::position(float x, float y, float z)
 {
     m_hasImportedModelMatrix = false;
     m_position = glm::vec3(x, y, z);
+    updateModelMatrix();
 }
 
 void MeshRenderable::rotation(float x, float y, float z)
 {
     m_hasImportedModelMatrix = false;
     m_rotation = glm::vec3(x, y, z);
+    updateModelMatrix();
 }
 
 void MeshRenderable::scale(float s)
 {
     m_hasImportedModelMatrix = false;
     m_scale = glm::vec3(s);
+    updateModelMatrix();
 }
 
 void MeshRenderable::scale(float x, float y, float z)
 {
     m_hasImportedModelMatrix = false;
     m_scale = glm::vec3(x, y, z);
+    updateModelMatrix();
 }
 
 void MeshRenderable::setModelMatrix(const glm::mat4& modelMatrix)
@@ -76,6 +81,31 @@ glm::vec3 MeshRenderable::getRotation() const
 glm::vec3 MeshRenderable::getScale() const
 {
     return m_scale;
+}
+
+bool MeshRenderable::getWorldBounds(glm::vec3& boundsMin,
+                                    glm::vec3& boundsMax) const
+{
+    const float largestValue = std::numeric_limits<float>::max();
+    boundsMin = glm::vec3(largestValue);
+    boundsMax = glm::vec3(-largestValue);
+    bool hasPositions = false;
+
+    for (const auto& meshgeom : m_meshgeoms) {
+        if (!meshgeom) {
+            continue;
+        }
+
+        for (const glm::vec3& position : meshgeom->m_positions) {
+            const glm::vec3 worldPosition = glm::vec3(
+                m_modelMatrix * glm::vec4(position, 1.0f));
+            boundsMin = glm::min(boundsMin, worldPosition);
+            boundsMax = glm::max(boundsMax, worldPosition);
+            hasPositions = true;
+        }
+    }
+
+    return hasPositions;
 }
 
 std::shared_ptr<MeshGeometry> MeshRenderable::getMeshGeometry() const
