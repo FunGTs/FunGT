@@ -3,10 +3,6 @@
 
 #include <vector>
 
-void (*MeshGeometry::s_gpuBuild)(MeshGeometry&, MeshGeomGPU*&) = nullptr;
-void (*MeshGeometry::s_gpuFree)(MeshGeomGPU*) = nullptr;
-void (*MeshGeometry::s_gpuDraw)(MeshGeomGPU&, const MeshGeometry&, Shader&) = nullptr;
-
 void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
 {
     if (!meshGeometry.isValid()) {

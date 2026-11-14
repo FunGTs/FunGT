@@ -10,6 +10,7 @@
 #include "Random/random.hpp"
 #include "defualt_geometries.hpp"
 #include "Lights/scene_light.hpp"
+#include "Meshing/mesh_renderable.hpp"
 #include "PBR/Light/light.hpp"
 #include "PBR/Render/include/compute_backends.hpp"
 #include "PBR/Render/include/icompute_renderer.hpp"
@@ -47,6 +48,7 @@ class Space {
         void InitComputeRenderBackend();
         void LoadModelToRender(const SimpleModel& model);
         void LoadGeometryToRender(const SimpleGeometry& geometry);
+        void LoadMeshToRender(const MeshRenderable& mesh);
         void loadLightsFromScene(const std::vector<SceneLight>& sceneLights);
         void static SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer, int width, int height);
         static void SaveFrameBufferAsPNG(const std::vector<fungt::Vec3>& framebuffer,

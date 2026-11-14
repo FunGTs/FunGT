@@ -377,6 +377,84 @@ void Space::LoadGeometryToRender(const SimpleGeometry& geometry) {
     std::cout << "Geometry loaded. Total triangles in scene: " << m_triangles.size() << std::endl;
     sendTexturesToRender();
 }
+void Space::LoadMeshToRender(const MeshRenderable& mesh)
+{
+    glm::mat4 modelMatrix = mesh.getModelMatrix();
+    glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelMatrix)));
+
+    size_t totalTriangles = 0;
+    for (const auto& geom_mesh : mesh.getGeomMeshes()) {
+        if (!geom_mesh || !geom_mesh->isValid()) continue;
+        for (size_t faceIndex = 0; faceIndex < geom_mesh->faceCount(); ++faceIndex) {
+            const MeshGeometry::FaceCorners face = geom_mesh->faceCorners(faceIndex);
+            if (face.count >= 3) totalTriangles += face.count - 2;
+        }
+    }
+    m_triangles.reserve(m_triangles.size() + totalTriangles);
+
+    for (const auto& geom_mesh : mesh.getGeomMeshes()) {
+        if (!geom_mesh || !geom_mesh->isValid()) continue;
+
+        std::vector<MaterialData> materials;
+        materials.reserve(geom_mesh->m_materials.size());
+        for (const Material& material : geom_mesh->m_materials) {
+            MaterialData materialData;
+            materialData.baseColor[0] = material.m_baseColor.x;
+            materialData.baseColor[1] = material.m_baseColor.y;
+            materialData.baseColor[2] = material.m_baseColor.z;
+            materialData.metallic = material.m_metallic;
+            materialData.roughness = material.m_roughness;
+            materialData.reflectance = material.m_reflectance;
+            materialData.emission = material.m_emission;
+            materialData.baseColorTexIdx = material.m_baseColorTexture && m_textureManager ? m_textureManager->loadTexture(material.m_baseColorTexture->getPath()) : -1;
+            materials.push_back(materialData);
+        }
+
+        for (size_t faceIndex = 0; faceIndex < geom_mesh->faceCount(); ++faceIndex) {
+            const MeshGeometry::FaceCorners face = geom_mesh->faceCorners(faceIndex);
+            if (face.count < 3) continue;
+            const size_t cornerOffset = geom_mesh->m_faceOffsets[faceIndex];
+            const uint32_t materialIndex = geom_mesh->m_faceMaterials.empty() ? 0 : geom_mesh->m_faceMaterials[faceIndex];
+
+            for (size_t cornerIndex = 1; cornerIndex + 1 < face.count; ++cornerIndex) {
+                const size_t sourceCorner0 = cornerOffset;
+                const size_t sourceCorner1 = cornerOffset + cornerIndex;
+                const size_t sourceCorner2 = cornerOffset + cornerIndex + 1;
+                const glm::vec3 position0 = glm::vec3(modelMatrix * glm::vec4(geom_mesh->m_positions[face.vertices[0]], 1.0f));
+                const glm::vec3 position1 = glm::vec3(modelMatrix * glm::vec4(geom_mesh->m_positions[face.vertices[cornerIndex]], 1.0f));
+                const glm::vec3 position2 = glm::vec3(modelMatrix * glm::vec4(geom_mesh->m_positions[face.vertices[cornerIndex + 1]], 1.0f));
+                const glm::vec3 geometricNormal = glm::normalize(glm::cross(position1 - position0, position2 - position0));
+                glm::vec3 normal0 = geom_mesh->m_cornerNormals.empty() ? geometricNormal : normalMatrix * geom_mesh->m_cornerNormals[sourceCorner0];
+                glm::vec3 normal1 = geom_mesh->m_cornerNormals.empty() ? geometricNormal : normalMatrix * geom_mesh->m_cornerNormals[sourceCorner1];
+                glm::vec3 normal2 = geom_mesh->m_cornerNormals.empty() ? geometricNormal : normalMatrix * geom_mesh->m_cornerNormals[sourceCorner2];
+                normal0 = glm::dot(normal0, normal0) > 0.0f ? glm::normalize(normal0) : geometricNormal;
+                normal1 = glm::dot(normal1, normal1) > 0.0f ? glm::normalize(normal1) : geometricNormal;
+                normal2 = glm::dot(normal2, normal2) > 0.0f ? glm::normalize(normal2) : geometricNormal;
+                const glm::vec2 uv0 = geom_mesh->m_cornerUVs.empty() ? glm::vec2(0.0f) : geom_mesh->m_cornerUVs[sourceCorner0];
+                const glm::vec2 uv1 = geom_mesh->m_cornerUVs.empty() ? glm::vec2(0.0f) : geom_mesh->m_cornerUVs[sourceCorner1];
+                const glm::vec2 uv2 = geom_mesh->m_cornerUVs.empty() ? glm::vec2(0.0f) : geom_mesh->m_cornerUVs[sourceCorner2];
+
+                Triangle triangle;
+                triangle.v0 = fungt::toFungtVec3(position0);
+                triangle.v1 = fungt::toFungtVec3(position1);
+                triangle.v2 = fungt::toFungtVec3(position2);
+                triangle.n0 = fungt::toFungtVec3(normal0);
+                triangle.n1 = fungt::toFungtVec3(normal1);
+                triangle.n2 = fungt::toFungtVec3(normal2);
+                triangle.uvs[0][0] = uv0.x;
+                triangle.uvs[0][1] = uv0.y;
+                triangle.uvs[1][0] = uv1.x;
+                triangle.uvs[1][1] = uv1.y;
+                triangle.uvs[2][0] = uv2.x;
+                triangle.uvs[2][1] = uv2.y;
+                triangle.material = materials[materialIndex];
+                m_triangles.push_back(std::move(triangle));
+            }
+        }
+    }
+
+    sendTexturesToRender();
+}
 void Space::loadLightsFromScene(const std::vector<SceneLight>& sceneLights)
 {
     m_lights.clear();
@@ -474,5 +552,4 @@ void Space::setSamples(int numOfSamples)
 {
     m_samplesPerPixel = numOfSamples;
 }
-
 
