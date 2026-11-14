@@ -37,15 +37,10 @@ void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
 
             MeshGeomGPUVertex vertex;
             vertex.vertex_position = meshGeometry.m_positions[positionIndex];
-            vertex.normal_position = meshGeometry.m_cornerNormals.empty()
-                ? glm::vec3(0.0f)
-                : meshGeometry.m_cornerNormals[sourceCorner];
-            vertex.texture_position = meshGeometry.m_cornerUVs.empty()
-                ? glm::vec2(0.0f)
-                : meshGeometry.m_cornerUVs[sourceCorner];
-            vertex.color = meshGeometry.m_cornerColors.empty()
-                ? glm::vec4(1.0f)
-                : meshGeometry.m_cornerColors[sourceCorner];
+            vertex.normal_position = meshGeometry.m_cornerNormals.empty() ? glm::vec3(0.0f) : meshGeometry.m_cornerNormals[sourceCorner];
+            vertex.texture_position = meshGeometry.m_cornerUVs.empty() ? glm::vec2(0.0f) : meshGeometry.m_cornerUVs[sourceCorner];
+            vertex.color = meshGeometry.m_cornerColors.empty() ? glm::vec4(1.0f) : meshGeometry.m_cornerColors[sourceCorner];
+            vertex.tangent_position = meshGeometry.m_cornerTangents.empty() ? glm::vec4(0.0f) : meshGeometry.m_cornerTangents[sourceCorner];
             vertices.push_back(vertex);
         }
 
@@ -134,6 +129,15 @@ void DrawMeshGeomGPU(MeshGeomGPU& cache, const MeshGeometry& meshGeometry, Shade
         }
         else {
             shader.setUniform1i("hasOcclusionTexture", 0);
+        }
+
+        if (material.m_normalTexture) {
+            shader.setUniform1i("hasNormalTexture", 1);
+            shader.set1i(4, "normalTexture");
+            material.m_normalTexture->active(4);
+        }
+        else {
+            shader.setUniform1i("hasNormalTexture", 0);
         }
 
         cache.m_buffer->drawIndexedRange(range.m_indexCount, range.m_indexOffset);

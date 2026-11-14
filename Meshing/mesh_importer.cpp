@@ -251,7 +251,6 @@ std::shared_ptr<MeshGeometry> importMeshGeometry(aiMesh* assimpMesh,
         for (unsigned int cornerIndex = 0; cornerIndex < face.mNumIndices; ++cornerIndex) {
             const uint32_t vertexIndex = face.mIndices[cornerIndex];
             geometry->m_cornerVertices.push_back(vertexIndex);
-
             if (assimpMesh->HasNormals()) {
                 const aiVector3D& normal = assimpMesh->mNormals[vertexIndex];
                 const glm::vec3 transformedNormal = glm::normalize(
@@ -260,6 +259,26 @@ std::shared_ptr<MeshGeometry> importMeshGeometry(aiMesh* assimpMesh,
             }
             else {
                 geometry->m_cornerNormals.emplace_back(0.0f);
+            }
+
+            if (assimpMesh->HasTangentsAndBitangents()) {
+                const aiVector3D& sourceTangent   = assimpMesh->mTangents[vertexIndex];
+                const aiVector3D& sourceBitangent = assimpMesh->mBitangents[vertexIndex];
+
+                glm::vec3 normal = geometry->m_cornerNormals.back();
+
+                glm::vec3 tangent = glm::normalize(glm::mat3(transform) * glm::vec3(sourceTangent.x, sourceTangent.y,sourceTangent.z));
+
+                glm::vec3 bitangent = glm::normalize(glm::mat3(transform) * glm::vec3(sourceBitangent.x,sourceBitangent.y,sourceBitangent.z));
+
+                tangent = glm::normalize(tangent - normal * glm::dot(normal, tangent));
+
+                const float handedness = glm::dot(glm::cross(normal, tangent), bitangent) < 0.0f ? -1.0f : 1.0f;
+
+                geometry->m_cornerTangents.emplace_back(tangent, handedness);
+            }
+            else {
+                geometry->m_cornerTangents.emplace_back(0.0f);
             }
 
             if (assimpMesh->HasTextureCoords(0)) {
@@ -302,6 +321,7 @@ std::shared_ptr<MeshRenderable> importStaticMesh(const std::string& path)
         path,
         aiProcess_Triangulate |
         aiProcess_GenSmoothNormals |
+        aiProcess_CalcTangentSpace |
         aiProcess_JoinIdenticalVertices);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {

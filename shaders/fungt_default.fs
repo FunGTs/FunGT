@@ -21,6 +21,7 @@ in vec3 FragPos;
 in vec3 Normal;
 in vec2 textureCoords;
 in vec4 vertexColor;
+in mat3 TBN;
 
 out vec4 vs_color;
 
@@ -32,6 +33,8 @@ uniform sampler2D metallicRoughnessTexture;
 uniform bool     hasMetallicRoughnessTexture;
 uniform sampler2D occlusionTexture;
 uniform bool     hasOcclusionTexture;
+uniform sampler2D normalTexture;
+uniform bool     hasNormalTexture;
 uniform bool     hasVertexColor;
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
@@ -98,7 +101,13 @@ void main()
     if (hasOcclusionTexture)
         occlusion = texture(occlusionTexture, textureCoords).r;
 
-    vec3 norm    = normalize(Normal);
+    vec3 norm = normalize(Normal);
+
+    if (hasNormalTexture) {
+        vec3 tangentNormal = texture(normalTexture, textureCoords).rgb * 2.0 - 1.0;
+        norm = normalize(TBN * tangentNormal);
+    }
+
     vec3 viewDir = normalize(viewPos - FragPos);
 
     vec3 totalDiffuse  = vec3(0.0);
