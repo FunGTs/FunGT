@@ -402,7 +402,7 @@ void Space::LoadMeshToRender(const MeshRenderable& mesh)
             materialData.baseColor[0] = material.m_baseColor.x;
             materialData.baseColor[1] = material.m_baseColor.y;
             materialData.baseColor[2] = material.m_baseColor.z;
-            materialData.metallic = material.m_metallic;
+            materialData.metallic = 0.0f; // For testing only: match the old SimpleModel path.
             materialData.roughness = material.m_roughness;
             materialData.reflectance = material.m_reflectance;
             materialData.emission = material.m_emission;
@@ -552,4 +552,3 @@ void Space::setSamples(int numOfSamples)
 {
     m_samplesPerPixel = numOfSamples;
 }
-
