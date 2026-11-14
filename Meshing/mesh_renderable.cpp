@@ -6,8 +6,10 @@
 #include <stdexcept>
 #include <utility>
 
+Shader* (*MeshRenderable::s_shaderCreate)() = nullptr;
+void (*MeshRenderable::s_shaderFree)(Shader*) = nullptr;
+
 MeshRenderable::MeshRenderable(std::shared_ptr<MeshGeometry> meshgeom)
-    : m_shader(Shader::create())
 {
     if (meshgeom) {
         m_meshgeoms.push_back(std::move(meshgeom));
@@ -16,14 +18,28 @@ MeshRenderable::MeshRenderable(std::shared_ptr<MeshGeometry> meshgeom)
 
 MeshRenderable::MeshRenderable(std::vector<std::shared_ptr<MeshGeometry>> meshgeoms)
     : m_meshgeoms(std::move(meshgeoms))
-    , m_shader(Shader::create())
 {
+}
+
+MeshRenderable::~MeshRenderable()
+{
+    if (s_shaderFree && m_shader) {
+        s_shaderFree(m_shader);
+    }
 }
 
 void MeshRenderable::load()
 {
     if (m_meshgeoms.empty()) {
         throw std::runtime_error("MeshRenderable::load() - No mesh geometry set!");
+    }
+
+    if (!m_shader && s_shaderCreate) {
+        m_shader = s_shaderCreate();
+    }
+
+    if (!m_shader) {
+        return;
     }
 
     m_shader->create(getAssetPath("shaders/fungt_default.vs"),

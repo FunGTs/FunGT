@@ -16,7 +16,7 @@ class MeshRenderable : public Renderable{
     private: 
 
         std::vector<std::shared_ptr<MeshGeometry>> m_meshgeoms;
-        std::unique_ptr<Shader> m_shader; 
+        Shader* m_shader = nullptr;
 
         glm::mat4 m_modelMatrix = glm::mat4(1.0f);
         glm::mat4 m_viewMatrix = glm::mat4(1.0f);
@@ -30,6 +30,7 @@ class MeshRenderable : public Renderable{
     public:
         explicit MeshRenderable(std::shared_ptr<MeshGeometry> meshgeom);
         explicit MeshRenderable(std::vector<std::shared_ptr<MeshGeometry>> meshgeoms);
+        ~MeshRenderable();
 
         void load();
         void position(float x = 0.0f, float y = 0.0f, float z = 0.0f);
@@ -48,6 +49,9 @@ class MeshRenderable : public Renderable{
         glm::mat4 getModelMatrix() const override;
         void setViewMatrix(const glm::mat4& viewMatrix) override;
         void updateModelMatrix() override;
+
+        static Shader* (*s_shaderCreate)();
+        static void (*s_shaderFree)(Shader*);
 
 
 };
