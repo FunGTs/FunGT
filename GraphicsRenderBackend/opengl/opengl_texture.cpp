@@ -44,7 +44,7 @@ void OpenGLTexture::uploadFloat(const float* pixels, int width, int height) {
     glTexParameteri(m_glTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(m_glTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    glTexImage2D(m_glTarget, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, pixels);
+    glTexImage2D(m_glTarget, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, pixels);
     glBindTexture(m_glTarget, 0);
 }
 
@@ -70,7 +70,7 @@ void OpenGLTexture::allocateEmptyCubemap(int faceSize, bool mipmaps) {
     glGenTextures(1, &m_id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, m_id);
     for (unsigned int i = 0; i < 6; i++) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F,
                      faceSize, faceSize, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

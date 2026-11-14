@@ -159,6 +159,8 @@ set(PBR_CORE_FILES
     ${FUNGT_BASE_DIR}/Geometries/box.cpp
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
+    ${FUNGT_BASE_DIR}/Meshing/mesh_geometry.cpp
+    ${FUNGT_BASE_DIR}/Meshing/mesh_renderable.cpp
     ${FUNGT_BASE_DIR}/Model/model.cpp
     ${FUNGT_BASE_DIR}/Path_Manager/path_manager.cpp
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp

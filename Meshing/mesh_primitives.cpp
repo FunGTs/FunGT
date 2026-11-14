@@ -34,7 +34,8 @@ std::shared_ptr<MeshGeometry> createCubeMeshGeometry(float size)
     const float halfSize = size * 0.5f;
 
     std::shared_ptr<MeshGeometry> mesh = std::make_shared<MeshGeometry>();
-
+    static int cube_count = 0; // Initialized ONLY on the first call
+    mesh->m_name = "Cube_" + std::to_string(cube_count);
     mesh->m_positions = {
         glm::vec3(-halfSize, -halfSize, -halfSize),
         glm::vec3( halfSize, -halfSize, -halfSize),
@@ -75,7 +76,7 @@ std::shared_ptr<MeshGeometry> createCubeMeshGeometry(float size)
     };
 
     mesh->m_faceMaterials = {0, 0, 0, 0, 0, 0};
-
+    cube_count++;
     return mesh;
 }
 
@@ -85,7 +86,8 @@ std::shared_ptr<MeshGeometry> createPlaneMeshGeometry(float width, float depth)
     const float halfDepth = depth * 0.5f;
 
     std::shared_ptr<MeshGeometry> mesh = std::make_shared<MeshGeometry>();
-
+    static int plane_count = 0; // Initialized ONLY on the first call
+    mesh->m_name = "Plane_" + std::to_string(plane_count);
     mesh->m_positions = {
         glm::vec3(-halfWidth, 0.0f,  halfDepth),
         glm::vec3( halfWidth, 0.0f,  halfDepth),
@@ -108,7 +110,7 @@ std::shared_ptr<MeshGeometry> createPlaneMeshGeometry(float width, float depth)
         glm::vec3(0.0f, 1.0f, 0.0f)
     };
     mesh->m_faceMaterials = {0};
-
+    plane_count++;
     return mesh;
 }
 
@@ -122,7 +124,8 @@ std::shared_ptr<MeshGeometry> createSphereMeshGeometry(float radius,
     if (sectorCount < 3 || stackCount < 2) {
         return mesh;
     }
-
+    static int sphere_count = 0; // Initialized ONLY on the first call
+    mesh->m_name = "Sphere_" + std::to_string(sphere_count);
     mesh->m_positions.push_back(glm::vec3(0.0f, radius, 0.0f));
 
     for (int stack = 1; stack < stackCount; ++stack) {
@@ -210,7 +213,7 @@ std::shared_ptr<MeshGeometry> createSphereMeshGeometry(float radius,
     }
 
     mesh->m_faceOffsets.push_back(static_cast<uint32_t>(mesh->m_cornerVertices.size()));
-
+    sphere_count++;
     return mesh;
 }
 
@@ -225,7 +228,8 @@ std::shared_ptr<MeshGeometry> createTorusMeshGeometry(float majorRadius,
     if (majorSegments < 3 || minorSegments < 3) {
         return mesh;
     }
-
+    static int torus_count = 0; // Initialized ONLY on the first call
+    mesh->m_name = "Torus_" + std::to_string(torus_count);
     for (int major = 0; major < majorSegments; ++major) {
         const float u = 2.0f * pi * static_cast<float>(major) / majorSegments;
         const float cosU = std::cos(u);
@@ -281,6 +285,6 @@ std::shared_ptr<MeshGeometry> createTorusMeshGeometry(float majorRadius,
             mesh->m_faceOffsets.push_back(static_cast<uint32_t>(mesh->m_cornerVertices.size()));
         }
     }
-
+    torus_count++;
     return mesh;
 }
