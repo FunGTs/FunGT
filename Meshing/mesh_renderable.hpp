@@ -7,6 +7,8 @@
 #include "Renderable/renderable.hpp"
 #include "mesh_geometry.hpp"
 #include "Material/material.hpp"
+#include "Physics/RigidBody/rigid_body.hpp"
+#include "Physics/CollisionManager/collision_manager.hpp"
 
 
 
@@ -25,6 +27,11 @@ class MeshRenderable : public Renderable{
         glm::vec3 m_rotation = glm::vec3(0.0f);
         glm::vec3 m_scale = glm::vec3(1.0f);
         bool m_hasImportedModelMatrix = false;
+        //To add physics:
+
+        std::weak_ptr<RigidBody> m_physicsBody;
+        bool isStatic = true; // Flag to indicate if the model is static (non-moving)
+        bool m_usePhysicsRigidBody = true; // Flag to indicate if the model should use a physics rigid body
 
 
     public:
@@ -49,6 +56,12 @@ class MeshRenderable : public Renderable{
         glm::mat4 getModelMatrix() const override;
         void setViewMatrix(const glm::mat4& viewMatrix) override;
         void updateModelMatrix() override;
+        // Physics: Collisions
+
+        void addCollisionProperty(std::shared_ptr<RigidBody> body);;
+        std::weak_ptr<RigidBody> getRigidBody() const override {
+            return m_physicsBody;
+        }
 
         static Shader* (*s_shaderCreate)();
         static void (*s_shaderFree)(Shader*);

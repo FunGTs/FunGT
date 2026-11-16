@@ -167,11 +167,28 @@ void MeshRenderable::updateModelMatrix()
         m_modelMatrix = m_importedModelMatrix;
         return;
     }
+    if (m_usePhysicsRigidBody) {
+        if (auto rigidBoy = m_physicsBody.lock()) {
+            m_position.x = rigidBoy->m_pos.x;
+            m_position.y = rigidBoy->m_pos.y;
+            m_position.z = rigidBoy->m_pos.z;
 
+            auto eulerAngles = rigidBoy->getEulerAngles();
+            m_rotation.x = glm::degrees(eulerAngles.x);
+            m_rotation.y = glm::degrees(eulerAngles.y);
+            m_rotation.z = glm::degrees(eulerAngles.z);
+        }
+    }
     m_modelMatrix = glm::mat4(1.0f);
     m_modelMatrix = glm::translate(m_modelMatrix, m_position);
     m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
     m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
     m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
     m_modelMatrix = glm::scale(m_modelMatrix, m_scale);
+}
+
+void MeshRenderable::addCollisionProperty(std::shared_ptr<RigidBody> body)
+{
+    m_physicsBody = body;  // Store direct reference
+    isStatic = false; // Mark as non-static since it now has a physics body
 }
