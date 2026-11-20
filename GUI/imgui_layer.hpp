@@ -11,6 +11,7 @@
 #include <memory>
 #include <filesystem>
 #include <algorithm>
+#include "../vendor/stb_image/stb_image.h"
 
 class ImGuiLayer : public Layer {
 
@@ -28,7 +29,35 @@ private:
     std::string m_selectedFile;
     std::vector<std::filesystem::directory_entry> m_dirEntries;
     std::string m_loadError;
+    GLuint m_logoTexture = 0;
+    int m_logoWidth = 0;
+    int m_logoHeight = 0;
     const std::vector<std::string> m_modelExtensions = {".obj", ".fbx", ".gltf", ".glb", ".dae"};
+
+    void loadLogoTexture() {
+        const std::string logoPath = getAssetPath("fungt_logo.png");
+        int channels = 0;
+        unsigned char* pixels = stbi_load(
+            logoPath.c_str(), &m_logoWidth, &m_logoHeight, &channels, 4);
+
+        if (!pixels) {
+            std::cerr << "Failed to load FunGT logo: " << logoPath << std::endl;
+            return;
+        }
+
+        glGenTextures(1, &m_logoTexture);
+        glBindTexture(GL_TEXTURE_2D, m_logoTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_logoWidth, m_logoHeight,
+            0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        stbi_image_free(pixels);
+    }
 
 public:
     ImGuiLayer()
@@ -207,6 +236,7 @@ public:
         SetTheme();
         ImGui_ImplGlfw_InitForOpenGL(m_window, true);
         ImGui_ImplOpenGL3_Init("#version 460");
+        loadLogoTexture();
         io.Fonts->Clear();
 
         // Load your font file (TTF)
@@ -252,6 +282,10 @@ public:
     }
 
     void onDetach() override {
+        if (m_logoTexture != 0) {
+            glDeleteTextures(1, &m_logoTexture);
+            m_logoTexture = 0;
+        }
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
@@ -332,6 +366,25 @@ public:
 
         // Menu Bar
         if (ImGui::BeginMenuBar()) {
+            if (m_logoTexture != 0) {
+                const ImVec2 logoAreaSize(95.0f, 56.0f);
+                const float logoHeight = 35.0f;
+                const float logoWidth = logoHeight * static_cast<float>(m_logoWidth) /
+                    static_cast<float>(m_logoHeight);
+                const ImVec2 logoAreaStart = ImGui::GetCursorScreenPos();
+
+                ImGui::InvisibleButton("##fungt_logo_area", logoAreaSize);
+                ImGui::SetCursorScreenPos(ImVec2(
+                    logoAreaStart.x + (logoAreaSize.x - logoWidth) * 0.5f - 6.0f,
+                    logoAreaStart.y + 2.0f));
+                ImGui::Image(
+                    static_cast<ImTextureID>(m_logoTexture),
+                    ImVec2(logoWidth, logoHeight));
+                ImGui::SetCursorScreenPos(ImVec2(
+                    logoAreaStart.x + logoAreaSize.x + 8.0f,
+                    logoAreaStart.y));
+            }
+
             if (ImGui::BeginMenu("File")) {
                 if (ImGui::MenuItem("Open", "Ctrl+O")) {
                     m_showFileBrowser = true;
