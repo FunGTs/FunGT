@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(FunGT)
+project(FunGT VERSION 0.1.0)
 
 # ════════════════════════════════════════════════════════════════════════════
 # GPU BACKEND OPTIONS
@@ -379,6 +379,9 @@ endif()
 # CREATE EXECUTABLE
 # ════════════════════════════════════════════════════════════════════════════
 add_executable(FunGT ${SOURCE_FILES})
+target_compile_definitions(FunGT PRIVATE
+    FUNGT_VERSION="${PROJECT_VERSION}"
+)
 if(FUNGT_USE_CUDA)
     target_compile_definitions(FunGT PRIVATE FUNGT_USE_CUDA)
     target_include_directories(FunGT PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
