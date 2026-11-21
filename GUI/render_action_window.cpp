@@ -1,7 +1,6 @@
 #include "render_action_window.hpp"
 #include "PBR/Space/space.hpp"
-#include "SimpleModel/simple_model.hpp"
-#include "SimpleGeometry/simple_geometry.hpp"
+#include "Meshing/mesh_renderable.hpp"
 #include "Vector/vector3.hpp"
 
 void RenderWindow::onImGuiRender() {
@@ -213,31 +212,23 @@ void RenderWindow::triggerRender() {
         // LOAD ALL MODELS FROM SCENE
         const auto& objects = m_sceneManager->getRenderable();
 
-        int modelCount = 0;
-        int geometryCount = 0;
-        for (auto& obj : objects) {
-            auto simpleModel = std::dynamic_pointer_cast<SimpleModel>(obj);
-            if (simpleModel) {
-                std::cout << "Loading model " << (modelCount + 1) << " to PBR scene..." << std::endl;
-                space.LoadModelToRender(*simpleModel);
-                modelCount++;
-                continue;
-            }
-            auto simpleGeometry = std::dynamic_pointer_cast<SimpleGeometry>(obj);
-            if (simpleGeometry) {
-                std::cout << "Loading geometry " << (geometryCount + 1) << " to PBR scene..." << std::endl;
-                space.LoadGeometryToRender(*simpleGeometry);
-                geometryCount++;
+        int meshCount = 0;
+        for (const auto& obj : objects) {
+            auto meshRenderable = std::dynamic_pointer_cast<MeshRenderable>(obj);
+            if (meshRenderable) {
+                std::cout << "Loading mesh " << (meshCount + 1) << " to PBR scene..." << std::endl;
+                space.LoadMeshToRender(*meshRenderable);
+                meshCount++;
             }
         }
 
-        if (modelCount == 0 && geometryCount == 0) {
-            std::cerr << "No models or geometries found in scene!" << std::endl;
+        if (meshCount == 0) {
+            std::cerr << "No meshes found in scene!" << std::endl;
             m_isRendering = false;
             return;
         }
 
-        std::cout << "Loaded " << modelCount << " models" << std::endl;
+        std::cout << "Loaded " << meshCount << " meshes" << std::endl;
 
         // BUILD BVH
         std::cout << "Building BVH..." << std::endl;

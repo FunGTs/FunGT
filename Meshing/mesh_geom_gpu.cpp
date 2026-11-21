@@ -3,10 +3,6 @@
 
 #include <vector>
 
-void (*MeshGeometry::s_gpuBuild)(MeshGeometry&, MeshGeomGPU*&) = nullptr;
-void (*MeshGeometry::s_gpuFree)(MeshGeomGPU*) = nullptr;
-void (*MeshGeometry::s_gpuDraw)(MeshGeomGPU&, const MeshGeometry&, Shader&) = nullptr;
-
 void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
 {
     if (!meshGeometry.isValid()) {
@@ -37,12 +33,10 @@ void BuildMeshGeomGPU(MeshGeometry& meshGeometry, MeshGeomGPU*& cache)
 
             MeshGeomGPUVertex vertex;
             vertex.vertex_position = meshGeometry.m_positions[positionIndex];
-            vertex.normal_position = meshGeometry.m_cornerNormals.empty()
-                ? glm::vec3(0.0f)
-                : meshGeometry.m_cornerNormals[sourceCorner];
-            vertex.texture_position = meshGeometry.m_cornerUVs.empty()
-                ? glm::vec2(0.0f)
-                : meshGeometry.m_cornerUVs[sourceCorner];
+            vertex.normal_position = meshGeometry.m_cornerNormals.empty() ? glm::vec3(0.0f) : meshGeometry.m_cornerNormals[sourceCorner];
+            vertex.texture_position = meshGeometry.m_cornerUVs.empty() ? glm::vec2(0.0f) : meshGeometry.m_cornerUVs[sourceCorner];
+            vertex.color = meshGeometry.m_cornerColors.empty() ? glm::vec4(1.0f) : meshGeometry.m_cornerColors[sourceCorner];
+            vertex.tangent_position = meshGeometry.m_cornerTangents.empty() ? glm::vec4(0.0f) : meshGeometry.m_cornerTangents[sourceCorner];
             vertices.push_back(vertex);
         }
 
@@ -100,9 +94,48 @@ void DrawMeshGeomGPU(MeshGeomGPU& cache, const MeshGeometry& meshGeometry, Shade
 {
     cache.m_buffer->bindVAO();
     cache.m_buffer->bindVertexStreams(shader);
+    shader.setUniform1i("hasVertexColor", meshGeometry.m_cornerColors.empty() ? 0 : 1);
 
     for (const MeshGeomGPUMaterialRange& range : cache.m_materialRanges) {
-        meshGeometry.m_materials[range.m_materialIndex].sendToShader(shader);
+        const Material& material = meshGeometry.m_materials[range.m_materialIndex];
+        material.sendToShader(shader);
+
+        if (material.m_baseColorTexture) {
+            shader.setUniform1i("hasTexture", 1);
+            shader.set1i(0, "texture_diffuse1");
+            material.m_baseColorTexture->active(0);
+        }
+        else {
+            shader.setUniform1i("hasTexture", 0);
+        }
+
+        if (material.m_metallicRoughnessTexture) {
+            shader.setUniform1i("hasMetallicRoughnessTexture", 1);
+            shader.set1i(2, "metallicRoughnessTexture");
+            material.m_metallicRoughnessTexture->active(2);
+        }
+        else {
+            shader.setUniform1i("hasMetallicRoughnessTexture", 0);
+        }
+
+        if (material.m_occlusionTexture) {
+            shader.setUniform1i("hasOcclusionTexture", 1);
+            shader.set1i(3, "occlusionTexture");
+            material.m_occlusionTexture->active(3);
+        }
+        else {
+            shader.setUniform1i("hasOcclusionTexture", 0);
+        }
+
+        if (material.m_normalTexture) {
+            shader.setUniform1i("hasNormalTexture", 1);
+            shader.set1i(4, "normalTexture");
+            material.m_normalTexture->active(4);
+        }
+        else {
+            shader.setUniform1i("hasNormalTexture", 0);
+        }
+
         cache.m_buffer->drawIndexedRange(range.m_indexCount, range.m_indexOffset);
     }
 

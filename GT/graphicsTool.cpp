@@ -1,6 +1,7 @@
 #include "graphicsTool.hpp"
 #include "../MeshGPU/mesh_gpu.hpp"
 #include "../Meshing/mesh_geom_gpu.hpp"
+#include "../Meshing/mesh_renderable_gpu.hpp"
 #include "../TextureGPU/texture_gpu.hpp"
 #include "../PrimitiveGPU/primitive_gpu.hpp"
 #include "../Shaders/shader.hpp"
@@ -61,6 +62,7 @@ int GraphicsTool::initGL(){
     m_renderDevice->init(m_Window, m_frameBufferWidth, m_frameBufferHeight, m_colors);
     RegisterMeshGPUCallbacks();
     RegisterMeshGeomGPUCallbacks();
+    RegisterMeshRenderableGPUCallbacks();
     RegisterTextureGPUCallbacks();
     RegisterPrimitiveGPUCallbacks();
     Model::s_shaderCreate = &BuildShader;

@@ -254,6 +254,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/Mesh/mesh.cpp
     ${FUNGT_BASE_DIR}/MeshGPU/mesh_gpu.cpp
     ${FUNGT_BASE_DIR}/Meshing/mesh_geom_gpu.cpp
+    ${FUNGT_BASE_DIR}/Meshing/mesh_importer.cpp
     ${FUNGT_BASE_DIR}/Meshing/mesh_primitives.cpp
     ${FUNGT_BASE_DIR}/Meshing/mesh_renderable.cpp
     ${FUNGT_BASE_DIR}/TextureGPU/texture_gpu.cpp

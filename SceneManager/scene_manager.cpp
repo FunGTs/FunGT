@@ -136,9 +136,13 @@ void SceneManager::renderScene()
                 node->getShader().setUniformVec3f(m_ambientColor, "ambientColor");
 
                 if (m_hasIBL) {
-                    glActiveTexture(GL_TEXTURE1);
-                    glBindTexture(GL_TEXTURE_CUBE_MAP, m_iblProbe->getIrradianceMapID());
+                    m_iblProbe->bindIrradianceMap(); 
                     node->getShader().set1i(1, "irradianceMap");
+                    m_iblProbe->bindPrefilterMap(); 
+                    node->getShader().set1i(5, "prefilterMap");
+                    m_iblProbe->bindBRDFLUT(); 
+                    node->getShader().set1i(6, "brdfLUT");
+                    node->getShader().setUniform1f(m_iblProbe->getMaxPrefilterMip(), "maxPrefilterMip");
                     node->getShader().setUniform1f(m_iblIntensity, "iblIntensity");
                 }
 

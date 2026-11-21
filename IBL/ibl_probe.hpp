@@ -26,16 +26,25 @@ public:
     void build(const std::string& hdrPath);
 
     unsigned int getIrradianceMapID() const { return m_irradianceMap.getID(); }
+    unsigned int getPrefilterMapID() const { return m_prefilterMap.getID(); }
+    unsigned int getBRDFLUTID() const { return m_brdfLUT.getID(); }
+    float getMaxPrefilterMip() const { return 7.0f; }
+    void bindIrradianceMap();
+    void bindPrefilterMap();
+    void bindBRDFLUT();
 
 private:
     Texture m_envCubemap{ TextureType::CubeMap };
     Texture m_irradianceMap{ TextureType::CubeMap };
+    Texture m_prefilterMap{ TextureType::CubeMap };
+    Texture m_brdfLUT{ TextureType::Texture2D };
 
     std::unique_ptr<GPUBuffer> m_cubeBuffer;
 
     void buildCubeMesh();
     void renderCube();
-
+    void prefilterSpecular();
+    void buildBRDFLUT();
     void renderEquirectToCubemap(unsigned int equirectTexID, unsigned int cubemapID, int faceSize);
     void convolveIrradiance(unsigned int envCubemapID, unsigned int irradianceCubemapID, int faceSize);
 };

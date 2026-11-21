@@ -46,30 +46,23 @@ void ProgressivePathTracer::initialize(Camera* viewportCam,
     m_space->loadLightsFromScene(sceneManager->getLights());
 
     const auto& objects = sceneManager->getRenderable();
-    int modelCount = 0;
-    int geometryCount = 0;
+    int meshCount = 0;
 
-    for (auto& obj : objects) {
-        auto simpleModel = std::dynamic_pointer_cast<SimpleModel>(obj);
-        if (simpleModel) {
-            m_space->LoadModelToRender(*simpleModel);
-            modelCount++;
-            continue;
-        }
-        auto simpleGeometry = std::dynamic_pointer_cast<SimpleGeometry>(obj);
-        if (simpleGeometry) {
-            m_space->LoadGeometryToRender(*simpleGeometry);
-            geometryCount++;
+    for (const auto& obj : objects) {
+        auto meshRenderable = std::dynamic_pointer_cast<MeshRenderable>(obj);
+        if (meshRenderable) {
+            m_space->LoadMeshToRender(*meshRenderable);
+            meshCount++;
         }
     }
 
-    if (modelCount == 0 && geometryCount == 0) {
-        std::cerr << "Warning: No models or geometries in scene for path tracing" << std::endl;
+    if (meshCount == 0) {
+        std::cerr << "Warning: No meshes in scene for path tracing" << std::endl;
         m_initialized = false;
         return;
     }
 
-    std::cout << "Loaded " << modelCount << " models, " << geometryCount << " geometries" << std::endl;
+    std::cout << "Loaded " << meshCount << " meshes" << std::endl;
     std::cout << "Building BVH..." << std::endl;
     m_space->BuildBVH();
 

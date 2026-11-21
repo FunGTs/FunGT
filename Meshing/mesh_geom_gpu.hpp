@@ -12,8 +12,16 @@ struct MeshGeomGPUVertex {
     glm::vec3 vertex_position;
     glm::vec3 normal_position;
     glm::vec2 texture_position;
+    glm::vec4 color;
+    glm::vec4 tangent_position;
 
-    FUNGT_NEXT_VERTEX_FORMAT(MeshGeomGPUVertex, vertex_position, normal_position, texture_position)
+
+    FUNGT_NEXT_VERTEX_FORMAT(MeshGeomGPUVertex,
+                            vertex_position,
+                            normal_position,
+                            texture_position,
+                            color,
+                            tangent_position)
 };
 
 struct MeshGeomGPUSkin {

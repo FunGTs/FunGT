@@ -153,6 +153,17 @@ void Texture::allocateEmptyCubemap(int faceSize, bool mipmaps) {
     }
 }
 
+void Texture::allocateEmptyFloat2D(int width, int height) {
+    if (!m_gpuCache && s_gpuCreate) {
+        m_gpuCache = s_gpuCreate(TextureType::Texture2D);
+    }
+    if (s_gpuUploadFloat && m_gpuCache) {
+        s_gpuUploadFloat(*m_gpuCache, nullptr, width, height);
+        txt_width = width;
+        txt_height = height;
+    }
+}
+
 void Texture::active(unsigned int slot) {
     if (s_gpuBind && m_gpuCache) {
         s_gpuBind(*m_gpuCache, slot);
