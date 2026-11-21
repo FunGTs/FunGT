@@ -68,7 +68,7 @@ namespace fungt {
         m_isovalue = iso;
     }
 
-    const std::vector<PrimitiveVertex>& MarchingCubesCPU::getVertices() const
+    const std::vector<MCVertex>& MarchingCubesCPU::getVertices() const
     {
         return m_vertices;
     }
@@ -197,19 +197,19 @@ namespace fungt {
                         fungt::Vec3 n1 = computeNormal(m_field, v1, h);
                         fungt::Vec3 n2 = computeNormal(m_field, v2, h);
 
-                        PrimitiveVertex pv0, pv1, pv2;
+                        fungt::MCVertex pv0, pv1, pv2;
 
                         pv0.position = glm::vec3(v0.x, v0.y, v0.z);
                         pv0.normal = glm::vec3(n0.x, n0.y, n0.z);
-                        pv0.texcoord = glm::vec2(0.f);
+                        pv0.color = glm::vec3(0.8f);
 
                         pv1.position = glm::vec3(v1.x, v1.y, v1.z);
                         pv1.normal = glm::vec3(n1.x, n1.y, n1.z);
-                        pv1.texcoord = glm::vec2(0.f);
+                        pv1.color = glm::vec3(0.8f);
 
                         pv2.position = glm::vec3(v2.x, v2.y, v2.z);
                         pv2.normal = glm::vec3(n2.x, n2.y, n2.z);
-                        pv2.texcoord = glm::vec2(0.f);
+                        pv2.color = glm::vec3(0.8f);
 
                         m_vertices.push_back(pv0);
                         m_vertices.push_back(pv1);

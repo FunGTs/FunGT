@@ -18,7 +18,7 @@ namespace fungt {
 
         void execute() override;
 
-        const std::vector<PrimitiveVertex>& getVertices() const override;
+        const std::vector<MCVertex>& getVertices() const override;
         const std::vector<unsigned int>& getIndices() const override;
     };
 

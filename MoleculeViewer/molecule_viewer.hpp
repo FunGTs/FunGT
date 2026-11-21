@@ -10,7 +10,7 @@
 class MoleculeViewer : public Surface {
     fungt::Molecule m_molecule;
 
-    MoleculeViewer();
+    MoleculeViewer(fungt::MC_MODE mode);
 
 public:
     ~MoleculeViewer();
@@ -18,7 +18,8 @@ public:
     void setBlend(float k);
     void rebuild() override;
 
-    static std::shared_ptr<MoleculeViewer> create(const std::string& xyzPath);
+    static std::shared_ptr<MoleculeViewer> create(const std::string& xyzPath,
+        fungt::MC_MODE mode = fungt::MC_MODE::CPU);
 };
 
 #endif // _MOLECULE_VIEWER_HPP_

@@ -1,33 +1,42 @@
 #include "surface.hpp"
+#include "MarchingCubes/gpu/mc_gpu.hpp"
 #include <vector>
 
-Surface::Surface()
+Surface::Surface(fungt::MC_MODE mode)
     : m_shader(Shader::create())
 {
     m_vs = getAssetPath("shaders/fungt_surface.vs");
     m_fs = getAssetPath("shaders/fungt_surface.fs");
+
+    if (mode == fungt::MC_MODE::GPU) {
+        m_mc = std::make_shared<MarchingCubesGPU>();
+        isGPU = true;
+    } else {
+        m_mc = std::make_shared<fungt::MarchingCubesCPU>();
+        isGPU = false;
+    }
 }
 
 Surface::~Surface() = default;
 
 void Surface::setField(std::function<float(fungt::Vec3)> field)
 {
-    m_mc.setField(field);
+    m_mc->setField(field);
 }
 
 void Surface::sampleScalarFieldInside(fungt::Vec3 min, fungt::Vec3 max)
 {
-    m_mc.sampleScalarFieldInside(min, max);
+    m_mc->sampleScalarFieldInside(min, max);
 }
 
 void Surface::setResolution(int x, int y, int z)
 {
-    m_mc.setResolution(x, y, z);
+    m_mc->setResolution(x, y, z);
 }
 
 void Surface::setIsovalue(float iso)
 {
-    m_mc.setIsovalue(iso);
+    m_mc->setIsovalue(iso);
 }
 
 void Surface::load()
@@ -38,42 +47,70 @@ void Surface::load()
 
 void Surface::rebuild()
 {
-    m_mc.execute();
+    
 
-    const auto& mcVerts = m_mc.getVertices();
-    const auto& indices = m_mc.getIndices();
-
-    std::vector<SurfaceVertex> verts(mcVerts.size());
-    for (size_t i = 0; i < mcVerts.size(); ++i) {
-        verts[i].position = mcVerts[i].position;
-        verts[i].normal = mcVerts[i].normal;
-        verts[i].color = glm::vec3(0.8f, 0.8f, 0.8f);
+    if(isGPU){
+        createGPUInteropBuffer();
     }
+    else{
+        //Normal CPU marching cubes
+        m_mc->execute();
+        const auto& mcVerts = m_mc->getVertices();
+        const auto& indices = m_mc->getIndices();
 
-    m_indexCount = static_cast<unsigned int>(indices.size());
+        createGPUBuffer(mcVerts, indices);
+    }
+}
+
+void Surface::createGPUInteropBuffer()
+{
+    m_mc->prepare();
+
+    unsigned int numVertices = static_cast<unsigned int>(m_mc->getTotVertices());
 
     m_buffer = GPUBuffer::create();
     m_buffer->genVAO();
     m_buffer->bindVAO();
+    m_buffer->create(BufferType::Vertex, nullptr, numVertices * sizeof(fungt::MCVertex));
+    m_buffer->applyFormat(fungt::MCVertex::getFormat());
+
+    m_mc->execute(m_buffer->getId());
+
+    m_buffer->unbindVAO();
+
+    m_drawCall = [this, numVertices]() {
+        m_buffer->drawArrays(numVertices, DrawMode::Triangles);
+    };
+}
+
+void Surface::createGPUBuffer(const std::vector<fungt::MCVertex>& verts,
+                              const std::vector<unsigned int>& indices)
+{
+    m_buffer = GPUBuffer::create();
+    m_buffer->genVAO();
+    m_buffer->bindVAO();
     m_buffer->create(BufferType::Vertex, verts.data(),
-        verts.size() * sizeof(SurfaceVertex));
+        verts.size() * sizeof(fungt::MCVertex));
     m_buffer->create(BufferType::Index, indices.data(),
         indices.size() * sizeof(unsigned int));
 
-    m_buffer->applyFormat(SurfaceVertex::getFormat());
-
+    m_buffer->applyFormat(fungt::MCVertex::getFormat());
     m_buffer->unbindVAO();
+
+    m_indexCount = static_cast<unsigned int>(indices.size());
+    m_drawCall = [this]() {
+        m_buffer->drawIndexed(m_indexCount, DrawMode::Triangles);
+    };
 }
 
 void Surface::draw()
 {
-    if (!m_buffer || m_indexCount == 0)
+    if (!m_buffer || !m_drawCall)
         return;
 
     m_shader->Bind();
-
     m_buffer->bindVAO();
-    m_buffer->drawIndexed(m_indexCount, DrawMode::Triangles);
+    m_drawCall();
     m_buffer->unbindVAO();
 }
 
@@ -140,7 +177,7 @@ Material& Surface::getMaterial()
     return m_material;
 }
 
-std::shared_ptr<Surface> Surface::create()
+std::shared_ptr<Surface> Surface::create(fungt::MC_MODE mode)
 {
-    return std::shared_ptr<Surface>(new Surface());
+    return std::shared_ptr<Surface>(new Surface(mode));
 }

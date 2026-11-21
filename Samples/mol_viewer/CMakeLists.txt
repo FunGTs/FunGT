@@ -289,6 +289,7 @@ set(SOURCE_FILES
     ${FUNGT_BASE_DIR}/SimpleModel/simple_model.cpp
     ${FUNGT_BASE_DIR}/SimpleGeometry/simple_geometry.cpp
     ${FUNGT_BASE_DIR}/MarchingCubes/marching_cubes_cpu.cpp
+    ${FUNGT_BASE_DIR}/MarchingCubes/gpu/mc_gpu.cpp
     ${FUNGT_BASE_DIR}/Surface/surface.cpp
     ${FUNGT_BASE_DIR}/MoleculeViewer/molecule.cpp
     ${FUNGT_BASE_DIR}/MoleculeViewer/mol_reader.cpp
@@ -525,10 +526,13 @@ elseif (UNIX)
     endif()
 
     set(SYCL_SOURCES
+        ${FUNGT_BASE_DIR}/MoleculeViewer/molecule_viewer.cpp
         ${FUNGT_BASE_DIR}/InfoDevice/sycl_backend.cpp
         ${FUNGT_BASE_DIR}/ParticleSimulation/particle_simulation_sycl_ops.cpp
         ${FUNGT_BASE_DIR}/ParticleSimulation/particle_rtc_sycl_ops.cpp
         ${FUNGT_BASE_DIR}/PBR/Space/space.cpp
+        ${FUNGT_BASE_DIR}/MarchingCubes/gpu/mc_gpu.cpp
+        ${FUNGT_BASE_DIR}/Surface/surface.cpp
     )
 
     list(JOIN SYCL_CUDA_ARCH_ARGS " " SYCL_CUDA_ARCH_STR)

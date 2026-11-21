@@ -27,7 +27,7 @@ public:
 
     void setBondThreshold(float factor);
 
-    Molecule buildMolecule(float radiusScale = 0.6f, float bondRadius = 0.05f) const;
+    Molecule buildMolecule(float radiusScale = 0.7f, float bondRadius = 0.12f) const;
 
     const std::vector<ParsedAtom>& getParsedAtoms() const { return m_parsedAtoms; }
     const std::string& getComment() const { return m_comment; }

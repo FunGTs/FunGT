@@ -43,6 +43,7 @@ public:
     void addAtom(Vec3 position, float radius, const std::string& element = "");
     void addBond(Vec3 a, Vec3 b, float radius);
     void setBlend(float k);
+    float getBlend() const { return m_blendK; }
 
     std::function<float(Vec3)> getField() const;
     void computeBounds(Vec3& min, Vec3& max, float padding = 0.5f) const;
