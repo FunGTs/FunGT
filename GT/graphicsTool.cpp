@@ -17,7 +17,7 @@ void FreeShader(Shader* s) {
 
 
 GraphicsTool::GraphicsTool(int _width, int _height)
-: m_width{_width}, m_height{_height},m_Windowname{"FunGT"}{
+: m_width{_width}, m_height{_height},m_Windowname{"FunGT " FUNGT_VERSION}{
     std::cout<<"GraphicsTool constructor "<<std::endl; 
 }
 
